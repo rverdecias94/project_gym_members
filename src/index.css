@@ -1,0 +1,50 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+}
+
+/* LOGIN */
+.login_form {
+  width: 100vw;
+  height: 100vh;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.login_title {
+  background: linear-gradient(45deg, #356dac, #b3345a);
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  color: white;
+}
+
+/* NAVBAR */
+.navbar {
+  padding: 15px;
+  background-color: #356dac;
+  display: flex;
+  justify-content: space-between;
+  font-family: sans-serif;
+  font-weight: 700;
+  color: white;
+  width: 100vw;
+}
+
+.btn_logout {
+  background: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 5px;
+  color: #356dac;
+  cursor: pointer;
+  font-family: sans-serif;
+  font-weight: 700;
+}
