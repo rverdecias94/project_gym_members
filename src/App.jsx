@@ -1,11 +1,13 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Login from './components/Login';
 import { Container } from '@mui/material';
-import Home from './components/Home';
 import NotFound from './components/NotFound';
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase/client';
 import Navbar from './components/Navbar';
+import { MembersContextProvider } from './context/MembersContext';
+import Menu from './components/Menu';
+
 
 function App() {
   const [sessionActive, setsessionActive] = useState(false);
@@ -13,7 +15,6 @@ function App() {
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
-      console.log(event, session)
       if (!session) {
         navigate('/login');
         setsessionActive(false);
@@ -27,12 +28,14 @@ function App() {
 
   return (
     <Container sx={{ width: "100vw", height: "100vh", paddingLeft: "0px !important", }}>
-      {sessionActive ? <Navbar /> : null}
-      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='*' element={<NotFound />} />
-      </Routes>
+      <MembersContextProvider>
+        {sessionActive ? <Navbar /> : null}
+        <Routes>
+          <Route path='/' element={<Menu />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='*' element={<NotFound />} />
+        </Routes>
+      </MembersContextProvider>
     </Container>
   )
 }

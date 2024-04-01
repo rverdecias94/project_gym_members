@@ -45,12 +45,15 @@ export default function Login() {
             placeholder="Escribe tu correo aquí ..."
             onChange={handlerChange}
             fullWidth
-            size='small'
             inputProps={{ style: { color: "black" } }}
             InputLabelProps={{ style: { color: "#356dac" } }}
+            sx={{ marginTop: 10 }}
           />
           <br />
-          <Button variant="contained" style={{ width: "100%", backgroundColor: "#356dac", color: "#fff", fontWeight: "bolder", marginTop: 15 }} type="submit">
+          <Button
+            variant="contained"
+            style={{ width: "100%", backgroundColor: "#356dac", color: "#fff", fontWeight: "bolder", marginTop: 15 }}
+            type="submit">
             Enviar link
           </Button>
         </form>

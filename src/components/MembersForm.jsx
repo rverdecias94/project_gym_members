@@ -1,10 +1,34 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState } from 'react'
-import { Button, FormControlLabel, FormLabel, Radio, RadioGroup, TextField } from "@mui/material"
+import { Button, FormControlLabel, FormLabel, MenuItem, Radio, RadioGroup, TextField } from "@mui/material"
 import { Box, Checkbox } from '@mui/material';
-/* import { supabase } from "../supabase/client";
-import { Toaster, toast } from 'react-hot-toast'; */
+import { Toaster } from 'react-hot-toast';
+import { useMembers } from '../context/MembersContext';
+import { useEffect } from 'react';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
+import dayjs from 'dayjs';
 
-function MembersForm() {
+const trainers = [
+  {
+    value: 'Yansi',
+    label: 'Yansi',
+  },
+  {
+    value: 'Mandy',
+    label: 'Mandy',
+  },
+  {
+    value: 'Alexis',
+    label: 'Alexis',
+  },
+];
+
+
+function MembersForm({ member }) {
+  const { createNewMember, adding, updateMember } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
     last_name: '',
@@ -12,31 +36,26 @@ function MembersForm() {
     ci: '',
     address: '',
     has_trainer: false,
+    trainer_name: null,
   })
+  const [editing, setEditing] = useState(false);
 
-  const handlerSubmit = (e) => {
-    e.preventDefault()
-    let dataToSave = {
-      ...memberData,
-      pay_date: Date.now(),
+
+
+  useEffect(() => {
+    console.log(member);
+    if (member && Object.keys(member).length > 0) {
+      setMemberData(member);
+      setEditing(true);
     }
-    console.log(dataToSave)
-    /* try {
-      const result = supabase.from("members").insert({
-        first_name: dataToSave.first_name,
-        last_name: dataToSave.last_name,
-        ci: dataToSave.ci,
-        address: dataToSave.address,
-        has_trainer: dataToSave.has_trainer,
-        pay_date: dataToSave.pay_date,
-      });
-      console.log(result)
-      if (result) {
-        toast.success("Registro guardado satisfactoriamente")
-      }
-    } catch (error) {
-      console.error(error)
-    } */
+  }, [])
+
+
+
+
+  const handlerSubmit = async (e) => {
+    e.preventDefault();
+    editing ? updateMember(memberData) : createNewMember(memberData);
     setMemberData({
       first_name: '',
       last_name: '',
@@ -44,21 +63,30 @@ function MembersForm() {
       ci: '',
       address: '',
       has_trainer: false,
+      trainer_name: null,
     })
   }
 
   const handlerChange = (e) => {
+    console.log(e.target.name);
     setMemberData(prev => ({
       ...prev,
-      [e.target.name]: e.target.name === 'has_trainer' ? e.target.checked : e.target.value
+      [e.target.name]: e.target.name === 'has_trainer' || e.target.name === 'active' ? e.target.checked : e.target.value
     }))
+
+    if (e.target.name === 'has_trainer' && !e.target.checked) {
+      setMemberData(prev => ({
+        ...prev,
+        trainer_name: null
+      }))
+    }
   }
   return (
     <>
-      {/* <Toaster
+      <Toaster
         position="top-center"
         reverseOrder={false}
-      /> */}
+      />
       <Box
         component="form"
         sx={{
@@ -72,6 +100,18 @@ function MembersForm() {
         autoComplete="off"
       >
         <form>
+          {editing &&
+            <FormControlLabel
+              value={memberData?.active}
+              onChange={handlerChange}
+              control={
+                <Checkbox
+                  name='active'
+                  checked={memberData?.active}
+                />}
+              label="Miembro Activo"
+            />
+          }
           <TextField
             required
             id="outlined-required"
@@ -112,15 +152,40 @@ function MembersForm() {
             onChange={handlerChange}
             size='small'
           />
+          {editing &&
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <MobileDatePicker label="Fecha de pago *" defaultValue={dayjs(memberData?.pay_date)} />
+            </LocalizationProvider>
+          }
           <FormControlLabel
             value={memberData?.has_trainer}
             onChange={handlerChange}
             control={
               <Checkbox
                 name='has_trainer'
+                checked={memberData?.has_trainer}
               />}
             label="Solicita entrenador"
           />
+          {memberData?.has_trainer &&
+            <TextField
+              id="outlined-select-currency"
+              select
+              label="Entrenador"
+              defaultValue=""
+              placeholder="Selecciona entrenador"
+              name="trainer_name"
+              onChange={handlerChange}
+              value={memberData?.trainer_name}
+            >
+              {trainers.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          }
+
           <FormLabel id="demo-row-radio-buttons-group-label">Género</FormLabel>
           <RadioGroup
             row
@@ -139,8 +204,8 @@ function MembersForm() {
               label="Hombre" />
           </RadioGroup>
 
-          <Button onClick={handlerSubmit} variant="contained" color="success">
-            Guardar
+          <Button disabled={adding} onClick={handlerSubmit} variant="contained">
+            {adding ? "Guardando..." : "Guardar"}
           </Button>
 
         </form>
