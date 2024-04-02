@@ -10,6 +10,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import dayjs from 'dayjs';
+import ImageUploader from './ImageUploader';
 
 const trainers = [
   {
@@ -27,7 +28,7 @@ const trainers = [
 ];
 
 
-function MembersForm({ member }) {
+function MembersForm({ member, onClose }) {
   const { createNewMember, adding, updateMember } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
@@ -43,7 +44,6 @@ function MembersForm({ member }) {
 
 
   useEffect(() => {
-    console.log(member);
     if (member && Object.keys(member).length > 0) {
       setMemberData(member);
       setEditing(true);
@@ -55,7 +55,7 @@ function MembersForm({ member }) {
 
   const handlerSubmit = async (e) => {
     e.preventDefault();
-    editing ? updateMember(memberData) : createNewMember(memberData);
+    editing ? await updateMember(memberData) : await createNewMember(memberData);
     setMemberData({
       first_name: '',
       last_name: '',
@@ -65,10 +65,12 @@ function MembersForm({ member }) {
       has_trainer: false,
       trainer_name: null,
     })
+    if (editing) {
+      onClose();
+    }
   }
 
   const handlerChange = (e) => {
-    console.log(e.target.name);
     setMemberData(prev => ({
       ...prev,
       [e.target.name]: e.target.name === 'has_trainer' || e.target.name === 'active' ? e.target.checked : e.target.value
@@ -81,6 +83,27 @@ function MembersForm({ member }) {
       }))
     }
   }
+
+  const handlerDatePaymentChange = (e) => {
+
+    const fechaActual = new Date(e.$d);
+    fechaActual.setMonth(fechaActual.getMonth() + 1);
+
+    if (fechaActual.getMonth() === 0) {
+      fechaActual.setFullYear(fechaActual.getFullYear() + 1);
+    }
+
+    const dia = fechaActual.getDate();
+    const mes = fechaActual.getMonth();
+    const año = fechaActual.getFullYear();
+    let new_payment_date = `${año}-${mes}-${dia}`;
+    setMemberData(prev => ({
+      ...prev,
+      pay_date: new_payment_date
+    }))
+  };
+
+
   return (
     <>
       <Toaster
@@ -112,6 +135,7 @@ function MembersForm({ member }) {
               label="Miembro Activo"
             />
           }
+          <ImageUploader />
           <TextField
             required
             id="outlined-required"
@@ -154,7 +178,11 @@ function MembersForm({ member }) {
           />
           {editing &&
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <MobileDatePicker label="Fecha de pago *" defaultValue={dayjs(memberData?.pay_date)} />
+              <MobileDatePicker
+                label="Fecha de pago *"
+                defaultValue={dayjs(memberData?.pay_date)}
+                onChange={handlerDatePaymentChange}
+              />
             </LocalizationProvider>
           }
           <FormControlLabel

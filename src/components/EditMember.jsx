@@ -36,7 +36,7 @@ export default function EditMember({ handleClose, memberInfo, open }) {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <MembersForm member={memberInfo} />
+          <MembersForm member={memberInfo} onClose={handleClose} />
         </DialogContent>
       </Dialog>
     </React.Fragment>

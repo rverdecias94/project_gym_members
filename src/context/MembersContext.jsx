@@ -77,8 +77,11 @@ export const MembersContextProvider = ({ children }) => {
   const updateMember = async (member) => {
     setAdding(true);
     try {
-      await supabase.from("members").update(member).eq("id", member?.id);
-      getMembers();
+      const result = await supabase.from("members").update(member).eq("id", member?.id);
+      if (result) {
+        toast.success("Registro actualizado satisfactoriamente")
+        getMembers();
+      }
     } catch (error) {
       console.error(error)
     } finally {
