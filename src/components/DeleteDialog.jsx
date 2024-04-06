@@ -7,15 +7,16 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { useMembers } from '../context/MembersContext';
+import { useMembers } from '../context/Context';
 
 
 
-export default function DeleteDialog({ handleClose, memberInfo, open }) {
-  const { deleteMember } = useMembers();
+export default function DeleteDialog({ handleClose, info, open, type }) {
+  const { deleteMember, deleteTrainer } = useMembers();
+
 
   const handleDelete = async () => {
-    await deleteMember(memberInfo?.id);
+    await type === 1 ? deleteMember(info?.id) : deleteTrainer(info?.id);
     handleClose();
   };
 
@@ -33,7 +34,7 @@ export default function DeleteDialog({ handleClose, memberInfo, open }) {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            ¿Estás seguro que deseas eliminar la informacion de {memberInfo?.first_name}?
+            ¿Estás seguro que deseas eliminar la información de {type === 1 ? info?.first_name : info?.name}?
           </DialogContentText>
         </DialogContent>
         <DialogActions>

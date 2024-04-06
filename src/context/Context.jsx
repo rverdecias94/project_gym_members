@@ -2,18 +2,19 @@ import { createContext, useContext, useState } from "react";
 import { supabase } from "../supabase/client";
 import toast from "react-hot-toast";
 
-export const MembersContext = createContext();
+export const Context = createContext();
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useMembers = () => {
-  const context = useContext(MembersContext);
-  if (!context) throw new Error("useMembers debe ser usado con un MembersContextProvider");
+  const context = useContext(Context);
+  if (!context) throw new Error("useMembers debe ser usado con un ContextProvider");
   return context;
 };
 
 // eslint-disable-next-line react/prop-types
-export const MembersContextProvider = ({ children }) => {
+export const ContextProvider = ({ children }) => {
   const [membersList, setMembersList] = useState([]);
+  const [trainersList, setTrainersList] = useState([]);
   const [adding, setAdding] = useState(false);
 
   const getMembers = async () => {
@@ -21,6 +22,13 @@ export const MembersContextProvider = ({ children }) => {
     console.log(res);
     if (res?.data?.length > 0) {
       setMembersList(res.data);
+    }
+  }
+  const getTrainers = async () => {
+    const res = await supabase.from("trainers").select();
+    console.log(res);
+    if (res?.data?.length > 0) {
+      setTrainersList(res.data);
     }
   }
 
@@ -51,6 +59,7 @@ export const MembersContextProvider = ({ children }) => {
         gender: dataToSave.gender,
         has_trainer: dataToSave.has_trainer,
         trainer_name: dataToSave.trainer_name,
+        image_profile: dataToSave.image_profile,
         pay_date: dataToSave.pay_date,
       });
       console.log(result)
@@ -64,11 +73,43 @@ export const MembersContextProvider = ({ children }) => {
     }
   }
 
+  const createNewTrainer = async (trainerData) => {
+    setAdding(true);
+
+    let dataToSave = { ...trainerData }
+    console.log(dataToSave);
+    try {
+      const result = await supabase.from("trainers").insert({
+        name: dataToSave.name,
+        last_name: dataToSave.last_name,
+        ci: dataToSave.ci,
+        image_profile: dataToSave.image_profile,
+      });
+      console.log(result)
+      if (result) {
+        toast.success("!Nuevo entrenador resgistrado!")
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setAdding(false);
+    }
+  }
+
   const deleteMember = async (id) => {
     const { error } = await supabase.from("members").delete().eq("id", id);
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
       getMembers();
+    } else throw new Error(error);
+
+  };
+
+  const deleteTrainer = async (id) => {
+    const { error } = await supabase.from("trainers").delete().eq("id", id);
+    if (!error) {
+      toast.success("Registro eliminado satisfactoriamente")
+      getTrainers();
     } else throw new Error(error);
 
   };
@@ -87,12 +128,37 @@ export const MembersContextProvider = ({ children }) => {
     } finally {
       setAdding(false);
     }
-
-
   };
 
-  return <MembersContext.Provider
-    value={{ membersList, getMembers, createNewMember, adding, deleteMember, updateMember }}>
+  const updateTrainer = async (trainer) => {
+    setAdding(true);
+    try {
+      const result = await supabase.from("trainers").update(trainer).eq("id", trainer?.id);
+      if (result) {
+        toast.success("Registro actualizado satisfactoriamente")
+        getTrainers();
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return <Context.Provider
+    value={{
+      membersList,
+      trainersList,
+      adding,
+      getMembers,
+      getTrainers,
+      createNewMember,
+      createNewTrainer,
+      updateMember,
+      updateTrainer,
+      deleteMember,
+      deleteTrainer
+    }}>
     {children}
-  </MembersContext.Provider>
+  </Context.Provider>
 };

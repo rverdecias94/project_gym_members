@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useMembers } from '../context/MembersContext';
+import { useMembers } from '../context/Context';
 import { TableMembersList } from './TableMembersList';
 
 

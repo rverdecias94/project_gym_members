@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Home from './Home';
 import MembersList from './MembersList';
+import Trainers from './TrainersList';
 
 
 function CustomTabPanel(props) {
@@ -54,6 +55,7 @@ export default function Menu() {
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Registrar" {...a11yProps(0)} />
           <Tab label="Miembros" {...a11yProps(1)} />
+          <Tab label="Entrenadores" {...a11yProps(2)} />
         </Tabs>
       </Box>
       <CustomTabPanel value={value} index={0}>
@@ -61,6 +63,9 @@ export default function Menu() {
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
         <MembersList />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={2}>
+        <Trainers />
       </CustomTabPanel>
     </Box>
   );

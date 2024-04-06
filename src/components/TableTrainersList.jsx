@@ -1,9 +1,9 @@
 import { DataGrid } from '@mui/x-data-grid';
 import DeleteDialog from './DeleteDialog';
-import EditMember from './EditMember';
 import { useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditTrainer from './EditTrainer';
 
 const esES = {
   noRowsLabel: "No se ha encontrado datos.",
@@ -17,14 +17,14 @@ const esES = {
 };
 
 // eslint-disable-next-line react/prop-types
-export const TableMembersList = ({ membersList }) => {
+export const TableTrainersList = ({ trainersList }) => {
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
-  const [memberInfo, setMemberInfo] = useState({});
+  const [trainerInfo, setTrainerInfo] = useState({});
 
-  const handleOpenDelete = (member) => {
+  const handleOpenDelete = (trainer) => {
     setOpenDelete(true);
-    setMemberInfo(member);
+    setTrainerInfo(trainer);
   };
 
   const handleClose = () => {
@@ -32,9 +32,9 @@ export const TableMembersList = ({ membersList }) => {
     setOpenEdit(false);
   };
 
-  const handleOpenEdit = (member) => {
+  const handleOpenEdit = (trainer) => {
     setOpenEdit(true);
-    setMemberInfo(member);
+    setTrainerInfo(trainer);
   };
 
 
@@ -57,7 +57,7 @@ export const TableMembersList = ({ membersList }) => {
         </div>
       ),
     },
-    { field: 'first_name', headerName: 'Nombre', width: 130 },
+    { field: 'name', headerName: 'Nombre', width: 130 },
     { field: 'last_name', headerName: 'Apellidos', width: 130 },
     { field: 'ci', headerName: 'CI', width: 130 },
   ];
@@ -65,7 +65,7 @@ export const TableMembersList = ({ membersList }) => {
   return (
     <div style={{ height: 400, width: '100%' }}>
       <DataGrid
-        rows={membersList}
+        rows={trainersList}
         columns={columns}
         localeText={esES}
         initialState={{
@@ -81,8 +81,8 @@ export const TableMembersList = ({ membersList }) => {
         pageSizeOptions={[5, 10]}
       />
 
-      <DeleteDialog handleClose={handleClose} info={memberInfo} open={openDelete} type={1} />
-      <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} />
+      <DeleteDialog handleClose={handleClose} info={trainerInfo} open={openDelete} type={2} />
+      <EditTrainer handleClose={handleClose} trainerInfo={trainerInfo} open={openEdit} />
     </div>
   );
 }

@@ -1,0 +1,14 @@
+.containerProfileImage {
+  width: 80%;
+  margin: 0 10%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.imgProfile {
+  width: 285px;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 10px;
+}

@@ -1,6 +1,6 @@
 import { supabase } from '../supabase/client';
 import { Toaster, toast } from 'react-hot-toast';
-import { useMembers } from '../context/MembersContext';
+import { useMembers } from '../context/Context';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 export default function Navbar() {
@@ -20,7 +20,7 @@ export default function Navbar() {
       />
       <span style={{ display: "flex", alignItems: "center" }}>
         <img src="/public/images/logo.jpg" alt="logo" style={{ position: "absolute", width: 40, height: 40, borderRadius: "50%", top: 8 }} />
-        <span style={{ marginLeft: 50 }}>Tecno Gym</span>
+        <span style={{ marginLeft: 50 }}>Gym</span>
       </span>
       <LogoutIcon onClick={logoutUser} className='btn_logout' />
 

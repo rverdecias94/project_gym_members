@@ -4,11 +4,11 @@ import * as React from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import MembersForm from './MembersForm';
 import CancelIcon from '@mui/icons-material/Cancel';
 import IconButton from '@mui/material/IconButton';
+import TrainersForm from './TrainersForm';
 
-export default function EditMember({ handleClose, memberInfo, open }) {
+export default function EditTrainer({ handleClose, trainerInfo, open }) {
 
   return (
     <React.Fragment>
@@ -26,7 +26,7 @@ export default function EditMember({ handleClose, memberInfo, open }) {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <MembersForm member={memberInfo} onClose={handleClose} />
+          <TrainersForm trainer={trainerInfo} onClose={handleClose} />
         </DialogContent>
       </Dialog>
     </React.Fragment>

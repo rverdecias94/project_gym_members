@@ -4,32 +4,19 @@ import { useState } from 'react'
 import { Button, FormControlLabel, FormLabel, MenuItem, Radio, RadioGroup, TextField } from "@mui/material"
 import { Box, Checkbox } from '@mui/material';
 import { Toaster } from 'react-hot-toast';
-import { useMembers } from '../context/MembersContext';
+import { useMembers } from '../context/Context';
 import { useEffect } from 'react';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import dayjs from 'dayjs';
 import ImageUploader from './ImageUploader';
-
-const trainers = [
-  {
-    value: 'Yansi',
-    label: 'Yansi',
-  },
-  {
-    value: 'Mandy',
-    label: 'Mandy',
-  },
-  {
-    value: 'Alexis',
-    label: 'Alexis',
-  },
-];
-
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import IconButton from '@mui/material/IconButton';
+import { Link } from 'react-router-dom';
 
 function MembersForm({ member, onClose }) {
-  const { createNewMember, adding, updateMember } = useMembers();
+  const { createNewMember, adding, updateMember, trainersList } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
     last_name: '',
@@ -40,22 +27,36 @@ function MembersForm({ member, onClose }) {
     trainer_name: null,
   })
   const [editing, setEditing] = useState(false);
-
+  const [imageBase64, setImageBase64] = useState(null);
+  const [trainers, setTrainers] = useState([]);
 
 
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
       setMemberData(member);
+      setImageBase64(member?.image_profile ?? null)
       setEditing(true);
     }
   }, [])
 
-
-
+  useEffect(() => {
+    console.log(trainersList)
+    if (trainersList?.length > 0) {
+      const trainers = [];
+      trainersList.forEach(element => {
+        trainers.push({ value: element.name, label: element.name });
+      });
+      setTrainers(trainers);
+    }
+  }, [])
 
   const handlerSubmit = async (e) => {
     e.preventDefault();
-    editing ? await updateMember(memberData) : await createNewMember(memberData);
+    let member = { ...memberData }
+
+    member.image_profile = imageBase64;
+    console.log(member)
+    editing ? await updateMember(member) : await createNewMember(member);
     setMemberData({
       first_name: '',
       last_name: '',
@@ -65,6 +66,7 @@ function MembersForm({ member, onClose }) {
       has_trainer: false,
       trainer_name: null,
     })
+    setImageBase64(null)
     if (editing) {
       onClose();
     }
@@ -113,16 +115,26 @@ function MembersForm({ member, onClose }) {
       <Box
         component="form"
         sx={{
-          '& .MuiTextField-root': { m: 1, width: '100%' },
+          '& .MuiTextField-root': { margin: "8px 0", width: '100%' },
           '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
           '& .MuiFormLabel-root': { width: '100%' },
           '& .MuiButton-root': { width: '100%', backgroundColor: "#356dac" },
-          padding: 2
+          '& .MuiRadioGroup-root': { display: 'flex' },
+          '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
+          padding: 2,
+          width: "100vw"
         }}
         noValidate
         autoComplete="off"
       >
-        <form>
+        {!editing &&
+          <IconButton aria-label="back" size="large">
+            <Link to='/'>
+              <ArrowBackIcon />
+            </Link>
+          </IconButton>
+        }
+        <form style={{ width: "100%" }}>
           {editing &&
             <FormControlLabel
               value={memberData?.active}
@@ -135,7 +147,7 @@ function MembersForm({ member, onClose }) {
               label="Miembro Activo"
             />
           }
-          <ImageUploader />
+          <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
           <TextField
             required
             id="outlined-required"
@@ -144,7 +156,6 @@ function MembersForm({ member, onClose }) {
             value={memberData?.first_name}
             placeholder='Ej: Jhon'
             onChange={handlerChange}
-            size='small'
           />
           <TextField
             required
@@ -154,7 +165,6 @@ function MembersForm({ member, onClose }) {
             value={memberData?.last_name}
             placeholder='Ej: Doe Smitt'
             onChange={handlerChange}
-            size='small'
           />
           <TextField
             required
@@ -164,7 +174,6 @@ function MembersForm({ member, onClose }) {
             value={memberData?.ci}
             placeholder='CI: 35123145685'
             onChange={handlerChange}
-            size='small'
           />
           <TextField
             required
@@ -174,7 +183,6 @@ function MembersForm({ member, onClose }) {
             value={memberData?.address}
             placeholder='S.T Village nº 9827'
             onChange={handlerChange}
-            size='small'
           />
           {editing &&
             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -225,11 +233,15 @@ function MembersForm({ member, onClose }) {
             <FormControlLabel
               value="F"
               control={<Radio />}
-              label="Mujer" />
+              label="Femenino"
+              style={{ width: "fit-content" }}
+            />
             <FormControlLabel
               value="M"
               control={<Radio />}
-              label="Hombre" />
+              label="Masculino"
+              style={{ width: "fit-content" }}
+            />
           </RadioGroup>
 
           <Button disabled={adding} onClick={handlerSubmit} variant="contained">
