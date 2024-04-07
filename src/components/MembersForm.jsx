@@ -121,8 +121,8 @@ function MembersForm({ member, onClose }) {
           '& .MuiButton-root': { width: '100%', backgroundColor: "#356dac" },
           '& .MuiRadioGroup-root': { display: 'flex' },
           '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
-          padding: 2,
-          width: "100vw"
+          padding: editing ? null : 2,
+          width: editing ? null : "100vw"
         }}
         noValidate
         autoComplete="off"

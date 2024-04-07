@@ -145,6 +145,22 @@ export const ContextProvider = ({ children }) => {
     }
   };
 
+
+  const changedStatusToActive = async (userList) => {
+    setAdding(true);
+    try {
+      const result = await supabase.from('members').upsert(userList);
+      if (result) {
+        toast.success("Registro actualizado satisfactoriamente")
+        getMembers();
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return <Context.Provider
     value={{
       membersList,
@@ -157,7 +173,8 @@ export const ContextProvider = ({ children }) => {
       updateMember,
       updateTrainer,
       deleteMember,
-      deleteTrainer
+      deleteTrainer,
+      changedStatusToActive
     }}>
     {children}
   </Context.Provider>

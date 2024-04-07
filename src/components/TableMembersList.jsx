@@ -17,7 +17,7 @@ const esES = {
 };
 
 // eslint-disable-next-line react/prop-types
-export const TableMembersList = ({ membersList }) => {
+export const TableMembersList = ({ membersList = [] }) => {
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [memberInfo, setMemberInfo] = useState({});

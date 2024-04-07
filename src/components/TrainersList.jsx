@@ -1,8 +1,8 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect } from 'react';
 import { useMembers } from '../context/Context';
 import { TableTrainersList } from './TableTrainersList';
-
 
 
 function Trainers() {

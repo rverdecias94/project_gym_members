@@ -64,7 +64,7 @@ const ImageUploader = ({ setImageBase64, image }) => {
           <Button variant="contained" component="span" style={{ width: "100%" }}>
             <DriveFolderUploadIcon />
             <label htmlFor="image-upload">
-              <span style={{ marginLeft: 5 }}>
+              <span style={{ marginLeft: 5, fontSize: 12 }}>
                 Subir Imagen
               </span>
             </label>
@@ -73,7 +73,7 @@ const ImageUploader = ({ setImageBase64, image }) => {
         <Grid item sm={6} xs={6} style={{ width: "50%" }}>
           <Button variant="contained" onClick={handleCameraCapture} style={{ width: "100%" }} >
             <CameraAltIcon />
-            <span style={{ marginLeft: 5 }}>
+            <span style={{ marginLeft: 5, fontSize: 12 }}>
               Tomar foto
             </span>
           </Button>
