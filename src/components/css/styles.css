@@ -15,4 +15,5 @@
   height: 180px;
   object-fit: contain;
   border-radius: 10px;
+  mask-image: linear-gradient(black 80%, transparent);
 }

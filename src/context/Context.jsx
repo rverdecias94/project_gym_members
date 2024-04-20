@@ -14,12 +14,14 @@ export const useMembers = () => {
 // eslint-disable-next-line react/prop-types
 export const ContextProvider = ({ children }) => {
   const [membersList, setMembersList] = useState([]);
+  const [loadingMembersList, setLoadingMembersList] = useState(false);
   const [trainersList, setTrainersList] = useState([]);
   const [adding, setAdding] = useState(false);
 
   const getMembers = async () => {
-    const res = await supabase.from("members").select();
-    console.log(res);
+    setLoadingMembersList(true);
+    const res = await supabase.from("members").select()
+    setLoadingMembersList(false);
     if (res?.data?.length > 0) {
       setMembersList(res.data);
     }
@@ -164,6 +166,7 @@ export const ContextProvider = ({ children }) => {
   return <Context.Provider
     value={{
       membersList,
+      loadingMembersList,
       trainersList,
       adding,
       getMembers,
