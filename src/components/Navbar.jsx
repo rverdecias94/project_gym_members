@@ -1,12 +1,9 @@
 import { supabase } from '../supabase/client';
 import { Toaster, toast } from 'react-hot-toast';
-import { useMembers } from '../context/Context';
+/* import { useMembers } from '../context/Context'; */
 import LogoutIcon from '@mui/icons-material/Logout';
 
 export default function Navbar() {
-
-  const obj = useMembers();
-
   const logoutUser = async () => {
     await supabase.auth.signOut();
     toast.success("Sesión cerrada satisfactoriamente", { duration: 5000 })

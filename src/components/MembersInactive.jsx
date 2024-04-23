@@ -88,7 +88,6 @@ export const MembersInactive = ({ membersList = [] }) => {
     <div style={{ height: 400, width: '100%' }}>
       <Button
         variant='contained'
-        fullWidth
         color='primary'
         disabled={selectedRows?.length === 0}
         onClick={handlerActivateRows}

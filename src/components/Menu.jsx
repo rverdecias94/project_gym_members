@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Home from './Home';
 import MembersList from './MembersList';
 import Trainers from './TrainersList';
+import Dashboard from './Dashboard';
 
 
 function CustomTabPanel(props) {
@@ -53,18 +54,22 @@ export default function Menu() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab label="Registrar" {...a11yProps(0)} />
-          <Tab label="Miembros" {...a11yProps(1)} />
-          <Tab label="Entrenadores" {...a11yProps(2)} />
+          <Tab label="Panel" {...a11yProps(0)} />
+          <Tab label="Registrar" {...a11yProps(1)} />
+          <Tab label="Miembros" {...a11yProps(2)} />
+          <Tab label="Entrenadores" {...a11yProps(3)} />
         </Tabs>
       </Box>
       <CustomTabPanel value={value} index={0}>
-        <Home />
+        <Dashboard />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
-        <MembersList />
+        <Home />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={2}>
+        <MembersList />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={3}>
         <Trainers />
       </CustomTabPanel>
     </Box>

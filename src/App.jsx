@@ -1,6 +1,5 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Login from './components/Login';
-import { Container } from '@mui/material';
 import NotFound from './components/NotFound';
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase/client';
@@ -29,7 +28,7 @@ function App() {
 
 
   return (
-    <Container sx={{ width: "100vw", height: "100vh", padding: "0px !important", }}>
+    <div style={{ width: "100%", height: "100vh", padding: "0px !important", }}>
       <ContextProvider>
         {sessionActive ? <Navbar /> : null}
         <Routes>
@@ -40,7 +39,7 @@ function App() {
           <Route path='*' element={<NotFound />} />
         </Routes>
       </ContextProvider>
-    </Container>
+    </div>
   )
 }
 

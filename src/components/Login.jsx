@@ -26,39 +26,35 @@ export default function Login() {
 
   return (
     <Grid container>
-      <Grid xs={8}>
-
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+      />
+      <Typography variant="h5" textAlign='center' className="login_title">
+        Iniciar sesión con Email
+      </Typography>
+      <form onSubmit={handlerSubmit} className="login_form">
+        <TextField
+          required
+          id="outlined-required"
+          label='Correo'
+          value={email}
+          name="first_name"
+          placeholder="Escribe tu correo aquí ..."
+          onChange={handlerChange}
+          fullWidth
+          inputProps={{ style: { color: "black" } }}
+          InputLabelProps={{ style: { color: "#356dac" } }}
+          sx={{ marginTop: 10 }}
         />
-        <Typography variant="h5" textAlign='center' className="login_title">
-          Iniciar sesión con Email
-        </Typography>
-        <form onSubmit={handlerSubmit} className="login_form">
-          <TextField
-            required
-            id="outlined-required"
-            label='Correo'
-            value={email}
-            name="first_name"
-            placeholder="Escribe tu correo aquí ..."
-            onChange={handlerChange}
-            fullWidth
-            inputProps={{ style: { color: "black" } }}
-            InputLabelProps={{ style: { color: "#356dac" } }}
-            sx={{ marginTop: 10 }}
-          />
-          <br />
-          <Button
-            variant="contained"
-            style={{ width: "100%", backgroundColor: "#356dac", color: "#fff", fontWeight: "bolder", marginTop: 15 }}
-            type="submit">
-            Enviar link
-          </Button>
-        </form>
-
-      </Grid>
+        <br />
+        <Button
+          variant="contained"
+          style={{ width: "100%", backgroundColor: "#356dac", color: "#fff", fontWeight: "bolder", marginTop: 15 }}
+          type="submit">
+          Enviar link
+        </Button>
+      </form>
     </Grid>
   )
 }

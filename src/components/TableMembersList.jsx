@@ -1,4 +1,4 @@
-import { DataGrid, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid';
+import { DataGrid,/*  GridToolbarContainer, GridToolbarExport */ } from '@mui/x-data-grid';
 import DeleteDialog from './DeleteDialog';
 import EditMember from './EditMember';
 import { useState } from 'react';
@@ -6,6 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Checkbox, FormControlLabel, Button } from '@mui/material';
 import { useMembers } from '../context/Context';
+import AddRuleDialog from './AddRuleDialog';
 
 const esES = {
   noRowsLabel: "No se ha encontrado datos.",
@@ -23,9 +24,10 @@ export const TableMembersList = ({ membersList = [] }) => {
   const { loadingMembersList } = useMembers();
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
+  const [openRule, setOpenRule] = useState(false);
   const [memberInfo, setMemberInfo] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
-
+  const [amountDays, setAmountDays] = useState("");
   const handleOpenDelete = (member) => {
     setOpenDelete(true);
     setMemberInfo(member);
@@ -34,11 +36,15 @@ export const TableMembersList = ({ membersList = [] }) => {
   const handleClose = () => {
     setOpenDelete(false);
     setOpenEdit(false);
+    setOpenRule(false);
   };
 
   const handleOpenEdit = (member) => {
     setOpenEdit(true);
     setMemberInfo(member);
+  };
+  const handleOpenRule = () => {
+    setOpenRule(true);
   };
 
   const handlerChangeStatus = (e, row) => {
@@ -50,6 +56,10 @@ export const TableMembersList = ({ membersList = [] }) => {
       );
     }
   };
+
+  const handlerChangeAmount = (e) => {
+    setAmountDays(e.target.value)
+  }
 
   const columns = [
     {
@@ -88,26 +98,31 @@ export const TableMembersList = ({ membersList = [] }) => {
     { field: 'address', headerName: 'Dirección', width: 130 },
   ];
 
-  function CustomToolbar() {
-    return (
-      <div style={{ display: "flex", justifyContent: "end" }}>
-        <GridToolbarContainer>
-          <GridToolbarExport
-            slotProps={{
-              tooltip: { title: 'Export data' },
-              button: { variant: 'outlined' },
-            }}
-          />
-        </GridToolbarContainer>
-      </div>
-    );
-  }
+  /*  function CustomToolbar() {
+     return (
+       <div style={{ display: "flex", justifyContent: "end" }}>
+         <GridToolbarContainer>
+           <GridToolbarExport
+             slotProps={{
+               tooltip: { title: 'Export data' },
+               button: { variant: 'outlined' },
+             }}
+           />
+         </GridToolbarContainer>
+       </div>
+     );
+   } */
   return (
     <div style={{ height: 400, width: '100%', marginBottom: 40 }}>
-      {
-        selectedRows.length > 0 &&
-        <Button variant='contained' fullWidth color='primary'>Aplicar regla</Button>
-      }
+
+      <Button
+        variant='contained'
+        disabled={selectedRows.length === 0}
+        color='primary'
+        onClick={handleOpenRule}
+      >
+        Aplicar regla
+      </Button>
       <br />
       <br />
       {loadingMembersList && <span>Cargando listado de miembros...</span>}
@@ -126,12 +141,24 @@ export const TableMembersList = ({ membersList = [] }) => {
           }
         }}
         pageSizeOptions={[5, 10]}
-        slots={{ toolbar: CustomToolbar }}
+      /* slots={{ toolbar: CustomToolbar }} */
       /* checkboxSelection
       disableRowSelectionOnClick */
       />
 
-      <DeleteDialog handleClose={handleClose} info={memberInfo} open={openDelete} type={1} />
+      <DeleteDialog
+        handleClose={handleClose}
+        info={memberInfo}
+        open={openDelete}
+        type={1}
+      />
+      <AddRuleDialog
+        handlerChangeAmount={handlerChangeAmount}
+        handleClose={handleClose}
+        open={openRule}
+        selectedRows={selectedRows}
+        amountDays={amountDays}
+      />
       <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} />
     </div>
   );
