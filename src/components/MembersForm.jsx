@@ -40,7 +40,6 @@ function MembersForm({ member, onClose }) {
   }, [])
 
   useEffect(() => {
-    console.log(trainersList)
     if (trainersList?.length > 0) {
       const trainers = [];
       trainersList.forEach(element => {

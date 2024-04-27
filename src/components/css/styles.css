@@ -17,3 +17,20 @@
   border-radius: 10px;
   mask-image: linear-gradient(black 80%, transparent);
 }
+
+.btn-pdf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #1976d2;
+  color: #f8f9fa;
+  border: none;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-weight: bold;
+  box-shadow: 0px 2px 6px -4px black;
+  text-transform: uppercase;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  cursor: pointer;
+}

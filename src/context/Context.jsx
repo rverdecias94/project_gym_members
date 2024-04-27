@@ -20,15 +20,26 @@ export const ContextProvider = ({ children }) => {
 
   const getMembers = async () => {
     setLoadingMembersList(true);
-    const res = await supabase.from("members").select()
-    setLoadingMembersList(false);
-    if (res?.data?.length > 0) {
-      setMembersList(res.data);
-    }
+    await supabase
+      .from("members")
+      .select("id,created_at,first_name,last_name,address,active,pay_date,ci,has_trainer,gender,trainer_name"
+      )
+      .then((res, err) => {
+        setLoadingMembersList(false);
+        if (err) {
+          console.error("Error fetching data:", err);
+          return;
+        }
+        if (res?.data?.length > 0) {
+          setMembersList(res.data);
+        }
+      })
+
   }
+
   const getTrainers = async () => {
     const res = await supabase.from("trainers").select();
-    console.log(res);
+
     if (res?.data?.length > 0) {
       setTrainersList(res.data);
     }

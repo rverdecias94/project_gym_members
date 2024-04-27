@@ -7,6 +7,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Checkbox, FormControlLabel, Button } from '@mui/material';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import jsPDF from 'jspdf';
+
 
 const esES = {
   noRowsLabel: "No se ha encontrado datos.",
@@ -98,32 +101,33 @@ export const TableMembersList = ({ membersList = [] }) => {
     { field: 'address', headerName: 'Dirección', width: 130 },
   ];
 
-  /*  function CustomToolbar() {
-     return (
-       <div style={{ display: "flex", justifyContent: "end" }}>
-         <GridToolbarContainer>
-           <GridToolbarExport
-             slotProps={{
-               tooltip: { title: 'Export data' },
-               button: { variant: 'outlined' },
-             }}
-           />
-         </GridToolbarContainer>
-       </div>
-     );
-   } */
+  const downloadPDF = () => {
+    const data = [...membersList];
+    const doc = new jsPDF();
+    doc.autoTable({
+      head: [columns.map((column) => column.headerName)],
+      body: data.map((row) => columns.map((column) => row[column.field])),
+    });
+
+    doc.save('Listado de clientes.pdf');
+  }
+
   return (
     <div style={{ height: 400, width: '100%', marginBottom: 40 }}>
-
-      <Button
-        variant='contained'
-        disabled={selectedRows.length === 0}
-        color='primary'
-        onClick={handleOpenRule}
-      >
-        Aplicar regla
-      </Button>
-      <br />
+      <div style={{ display: "flex", justifyContent: "start", gap: 10 }}>
+        <Button
+          variant='contained'
+          disabled={selectedRows.length === 0}
+          color='primary'
+          onClick={handleOpenRule}
+          style={{ height: '100%' }}
+        >
+          Aplicar regla
+        </Button>
+        <button id="pdf-button" className='btn-pdf' onClick={downloadPDF}>
+          <PictureAsPdfIcon /> Descargar
+        </button>
+      </div>
       <br />
       {loadingMembersList && <span>Cargando listado de miembros...</span>}
       <DataGrid
@@ -141,9 +145,6 @@ export const TableMembersList = ({ membersList = [] }) => {
           }
         }}
         pageSizeOptions={[5, 10]}
-      /* slots={{ toolbar: CustomToolbar }} */
-      /* checkboxSelection
-      disableRowSelectionOnClick */
       />
 
       <DeleteDialog

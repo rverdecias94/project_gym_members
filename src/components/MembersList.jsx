@@ -64,8 +64,8 @@ function MembersList() {
   const { membersList, getMembers } = useMembers();
   const [value, setValue] = useState(0);
   const [membersStatus, setMembersStatus] = useState(0);
-  const [membersPendingPay, setMembersPendingPay] = useState([]);
-  const [membersPagoRetrasado, setMembersPagoRetardado] = useState([]);
+  const [membersPendingPayment, setMembersPendingPayment] = useState([]);
+  const [membersPaymentDelayed, setMembersPaymentDelayed] = useState([]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -98,25 +98,30 @@ function MembersList() {
     return objects.filter(obj => isInCurrentWeek(new Date(obj.pay_date)));
   }
 
-  function pagoRetrasado(dateString) {
+  function latePayment(dateString) {
     const today = new Date();
     const dateToCheck = new Date(dateString);
-    return dateToCheck < today;
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dateToCheckDate = new Date(dateToCheck.getFullYear(), dateToCheck.getMonth(), dateToCheck.getDate());
+    return dateToCheckDate < todayDate;
   }
 
-  function filterObjectsPagoRetardado(objects) {
-    return objects.filter(obj => pagoRetrasado(new Date(obj.pay_date)));
+  function filterObjectsLatePayment(objects) {
+    return objects.filter(obj => latePayment(new Date(obj.pay_date)));
   }
 
   useEffect(() => {
+    const paymentInCurrentWeek = filterObjectsByCurrentWeek(membersList);
+    const delayedPayment = filterObjectsLatePayment(membersList);
 
-    const objectsInCurrentWeek = filterObjectsByCurrentWeek(membersList);
-    const pagoRetardado = filterObjectsPagoRetardado(membersList);
-    setMembersPendingPay(objectsInCurrentWeek);
-    setMembersPagoRetardado(pagoRetardado);
-    console.log(pagoRetardado)
+    const filteredPaymentInCurrentWeek = paymentInCurrentWeek.filter(member => {
+      return !delayedPayment.some(p => p.id === member.id);
+    });
 
-    const membersStatusObj = membersList.reduce((acc, obj) => {
+    setMembersPaymentDelayed(delayedPayment);
+    setMembersPendingPayment(filteredPaymentInCurrentWeek);
+
+    const membersStatusObj = membersList?.reduce((acc, obj) => {
       if (obj.active) {
         acc.active.push(obj);
       } else {
@@ -149,10 +154,10 @@ function MembersList() {
         <TableMembersList membersList={membersStatus?.active} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
-        <TablePendingPay membersPendingPay={membersPendingPay} />
+        <TablePendingPay membersPendingPayment={membersPendingPayment} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={2}>
-        <TablePagoRetardado membersPagoRetrasado={membersPagoRetrasado} />
+        <TablePagoRetardado membersPaymentDelayed={membersPaymentDelayed} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={3}>
         <MembersInactive membersList={membersStatus?.inactive} />
