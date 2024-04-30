@@ -86,6 +86,7 @@ export const MembersInactive = ({ membersList = [] }) => {
 
   return (
     <div style={{ height: 400, width: '100%' }}>
+      <br />
       <Button
         variant='contained'
         color='primary'

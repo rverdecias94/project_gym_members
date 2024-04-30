@@ -4,6 +4,10 @@ import { useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditTrainer from './EditTrainer';
+import { Link } from 'react-router-dom';
+import { Button } from '@mui/material';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+
 
 const esES = {
   noRowsLabel: "No se ha encontrado datos.",
@@ -64,6 +68,13 @@ export const TableTrainersList = ({ trainersList }) => {
 
   return (
     <div style={{ height: 400, width: '100%' }}>
+      <br />
+      <Link to="/new_trainer" style={{ width: "fit-content", display: "block", color: "white", textDecoration: "none" }}>
+        <Button variant="contained" style={{ display: "flex", justifyContent: "space-evenly", background: "#356dac" }}>
+          <PersonAddIcon /> Entrenador
+        </Button>
+      </Link>
+      <br />
       <DataGrid
         rows={trainersList}
         columns={columns}

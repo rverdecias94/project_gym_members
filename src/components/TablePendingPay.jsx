@@ -20,7 +20,7 @@ const esES = {
 
 // eslint-disable-next-line react/prop-types
 export const TablePendingPay = ({ membersPendingPayment = [] }) => {
-  const { trainersList } = useMembers();
+  const { trainersList, makePayment, adding } = useMembers();
   const [membersPendingOriginal, setMembersPendingOriginal] = useState([]);
   const [membersPending, setMembersPending] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -42,8 +42,9 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   }, [])
 
   useEffect(() => {
-    setMembersPendingOriginal(membersPendingPayment)
-    setMembersPending(membersPendingPayment)
+    setMembersPendingOriginal(membersPendingPayment);
+    setMembersPending(membersPendingPayment);
+    setSelectedRows([]);
   }, [membersPendingPayment]);
 
   useEffect(() => {
@@ -86,8 +87,24 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
     { field: 'trainer_name', headerName: 'Entrenador', width: 130 },
   ];
 
-  const handlerActivateRows = () => {
-    console.log(selectedRows)
+  const handlerMakePayment = async () => {
+    if (selectedRows.length > 0) {
+      selectedRows.forEach(elem => {
+        const fechaPago = new Date(elem.pay_date);
+        fechaPago.setMonth(fechaPago.getMonth() + 1);
+        // Verificar si el mes resultante es enero para ajustar el año
+        if (fechaPago.getMonth() === 0) {
+          fechaPago.setFullYear(fechaPago.getFullYear() + 1);
+        }
+        // Formatear la fecha en formato día, mes, año
+        const dia = fechaPago.getDate();
+        const mes = fechaPago.getMonth() + 1;
+        const año = fechaPago.getFullYear();
+        elem.pay_date = `${año}-${mes}-${dia}`;
+      })
+
+      makePayment(selectedRows);
+    }
   }
 
   const handlerChangeStatus = (e, row) => {
@@ -117,21 +134,30 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
 
   return (
     <div style={{ height: 400, width: '100%', marginBottom: 40 }}>
+      <br />
       <div style={{ display: "flex", justifyContent: "start", gap: 10 }}>
         <Button
           variant='contained'
           disabled={selectedRows?.length === 0}
-          onClick={handlerActivateRows}
-          style={{ height: '100%' }}
+          onClick={handlerMakePayment}
         >
           Registrar Pago
+        </Button>
+        <Button
+          variant='contained'
+          className='btn-pdf'
+          onClick={downloadPDF}
+          disabled={membersPending.length === 0}
+        >
+          <PictureAsPdfIcon /> Descargar
         </Button>
         <TextField
           id="outlined-select-currency"
           select
-          label="Filtrar por"
+          disabled={membersPending.length === 0}
+          label="Entrenador"
           defaultValue=""
-          placeholder="Filtrar por"
+          placeholder="Entrenador"
           name="trainer_name"
           onChange={handlerChange}
           value={trainer_name}
@@ -144,11 +170,10 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
             </MenuItem>
           ))}
         </TextField>
-        <button id="pdf-button" className='btn-pdf' onClick={downloadPDF}>
-          <PictureAsPdfIcon /> Descargar
-        </button>
+
       </div>
       <br />
+      {adding && <span>Actializando...</span>}
       <DataGrid
         rows={membersPending}
         columns={columns}

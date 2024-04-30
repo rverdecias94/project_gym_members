@@ -10,25 +10,8 @@ import { MembersInactive } from './MembersInactive';
 import { TablePendingPay } from './TablePendingPay';
 import { TablePagoRetardado } from './TablePagoRetardado';
 
-
-/* const ScrollableTabs = ({ children }) => {
-  return (
-    <Box sx={{ width: '100%', overflowX: 'auto' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex' }}>
-        {children}
-      </Box>
-    </Box>
-  );
-}; */
-
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
-  /* const [valueTab, setValue] = useState(0); */
-
-  /* const handleChange = (event, newValue) => {
-    setValue(newValue);
-  }; */
-
   return (
     <div
       role="tabpanel"
@@ -38,7 +21,7 @@ function CustomTabPanel(props) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 1 }}>
           <Typography>{children}</Typography>
         </Box>
       )}
@@ -135,7 +118,6 @@ function MembersList() {
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        {/* <ScrollableTabs> */}
         <Tabs
           value={value}
           onChange={handleChange}

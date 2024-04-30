@@ -127,7 +127,6 @@ export const ContextProvider = ({ children }) => {
 
   };
 
-
   const updateMember = async (member) => {
     setAdding(true);
     try {
@@ -158,13 +157,43 @@ export const ContextProvider = ({ children }) => {
     }
   };
 
-
-  const changedStatusToActive = async (userList) => {
+  const changedStatusToActive = async (clientsList) => {
     setAdding(true);
     try {
-      const result = await supabase.from('members').upsert(userList);
+      const result = await supabase.from('members').upsert(clientsList);
       if (result) {
         toast.success("Registro actualizado satisfactoriamente")
+        getMembers();
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const makePayment = async (clientsList) => {
+    setAdding(true);
+    try {
+      const result = await supabase.from('members').upsert(clientsList);
+      if (result) {
+        toast.success("Pago registrado satisfactoriamente");
+        getMembers();
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const applyRuleToRows = async (clientsList) => {
+    setAdding(true);
+    try {
+      const result = await supabase.from('members').upsert(clientsList);
+      console.log(result);
+      if (result) {
+        toast.success("Reglas aplicadas satisfactoriamente a todos los clientes seleccionados");
         getMembers();
       }
     } catch (error) {
@@ -188,7 +217,9 @@ export const ContextProvider = ({ children }) => {
       updateTrainer,
       deleteMember,
       deleteTrainer,
-      changedStatusToActive
+      changedStatusToActive,
+      makePayment,
+      applyRuleToRows,
     }}>
     {children}
   </Context.Provider>

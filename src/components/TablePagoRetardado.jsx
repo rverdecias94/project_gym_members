@@ -22,7 +22,7 @@ const esES = {
 // eslint-disable-next-line react/prop-types
 export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   const [selectedRows, setSelectedRows] = useState([]);
-  const { trainersList } = useMembers();
+  const { trainersList, makePayment, adding } = useMembers();
   const [membersPaymentDelayedOriginal, setMembersPaymentDelayedOriginal] = useState([]);
   const [membersDelayed, setMembersDelayed] = useState([]);
   const [trainer_name, setTrainerName] = useState("");
@@ -43,8 +43,9 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   }, [])
 
   useEffect(() => {
-    setMembersPaymentDelayedOriginal(membersPaymentDelayed)
-    setMembersDelayed(membersPaymentDelayed)
+    setMembersPaymentDelayedOriginal(membersPaymentDelayed);
+    setMembersDelayed(membersPaymentDelayed);
+    setSelectedRows([]);
   }, [membersPaymentDelayed]);
 
   useEffect(() => {
@@ -86,8 +87,24 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
     { field: 'trainer_name', headerName: 'Entrenador', width: 130 },
   ];
 
-  const handlerActivateRows = () => {
+  const handlerMakePayment = () => {
     console.log(selectedRows)
+
+    const fechaActual = new Date();
+    fechaActual.setMonth(fechaActual.getMonth() + 1);
+    // Verificar si el mes resultante es enero para ajustar el año
+    if (fechaActual.getMonth() === 0) {
+      fechaActual.setFullYear(fechaActual.getFullYear() + 1);
+    }
+
+    // Formatear la fecha en formato día, mes, año
+    const dia = fechaActual.getDate();
+    const mes = fechaActual.getMonth() + 1;
+    const año = fechaActual.getFullYear();
+
+    let dataToSave = [...selectedRows]
+    dataToSave.forEach(elem => elem.pay_date = `${año}-${mes}-${dia}`);
+    makePayment(dataToSave);
   }
 
   const handlerChangeStatus = (e, row) => {
@@ -117,22 +134,31 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
 
   return (
     <div style={{ height: 400, width: '100%', marginBottom: 40 }}>
+      <br />
       <div style={{ display: "flex", gap: 10 }}>
         <Button
           variant='contained'
           color='primary'
           disabled={selectedRows?.length === 0}
-          onClick={handlerActivateRows}
-          style={{ height: '100%' }}
+          onClick={handlerMakePayment}
         >
           Registrar Pago
         </Button>
+        <Button
+          variant='contained'
+          className='btn-pdf'
+          onClick={downloadPDF}
+          disabled={membersDelayed.length === 0}
+        >
+          <PictureAsPdfIcon /> Descargar
+        </Button>
         <TextField
+          disabled={membersDelayed.length === 0}
           id="outlined-select-currency"
           select
-          label="Filtrar por"
+          label="Entrenador"
           defaultValue=""
-          placeholder="Filtrar por"
+          placeholder="Entrenador"
           name="trainer_name"
           onChange={handlerChange}
           value={trainer_name}
@@ -145,11 +171,10 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
             </MenuItem>
           ))}
         </TextField>
-        <button id="pdf-button" className='btn-pdf' onClick={downloadPDF}>
-          <PictureAsPdfIcon /> Descargar
-        </button>
+
       </div>
       <br />
+      {adding && <span>Actializando...</span>}
       <DataGrid
         rows={membersDelayed}
         columns={columns}
