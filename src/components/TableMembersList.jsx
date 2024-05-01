@@ -4,7 +4,16 @@ import EditMember from './EditMember';
 import { useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Checkbox, FormControlLabel, Button, TextField, MenuItem, Grid } from '@mui/material';
+import {
+  Checkbox,
+  FormControlLabel,
+  Button,
+  TextField,
+  MenuItem,
+  Grid,
+  /* useMediaQuery, 
+  useTheme */
+} from '@mui/material';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -36,6 +45,11 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [amountDays, setAmountDays] = useState("");
   const [trainer_name, setTrainerName] = useState("");
   const [trainers, setTrainers] = useState([]);
+
+  /* const theme = useTheme(); */
+  /* const isMobile = useMediaQuery(theme.breakpoints.down("sm"), {
+    defaultMatches: true,
+  }); */
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -152,10 +166,10 @@ export const TableMembersList = ({ membersList = [] }) => {
   return (
     <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
-      <Grid container style={{ display: "flex", justifyContent: "space-between", }}>
-        <Grid item xl={10} lg={10} md={12} sm={12} xs={12} style={{ flexGrow: 8 }}>
-          <Grid container style={{ display: "flex", justifyContent: "space-between", }}>
-            <Grid item xl={3} lg={3} md={3} sm={12} xs={12}>
+      <Grid container className='container-options'>
+        <Grid item xl={7} lg={7} md={7} sm={12} xs={12}>
+          <Grid container style={{ display: "flex", justifyContent: "start", gap: 15 }}>
+            <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
               <Button
                 variant='contained'
                 disabled={selectedRows.length === 0}
@@ -167,21 +181,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 Aplicar regla
               </Button>
             </Grid>
-
-            <Grid item xl={3} lg={3} md={3} sm={12} xs={12}>
-              <Button
-                variant='contained'
-                className='btn-pdf'
-                onClick={downloadPDF}
-                fullWidth
-                disabled={membersList.length === 0}
-                sx={{ mr: 1.2, height: '100%' }}
-              >
-                <PictureAsPdfIcon /> Descargar
-              </Button>
-            </Grid>
-
-            <Grid item xl={3} lg={3} md={3} sm={12} xs={12}>
+            <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
               <TextField
                 id="outlined-select-currency"
                 select
@@ -203,29 +203,46 @@ export const TableMembersList = ({ membersList = [] }) => {
                 ))}
               </TextField>
             </Grid>
-
-            <Grid item xl={3} lg={3} md={3} sm={12} xs={12}>
+            <Grid item xl={4} lg={4} md={4} sm={12} xs={12} className='container-add-client'>
               <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none" }}>
-                <Button variant="contained" color='primary' fullWidth>
-                  <PersonAddIcon sx={{ mr: 1.2 }} /> Miembro
+                <Button variant="contained" color='primary' className='btn-add-client'>
+                  <PersonAddIcon sx={{ mr: 1.2, fontSize: 22, height: "100%" }} />
+                  <span className='text-add-client'>
+                    Miembro
+                  </span>
                 </Button>
               </Link>
             </Grid>
           </Grid>
         </Grid>
 
-        <Grid item xl={2} lg={2} md={12} sm={12} xs={12}>
-          <Button
-            variant='contained'
-            className='btn-pdf'
-            onClick={handlerCheckBox}
-            disabled={membersList.length === 0}
-            sx={{ flexGrow: .1 }}
-          >
-            <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Selec. Todos" : "Desmarcar Todos"}
-          </Button>
-        </Grid>
+        <Grid item xl={5} lg={5} md={5} sm={12} xs={12} className='container-options-sec_2'>
+          <Grid container style={{ display: "flex", flexWrap: "nowrap", gap: 15 }}>
+            <Grid item xl={6} lg={6} md={6} sm={3} xs={3}>
+              <Button
+                variant='contained'
+                className='btn-pdf'
+                onClick={downloadPDF}
+                disabled={membersList.length === 0}
+                sx={{ mr: 1.2, height: '100%', width: "fit-context" }}
+              >
+                <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
+              </Button>
+            </Grid>
 
+            <Grid item xl={6} lg={6} md={6} sm={9} xs={9}>
+              <Button
+                variant='contained'
+                className='btn-pdf'
+                onClick={handlerCheckBox}
+                disabled={membersList.length === 0}
+                sx={{ flexGrow: .1, float: 'right', width: "fit-context" }}
+              >
+                <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Selec. Todos" : "Desmarcar Todos"}
+              </Button>
+            </Grid>
+          </Grid>
+        </Grid>
       </Grid>
       <br />
       {loadingMembersList && <span>Cargando listado de clientes...</span>}

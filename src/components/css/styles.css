@@ -33,4 +33,46 @@
   text-transform: uppercase;
   font-family: "Roboto", "Helvetica", "Arial", sans-serif;
   cursor: pointer;
+  width: 100%;
+}
+
+.container-options {
+  display: "flex";
+  justify-content: space-between;
+}
+
+/* Responsive client secction */
+@media only screen and (max-width: 768px) {
+
+  .text-dw-pdf,
+  .text-add-client {
+    display: none;
+  }
+
+  .btn-pdf {
+    width: fit-content;
+  }
+
+  .container-add-client {
+    position: fixed;
+    bottom: 4.2rem;
+    z-index: 999;
+    right: 2.5rem;
+  }
+
+  .btn-add-client {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50% !important;
+    width: 30px !important;
+    height: 60px !important;
+  }
+
+  .container-options {
+    display: "flex";
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 15px;
+  }
 }
