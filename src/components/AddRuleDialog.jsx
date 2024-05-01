@@ -97,7 +97,7 @@ export default function AddRuleDialog({
                 name='active'
                 checked={inactivateUsers}
               />}
-            label="Desactivar miembros seleccionados"
+            label="Desactivar clientes seleccionados"
           />
           <FormControlLabel
             value={addMonth}

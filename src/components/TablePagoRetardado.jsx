@@ -1,4 +1,4 @@
-import { Button, Checkbox, FormControlLabel, MenuItem, TextField } from '@mui/material';
+import { Button, Checkbox, FormControlLabel, Grid, MenuItem, TextField } from '@mui/material';
 import { DataGrid,/*  GridToolbarContainer, GridToolbarExport */ } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { useMembers } from '../context/Context';
@@ -133,46 +133,54 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   }
 
   return (
-    <div style={{ height: 400, width: '100%', marginBottom: 40 }}>
+    <Grid style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
-      <div style={{ display: "flex", gap: 10 }}>
-        <Button
-          variant='contained'
-          color='primary'
-          disabled={selectedRows?.length === 0}
-          onClick={handlerMakePayment}
-        >
-          Registrar Pago
-        </Button>
-        <Button
-          variant='contained'
-          className='btn-pdf'
-          onClick={downloadPDF}
-          disabled={membersDelayed.length === 0}
-        >
-          <PictureAsPdfIcon /> Descargar
-        </Button>
-        <TextField
-          disabled={membersDelayed.length === 0}
-          id="outlined-select-currency"
-          select
-          label="Entrenador"
-          defaultValue=""
-          placeholder="Entrenador"
-          name="trainer_name"
-          onChange={handlerChange}
-          value={trainer_name}
-          style={{ width: "15%" }}
-          size='small'
-        >
-          {trainers.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-
-      </div>
+      <Grid container style={{ display: "flex", gap: 10 }}>
+        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+          <Button
+            variant='contained'
+            color='primary'
+            fullWidth
+            disabled={selectedRows?.length === 0}
+            onClick={handlerMakePayment}
+            sx={{ height: "100%" }}
+          >
+            Registrar Pago
+          </Button>
+        </Grid>
+        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+          <Button
+            variant='contained'
+            fullWidth
+            onClick={downloadPDF}
+            disabled={membersDelayed.length === 0}
+            sx={{ height: "100%" }}
+          >
+            <PictureAsPdfIcon /> Descargar
+          </Button>
+        </Grid>
+        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+          <TextField
+            disabled={membersDelayed.length === 0}
+            id="outlined-select-currency"
+            select
+            label="Entrenador"
+            defaultValue=""
+            placeholder="Entrenador"
+            name="trainer_name"
+            onChange={handlerChange}
+            value={trainer_name}
+            style={{ width: "100%" }}
+            size='small'
+          >
+            {trainers.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      </Grid>
       <br />
       {adding && <span>Actializando...</span>}
       <DataGrid
@@ -187,6 +195,6 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         pageSizeOptions={[5, 10]}
       />
 
-    </div>
+    </Grid>
   );
 }

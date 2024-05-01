@@ -1,7 +1,7 @@
 import { DataGrid } from '@mui/x-data-grid';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { Checkbox, FormControlLabel, Button } from '@mui/material';
+import { Checkbox, FormControlLabel, Button, Grid } from '@mui/material';
 import { useMembers } from '../context/Context';
 
 
@@ -21,9 +21,6 @@ export const MembersInactive = ({ membersList = [] }) => {
   const { changedStatusToActive } = useMembers();
   const [selectedRows, setSelectedRows] = useState([]);
 
-  useEffect(() => {
-    console.log(selectedRows);
-  }, [selectedRows])
 
   const handlerActivateRows = async () => {
     if (selectedRows.length > 0) {
@@ -85,17 +82,22 @@ export const MembersInactive = ({ membersList = [] }) => {
 
 
   return (
-    <div style={{ height: 400, width: '100%' }}>
+    <Grid style={{ height: 400, width: '100%' }}>
       <br />
-      <Button
-        variant='contained'
-        color='primary'
-        disabled={selectedRows?.length === 0}
-        onClick={handlerActivateRows}
-      >
-        Activar usuarios
-      </Button>
-      <br />
+      <Grid container style={{ display: "flex", gap: 10 }}>
+        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+          <Button
+            variant='contained'
+            color='primary'
+            fullWidth
+            disabled={selectedRows?.length === 0}
+            onClick={handlerActivateRows}
+            sx={{ height: "100%" }}
+          >
+            Activar usuarios
+          </Button>
+        </Grid>
+      </Grid>
       <br />
       <DataGrid
         rows={membersList}
@@ -114,6 +116,6 @@ export const MembersInactive = ({ membersList = [] }) => {
         /* checkboxSelection */
         pageSizeOptions={[5, 10]}
       />
-    </div>
+    </Grid>
   );
 }

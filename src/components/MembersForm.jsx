@@ -23,6 +23,7 @@ function MembersForm({ member, onClose }) {
     gender: '',
     ci: '',
     address: '',
+    phone: '',
     has_trainer: false,
     trainer_name: null,
   })
@@ -62,6 +63,7 @@ function MembersForm({ member, onClose }) {
       gender: '',
       ci: '',
       address: '',
+      phone: '',
       has_trainer: false,
       trainer_name: null,
     })
@@ -203,22 +205,34 @@ function MembersForm({ member, onClose }) {
             label="Solicita entrenador"
           />
           {memberData?.has_trainer &&
-            <TextField
-              id="outlined-select-currency"
-              select
-              label="Entrenador"
-              defaultValue=""
-              placeholder="Selecciona entrenador"
-              name="trainer_name"
-              onChange={handlerChange}
-              value={memberData?.trainer_name}
-            >
-              {trainers.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <>
+              <TextField
+                id="outlined-select-currency"
+                select
+                label="Entrenador"
+                defaultValue=""
+                placeholder="Selecciona entrenador"
+                name="trainer_name"
+                onChange={handlerChange}
+                value={memberData?.trainer_name}
+              >
+                {trainers.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <br />
+              <TextField
+                required
+                id="outlined-required"
+                label="Teléfono"
+                name="phone"
+                value={memberData?.phone}
+                placeholder='55565758'
+                onChange={handlerChange}
+              />
+            </>
           }
 
           <FormLabel id="demo-row-radio-buttons-group-label">Género</FormLabel>

@@ -167,7 +167,7 @@ export const TableMembersList = ({ membersList = [] }) => {
     <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
       <Grid container className='container-options'>
-        <Grid item xl={7} lg={7} md={7} sm={12} xs={12}>
+        <Grid item xl={8} lg={7} md={7} sm={12} xs={12}>
           <Grid container style={{ display: "flex", justifyContent: "start", gap: 15 }}>
             <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
               <Button
@@ -206,8 +206,8 @@ export const TableMembersList = ({ membersList = [] }) => {
             <Grid item xl={4} lg={4} md={4} sm={12} xs={12} className='container-add-client'>
               <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none" }}>
                 <Button variant="contained" color='primary' className='btn-add-client'>
-                  <PersonAddIcon sx={{ mr: 1.2, fontSize: 22, height: "100%" }} />
-                  <span className='text-add-client'>
+                  <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
+                  <span className='text-add-client' style={{ marginLeft: 5 }}>
                     Miembro
                   </span>
                 </Button>
@@ -216,14 +216,14 @@ export const TableMembersList = ({ membersList = [] }) => {
           </Grid>
         </Grid>
 
-        <Grid item xl={5} lg={5} md={5} sm={12} xs={12} className='container-options-sec_2'>
+        <Grid item xl={4} lg={5} md={5} sm={12} xs={12} className='container-options-sec_2'>
           <Grid container style={{ display: "flex", flexWrap: "nowrap", gap: 15 }}>
             <Grid item xl={6} lg={6} md={6} sm={3} xs={3}>
               <Button
                 variant='contained'
-                className='btn-pdf'
                 onClick={downloadPDF}
                 disabled={membersList.length === 0}
+                fullWidth
                 sx={{ mr: 1.2, height: '100%', width: "fit-context" }}
               >
                 <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>

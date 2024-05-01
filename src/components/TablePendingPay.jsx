@@ -1,4 +1,4 @@
-import { Button, Checkbox, FormControlLabel, MenuItem, TextField } from '@mui/material';
+import { Button, Checkbox, FormControlLabel, Grid, MenuItem, TextField } from '@mui/material';
 import { DataGrid,/*  GridToolbarContainer, GridToolbarExport */ } from '@mui/x-data-grid';
 import { useState, useEffect } from 'react';
 import { useMembers } from '../context/Context';
@@ -133,45 +133,54 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   }
 
   return (
-    <div style={{ height: 400, width: '100%', marginBottom: 40 }}>
+    <Grid style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
-      <div style={{ display: "flex", justifyContent: "start", gap: 10 }}>
-        <Button
-          variant='contained'
-          disabled={selectedRows?.length === 0}
-          onClick={handlerMakePayment}
-        >
-          Registrar Pago
-        </Button>
-        <Button
-          variant='contained'
-          className='btn-pdf'
-          onClick={downloadPDF}
-          disabled={membersPending.length === 0}
-        >
-          <PictureAsPdfIcon /> Descargar
-        </Button>
-        <TextField
-          id="outlined-select-currency"
-          select
-          disabled={membersPending.length === 0}
-          label="Entrenador"
-          defaultValue=""
-          placeholder="Entrenador"
-          name="trainer_name"
-          onChange={handlerChange}
-          value={trainer_name}
-          style={{ width: "15%" }}
-          size='small'
-        >
-          {trainers.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
+      <Grid container style={{ display: "flex", justifyContent: "start", gap: 10 }}>
+        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+          <Button
+            variant='contained'
+            disabled={selectedRows?.length === 0}
+            onClick={handlerMakePayment}
+            fullWidth
+            sx={{ height: "100%" }}
+          >
+            Registrar Pago
+          </Button>
+        </Grid>
+        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+          <Button
+            variant='contained'
+            onClick={downloadPDF}
+            fullWidth
+            sx={{ height: "100%" }}
+            disabled={membersPending.length === 0}
+          >
+            <PictureAsPdfIcon /> Descargar
+          </Button>
+        </Grid>
+        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+          <TextField
+            id="outlined-select-currency"
+            select
+            disabled={membersPending.length === 0}
+            label="Entrenador"
+            defaultValue=""
+            placeholder="Entrenador"
+            name="trainer_name"
+            onChange={handlerChange}
+            value={trainer_name}
+            style={{ width: "100%" }}
+            size='small'
+          >
+            {trainers.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
 
-      </div>
+      </Grid>
       <br />
       {adding && <span>Actializando...</span>}
       <DataGrid
@@ -187,6 +196,6 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
         pageSizeOptions={[5, 10]}
       />
 
-    </div>
+    </Grid>
   );
 }

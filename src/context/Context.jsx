@@ -22,7 +22,7 @@ export const ContextProvider = ({ children }) => {
     setLoadingMembersList(true);
     await supabase
       .from("members")
-      .select("id,created_at,first_name,last_name,address,active,pay_date,ci,has_trainer,gender,trainer_name"
+      .select("id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name"
       )
       .then((res, err) => {
         setLoadingMembersList(false);
@@ -69,6 +69,7 @@ export const ContextProvider = ({ children }) => {
         last_name: dataToSave.last_name,
         ci: dataToSave.ci,
         address: dataToSave.address,
+        phone: dataToSave.phone,
         gender: dataToSave.gender,
         has_trainer: dataToSave.has_trainer,
         trainer_name: dataToSave.trainer_name,
