@@ -6,19 +6,6 @@ import { useEffect } from 'react';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import jsPDF from 'jspdf';
 
-
-
-const esES = {
-  noRowsLabel: "No se ha encontrado datos.",
-  noResultsOverlayLabel: "No se ha encontrado ningún resultado",
-  toolbarColumns: "Columnas",
-  toolbarColumnsLabel: "Seleccionar columnas",
-  toolbarFilters: "Filtros",
-  toolbarFiltersLabel: "Ver filtros",
-  toolbarFiltersTooltipHide: "Quitar filtros",
-  toolbarFiltersTooltipShow: "Ver filtros",
-};
-
 // eslint-disable-next-line react/prop-types
 export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   const [selectedRows, setSelectedRows] = useState([]);
@@ -186,7 +173,6 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
       <DataGrid
         rows={membersDelayed}
         columns={columns}
-        localeText={esES}
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 5 },

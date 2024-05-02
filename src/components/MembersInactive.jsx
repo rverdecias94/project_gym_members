@@ -4,18 +4,6 @@ import { useState } from 'react';
 import { Checkbox, FormControlLabel, Button, Grid } from '@mui/material';
 import { useMembers } from '../context/Context';
 
-
-const esES = {
-  noRowsLabel: "No se ha encontrado datos.",
-  noResultsOverlayLabel: "No se ha encontrado ningún resultado",
-  toolbarColumns: "Columnas",
-  toolbarColumnsLabel: "Seleccionar columnas",
-  toolbarFilters: "Filtros",
-  toolbarFiltersLabel: "Ver filtros",
-  toolbarFiltersTooltipHide: "Quitar filtros",
-  toolbarFiltersTooltipShow: "Ver filtros",
-};
-
 // eslint-disable-next-line react/prop-types
 export const MembersInactive = ({ membersList = [] }) => {
   const { changedStatusToActive } = useMembers();
@@ -102,18 +90,11 @@ export const MembersInactive = ({ membersList = [] }) => {
       <DataGrid
         rows={membersList}
         columns={columns}
-        localeText={esES}
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 5 },
           },
         }}
-        onCellClick={(params) => {
-          if (params.field !== 'actions') {
-            console.log('Fila seleccionada:', params.row);
-          }
-        }}
-        /* checkboxSelection */
         pageSizeOptions={[5, 10]}
       />
     </Grid>

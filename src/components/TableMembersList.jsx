@@ -1,4 +1,4 @@
-import { DataGrid,/*  GridToolbarContainer, GridToolbarExport */ } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import DeleteDialog from './DeleteDialog';
 import EditMember from './EditMember';
 import { useState } from 'react';
@@ -11,8 +11,6 @@ import {
   TextField,
   MenuItem,
   Grid,
-  /* useMediaQuery, 
-  useTheme */
 } from '@mui/material';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
@@ -22,17 +20,6 @@ import jsPDF from 'jspdf';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-
-const esES = {
-  noRowsLabel: "No se ha encontrado datos.",
-  noResultsOverlayLabel: "No se ha encontrado ningún resultado",
-  toolbarColumns: "Columnas",
-  toolbarColumnsLabel: "Seleccionar columnas",
-  toolbarFilters: "Filtros",
-  toolbarFiltersLabel: "Ver filtros",
-  toolbarFiltersTooltipHide: "Quitar filtros",
-  toolbarFiltersTooltipShow: "Ver filtros",
-};
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
@@ -250,7 +237,6 @@ export const TableMembersList = ({ membersList = [] }) => {
       <DataGrid
         rows={membersList}
         columns={columns}
-        localeText={esES}
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 5 },

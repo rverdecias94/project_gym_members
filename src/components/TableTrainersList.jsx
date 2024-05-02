@@ -8,18 +8,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-
-const esES = {
-  noRowsLabel: "No se ha encontrado datos.",
-  noResultsOverlayLabel: "No se ha encontrado ningún resultado",
-  toolbarColumns: "Columnas",
-  toolbarColumnsLabel: "Seleccionar columnas",
-  toolbarFilters: "Filtros",
-  toolbarFiltersLabel: "Ver filtros",
-  toolbarFiltersTooltipHide: "Quitar filtros",
-  toolbarFiltersTooltipShow: "Ver filtros",
-};
-
 // eslint-disable-next-line react/prop-types
 export const TableTrainersList = ({ trainersList }) => {
   const [openDelete, setOpenDelete] = useState(false);
@@ -78,16 +66,10 @@ export const TableTrainersList = ({ trainersList }) => {
       <DataGrid
         rows={trainersList}
         columns={columns}
-        localeText={esES}
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 5 },
           },
-        }}
-        onCellClick={(params) => {
-          if (params.field !== 'actions') {
-            console.log('Fila seleccionada:', params.row);
-          }
         }}
         pageSizeOptions={[5, 10]}
       />

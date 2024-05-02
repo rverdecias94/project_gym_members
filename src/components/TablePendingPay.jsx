@@ -193,7 +193,6 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
       <DataGrid
         rows={membersPending}
         columns={columns}
-        localeText={esES}
         paginationPerPage={5}
         initialState={{
           pagination: {
