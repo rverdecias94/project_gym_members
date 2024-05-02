@@ -6,17 +6,10 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import "./css/styles.css"
+import ViewDetails from './ViewDetails';
 
-const esES = {
-  noRowsLabel: "No se ha encontrado datos.",
-  noResultsOverlayLabel: "No se ha encontrado ningún resultado",
-  toolbarColumns: "Columnas",
-  toolbarColumnsLabel: "Seleccionar columnas",
-  toolbarFilters: "Filtros",
-  toolbarFiltersLabel: "Ver filtros",
-  toolbarFiltersTooltipHide: "Quitar filtros",
-  toolbarFiltersTooltipShow: "Ver filtros",
-};
+import ContactPageIcon from '@mui/icons-material/ContactPage';
+
 
 // eslint-disable-next-line react/prop-types
 export const TablePendingPay = ({ membersPendingPayment = [] }) => {
@@ -26,6 +19,8 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [trainer_name, setTrainerName] = useState("");
   const [trainers, setTrainers] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [profile, setProfile] = useState(false);
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -61,14 +56,22 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
     }
   }, [trainer_name]);
 
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleOpenEdit = (client) => {
+    setOpen(true);
+    setProfile(client);
+  };
   const columns = [
     {
       field: 'actions',
       headerName: '',
       sortable: false,
-      width: 50,
+      width: 100,
       renderCell: (params) => (
-        <div>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <FormControlLabel
             control={
               <Checkbox
@@ -77,6 +80,10 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
                 name='active'
               />
             }
+          />
+          <ContactPageIcon
+            color="primary"
+            onClick={() => handleOpenEdit(params?.row)}
           />
         </div>
       ),
@@ -195,7 +202,11 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
         }}
         pageSizeOptions={[5, 10]}
       />
-
+      <ViewDetails
+        handleClose={handleClose}
+        open={open}
+        profile={profile}
+      />
     </Grid>
   );
 }
