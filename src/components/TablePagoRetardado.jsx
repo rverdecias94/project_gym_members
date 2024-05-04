@@ -1,10 +1,13 @@
-import { Button, Checkbox, FormControlLabel, Grid, MenuItem, TextField } from '@mui/material';
+import { Button, Checkbox, FormControlLabel, Grid, MenuItem, TextField, Tooltip } from '@mui/material';
 import { DataGrid,/*  GridToolbarContainer, GridToolbarExport */ } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { useMembers } from '../context/Context';
 import { useEffect } from 'react';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import jsPDF from 'jspdf';
+import ViewDetails from './ViewDetails';
+import ContactPageIcon from '@mui/icons-material/ContactPage';
+
 
 // eslint-disable-next-line react/prop-types
 export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
@@ -14,6 +17,9 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   const [membersDelayed, setMembersDelayed] = useState([]);
   const [trainer_name, setTrainerName] = useState("");
   const [trainers, setTrainers] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [profile, setProfile] = useState(false);
+
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -48,14 +54,23 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
     }
   }, [trainer_name]);
 
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleOpenEdit = (client) => {
+    setOpen(true);
+    setProfile(client);
+  };
+
   const columns = [
     {
       field: 'actions',
       headerName: '',
       sortable: false,
-      width: 50,
+      width: 100,
       renderCell: (params) => (
-        <div>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <FormControlLabel
             control={
               <Checkbox
@@ -65,13 +80,44 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
               />
             }
           />
+          <Tooltip title="Ver Detalles">
+            <ContactPageIcon
+              color="primary"
+              onClick={() => handleOpenEdit(params?.row)}
+            />
+          </Tooltip>
         </div>
       ),
     },
     { field: 'first_name', headerName: 'Nombre', width: 130 },
     { field: 'last_name', headerName: 'Apellidos', width: 130 },
+    {
+      field: 'phone',
+      headerName: 'Teléfono',
+      width: 130,
+      renderCell: (params) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {
+            params.value !== null ? params.value
+              : <strong style={{ fontSize: 20 }}>-</strong>
+          }
+        </div>
+      ),
+    },
     { field: 'pay_date', headerName: 'Fecha de Pago', width: 130 },
-    { field: 'trainer_name', headerName: 'Entrenador', width: 130 },
+    {
+      field: 'trainer_name',
+      headerName: 'Entrenador',
+      width: 130,
+      renderCell: (params) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {
+            params.value !== null ? params.value
+              : <strong style={{ fontSize: 20 }}>-</strong>
+          }
+        </div>
+      ),
+    },
   ];
 
   const handlerMakePayment = () => {
@@ -180,7 +226,11 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         }}
         pageSizeOptions={[5, 10]}
       />
-
+      <ViewDetails
+        handleClose={handleClose}
+        open={open}
+        profile={profile}
+      />
     </Grid>
   );
 }

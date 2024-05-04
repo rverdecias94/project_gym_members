@@ -11,6 +11,7 @@ import {
   TextField,
   MenuItem,
   Grid,
+  Tooltip,
 } from '@mui/material';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
@@ -111,22 +112,52 @@ export const TableMembersList = ({ membersList = [] }) => {
             }
             style={{ marginRight: 0 }}
           />
-          <EditIcon
-            color="primary"
-            onClick={() => handleOpenEdit(params?.row)}
-          />
-          <DeleteIcon
-            sx={{ color: "#e7657e" }}
-            onClick={() => handleOpenDelete(params?.row)}
-          />
+          <Tooltip title="Editar">
+            <EditIcon
+              color="primary"
+              onClick={() => handleOpenEdit(params?.row)}
+            />
+          </Tooltip>
+          <Tooltip title="Eliminar">
+            <DeleteIcon
+              sx={{ color: "#e7657e" }}
+              onClick={() => handleOpenDelete(params?.row)}
+            />
+          </Tooltip>
         </div>
 
       ),
     },
     { field: 'first_name', headerName: 'Nombre', width: 130 },
     { field: 'last_name', headerName: 'Apellidos', width: 130 },
+    {
+      field: 'phone',
+      headerName: 'Teléfono',
+      width: 130,
+      renderCell: (params) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {
+            params.value !== null ? params.value
+              : <strong style={{ fontSize: 20 }}>-</strong>
+          }
+        </div>
+      ),
+    },
     { field: 'ci', headerName: 'CI', width: 130 },
     { field: 'address', headerName: 'Dirección', width: 130 },
+    {
+      field: 'trainer_name',
+      headerName: 'Entrenador',
+      width: 130,
+      renderCell: (params) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {
+            params.value !== null ? params.value
+              : <strong style={{ fontSize: 20 }}>-</strong>
+          }
+        </div>
+      ),
+    },
   ];
 
   const downloadPDF = () => {

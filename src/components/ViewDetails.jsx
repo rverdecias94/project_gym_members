@@ -80,7 +80,7 @@ export default function ViewDetails({
                 label="Teléfono"
                 defaultValue="-"
                 sx={{ mb: 3, width: "98%" }}
-                value={profile?.phone !== null ? profile.phone : "Sin Teléfono"}
+                value={profile?.phone !== null ? profile.phone : "-"}
                 InputProps={{
                   readOnly: true,
                 }}

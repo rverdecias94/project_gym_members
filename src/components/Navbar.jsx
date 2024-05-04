@@ -2,6 +2,7 @@ import { supabase } from '../supabase/client';
 import { Toaster, toast } from 'react-hot-toast';
 /* import { useMembers } from '../context/Context'; */
 import LogoutIcon from '@mui/icons-material/Logout';
+import { Tooltip } from '@mui/material';
 
 export default function Navbar() {
   const logoutUser = async () => {
@@ -16,10 +17,12 @@ export default function Navbar() {
         reverseOrder={false}
       />
       <span style={{ display: "flex", alignItems: "center" }}>
-        <img src="/public/images/logo.jpg" alt="logo" style={{ position: "absolute", width: 40, height: 40, borderRadius: "50%", top: 8 }} />
+        <img src="../assets/img/logo.jpg" alt="logo" style={{ position: "absolute", width: 40, height: 40, borderRadius: "50%", top: 8 }} />
         <span style={{ marginLeft: 50 }}>Gym</span>
       </span>
-      <LogoutIcon onClick={logoutUser} className='btn_logout' />
+      <Tooltip title="Cerrar Sesión">
+        <LogoutIcon onClick={logoutUser} className='btn_logout' />
+      </Tooltip>
 
     </div>
   )

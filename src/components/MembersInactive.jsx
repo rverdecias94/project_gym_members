@@ -1,14 +1,16 @@
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from 'react';
-
+import ContactPageIcon from '@mui/icons-material/ContactPage';
 import { Checkbox, FormControlLabel, Button, Grid } from '@mui/material';
 import { useMembers } from '../context/Context';
+import ViewDetails from './ViewDetails';
 
 // eslint-disable-next-line react/prop-types
 export const MembersInactive = ({ membersList = [] }) => {
   const { changedStatusToActive } = useMembers();
   const [selectedRows, setSelectedRows] = useState([]);
-
+  const [open, setOpen] = useState(false);
+  const [profile, setProfile] = useState(false);
 
   const handlerActivateRows = async () => {
     if (selectedRows.length > 0) {
@@ -40,7 +42,7 @@ export const MembersInactive = ({ membersList = [] }) => {
       sortable: false,
       width: 80,
       renderCell: (params) => (
-        <div>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <FormControlLabel
             control={
               <Checkbox
@@ -49,6 +51,10 @@ export const MembersInactive = ({ membersList = [] }) => {
                 name='active'
               />
             }
+          />
+          <ContactPageIcon
+            color="primary"
+            onClick={() => handleOpenEdit(params?.row)}
           />
         </div>
       ),
@@ -68,6 +74,14 @@ export const MembersInactive = ({ membersList = [] }) => {
     }
   };
 
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleOpenEdit = (client) => {
+    setOpen(true);
+    setProfile(client);
+  };
 
   return (
     <Grid style={{ height: 400, width: '100%' }}>
@@ -96,6 +110,11 @@ export const MembersInactive = ({ membersList = [] }) => {
           },
         }}
         pageSizeOptions={[5, 10]}
+      />
+      <ViewDetails
+        handleClose={handleClose}
+        open={open}
+        profile={profile}
       />
     </Grid>
   );
