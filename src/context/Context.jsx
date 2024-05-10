@@ -20,10 +20,13 @@ export const ContextProvider = ({ children }) => {
 
   const getMembers = async () => {
     setLoadingMembersList(true);
+    const { data } = await supabase.auth.getUser();
+
     await supabase
       .from("members")
       .select("id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name"
       )
+      .eq("gym_id", data?.user?.id)
       .then((res, err) => {
         setLoadingMembersList(false);
         if (err) {
@@ -38,7 +41,8 @@ export const ContextProvider = ({ children }) => {
   }
 
   const getTrainers = async () => {
-    const res = await supabase.from("trainers").select();
+    const { data } = await supabase.auth.getUser();
+    const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
 
     if (res?.data?.length > 0) {
       setTrainersList(res.data);
@@ -64,6 +68,8 @@ export const ContextProvider = ({ children }) => {
     dataToSave.pay_date = `${año}-${mes}-${dia}`;
     console.log(dataToSave);
     try {
+      const { data } = await supabase.auth.getUser();
+
       const result = await supabase.from("members").insert({
         first_name: dataToSave.first_name,
         last_name: dataToSave.last_name,
@@ -75,6 +81,7 @@ export const ContextProvider = ({ children }) => {
         trainer_name: dataToSave.trainer_name,
         image_profile: dataToSave.image_profile,
         pay_date: dataToSave.pay_date,
+        gym_id: data?.user?.id,
       });
       console.log(result)
       if (result) {
@@ -93,11 +100,13 @@ export const ContextProvider = ({ children }) => {
     let dataToSave = { ...trainerData }
     console.log(dataToSave);
     try {
+      const { data } = await supabase.auth.getUser();
       const result = await supabase.from("trainers").insert({
         name: dataToSave.name,
         last_name: dataToSave.last_name,
         ci: dataToSave.ci,
         image_profile: dataToSave.image_profile,
+        gym_id: data?.user?.id,
       });
       console.log(result)
       if (result) {
@@ -111,7 +120,11 @@ export const ContextProvider = ({ children }) => {
   }
 
   const deleteMember = async (id) => {
-    const { error } = await supabase.from("members").delete().eq("id", id);
+    const { data } = await supabase.auth.getUser();
+    const { error } = await supabase.from("members")
+      .delete()
+      .eq("gym_id", data?.user?.id)
+      .eq("id", id);
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
       getMembers();
@@ -120,7 +133,11 @@ export const ContextProvider = ({ children }) => {
   };
 
   const deleteTrainer = async (id) => {
-    const { error } = await supabase.from("trainers").delete().eq("id", id);
+    const { data } = await supabase.auth.getUser();
+    const { error } = await supabase.from("trainers")
+      .delete()
+      .eq("gym_id", data?.user?.id)
+      .eq("id", id);
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
       getTrainers();
