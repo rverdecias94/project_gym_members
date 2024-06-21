@@ -33,11 +33,9 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [amountDays, setAmountDays] = useState("");
   const [trainer_name, setTrainerName] = useState("");
   const [trainers, setTrainers] = useState([]);
+  const [membersOriginal, setMembersOriginal] = useState([]);
+  const [members, setMembers] = useState([]);
 
-  /* const theme = useTheme(); */
-  /* const isMobile = useMediaQuery(theme.breakpoints.down("sm"), {
-    defaultMatches: true,
-  }); */
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -52,7 +50,24 @@ export const TableMembersList = ({ membersList = [] }) => {
       setTrainers(trainers);
     }
   }, [])
+  useEffect(() => {
+    setMembersOriginal(membersList);
+    setMembers(membersList);
+    setSelectedRows([]);
+  }, [membersList]);
 
+  useEffect(() => {
+    if (trainer_name !== "") {
+      let members = [...membersOriginal]
+      if (trainer_name !== "Sin Entrenador" && trainer_name !== "Todos") {
+        setMembers(members.filter(elem => elem.trainer_name === trainer_name));
+      } else if (trainer_name === "Sin Entrenador") {
+        setMembers(members.filter(elem => elem.trainer_name === null));
+      } else if (trainer_name === "Todos") {
+        setMembers(members);
+      }
+    }
+  }, [trainer_name]);
 
   const handleOpenDelete = (member) => {
     setOpenDelete(true);
@@ -189,7 +204,7 @@ export const TableMembersList = ({ membersList = [] }) => {
           <Grid container style={{ display: "flex", justifyContent: "start", gap: 15 }}>
             <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
               <Button
-                variant='contained'
+                variant='outlined'
                 disabled={selectedRows.length === 0}
                 color='primary'
                 fullWidth
@@ -199,28 +214,30 @@ export const TableMembersList = ({ membersList = [] }) => {
                 Aplicar regla
               </Button>
             </Grid>
-            <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
-              <TextField
-                id="outlined-select-currency"
-                select
-                disabled={membersList.length === 0}
-                label="Entrenador"
-                defaultValue="Todos"
-                fullWidth
-                placeholder="Entrenador"
-                name="trainer_name"
-                onChange={handlerChange}
-                value={trainer_name}
-                size='small'
-                sx={{ mr: 1.2, height: '100%' }}
-              >
-                {trainers.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+            {
+              membersList.length !== 0 &&
+              <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
+                <TextField
+                  id="outlined-select-currency"
+                  select
+                  label="Entrenador"
+                  defaultValue="Todos"
+                  fullWidth
+                  placeholder="Entrenador"
+                  name="trainer_name"
+                  onChange={handlerChange}
+                  value={trainer_name}
+                  size='small'
+                  sx={{ mr: 1.2, height: '100%' }}
+                >
+                  {trainers.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            }
             <Grid item xl={4} lg={4} md={4} sm={12} xs={12} className='container-add-client'>
               <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none" }}>
                 <Button variant="contained" color='primary' className='btn-add-client'>
@@ -238,11 +255,12 @@ export const TableMembersList = ({ membersList = [] }) => {
           <Grid container style={{ display: "flex", flexWrap: "nowrap", gap: 15 }}>
             <Grid item xl={6} lg={6} md={6} sm={3} xs={3}>
               <Button
-                variant='contained'
+                variant='outlined'
                 onClick={downloadPDF}
                 disabled={membersList.length === 0}
                 fullWidth
                 sx={{ mr: 1.2, height: '100%', width: "fit-context" }}
+                className='btn-pdf'
               >
                 <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
               </Button>
@@ -250,8 +268,8 @@ export const TableMembersList = ({ membersList = [] }) => {
 
             <Grid item xl={6} lg={6} md={6} sm={9} xs={9}>
               <Button
-                variant='contained'
-                className='btn-pdf'
+                variant='outlined'
+                className='btn-check'
                 onClick={handlerCheckBox}
                 disabled={membersList.length === 0}
                 sx={{ flexGrow: .1, float: 'right', width: "fit-context" }}
@@ -265,16 +283,18 @@ export const TableMembersList = ({ membersList = [] }) => {
       <br />
       {loadingMembersList && <span>Cargando listado de clientes...</span>}
       {adding && <span>Aplicando reglas a clientes seleccionados...</span>}
-      <DataGrid
-        rows={membersList}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-      />
+      <Grid container style={{ paddingBottom: 40 }}>
+        <DataGrid
+          rows={members}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 5 },
+            },
+          }}
+          pageSizeOptions={[5, 10]}
+        />
+      </Grid>
 
       <DeleteDialog
         handleClose={handleClose}

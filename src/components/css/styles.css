@@ -18,7 +18,8 @@
   mask-image: linear-gradient(black 80%, transparent);
 }
 
-.btn-pdf {
+.btn-pdf,
+.btn-check {
   display: flex;
   align-items: center;
   gap: 10px;

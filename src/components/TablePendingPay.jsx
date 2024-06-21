@@ -169,7 +169,7 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
     <Grid style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
       <Grid container style={{ display: "flex", justifyContent: "start", gap: 10 }}>
-        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
             disabled={selectedRows?.length === 0}
@@ -180,18 +180,19 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
             Registrar Pago
           </Button>
         </Grid>
-        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
             onClick={downloadPDF}
             fullWidth
             sx={{ height: "100%" }}
             disabled={membersPending.length === 0}
+            className='btn-pdf'
           >
             <PictureAsPdfIcon /> Descargar
           </Button>
         </Grid>
-        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <TextField
             id="outlined-select-currency"
             select

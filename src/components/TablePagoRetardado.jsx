@@ -121,8 +121,6 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   ];
 
   const handlerMakePayment = () => {
-    console.log(selectedRows)
-
     const fechaActual = new Date();
     fechaActual.setMonth(fechaActual.getMonth() + 1);
     // Verificar si el mes resultante es enero para ajustar el año
@@ -169,7 +167,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
     <Grid style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
       <Grid container style={{ display: "flex", gap: 10 }}>
-        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
             color='primary'
@@ -181,18 +179,19 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
             Registrar Pago
           </Button>
         </Grid>
-        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
             fullWidth
             onClick={downloadPDF}
             disabled={membersDelayed.length === 0}
             sx={{ height: "100%" }}
+            className='btn-pdf'
           >
             <PictureAsPdfIcon /> Descargar
           </Button>
         </Grid>
-        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <TextField
             disabled={membersDelayed.length === 0}
             id="outlined-select-currency"

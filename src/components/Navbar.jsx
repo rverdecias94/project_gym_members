@@ -17,8 +17,8 @@ export default function Navbar() {
         reverseOrder={false}
       />
       <span style={{ display: "flex", alignItems: "center" }}>
-        <img src="../assets/img/logo.jpg" alt="logo" style={{ position: "absolute", width: 40, height: 40, borderRadius: "50%", top: 8 }} />
-        <span style={{ marginLeft: 50 }}>Gym</span>
+        <img src="/img/logo.png" alt="logo" style={{ position: "absolute", width: 85, height: 30, borderRadius: 4, top: 8 }} />
+        <span style={{ marginTop: 25, fontFamily: "monospace", width: 88, textAlign: "center" }}>Gym Manager</span>
       </span>
       <Tooltip title="Cerrar Sesión">
         <LogoutIcon onClick={logoutUser} className='btn_logout' />

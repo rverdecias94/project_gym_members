@@ -87,7 +87,7 @@ export const MembersInactive = ({ membersList = [] }) => {
     <Grid style={{ height: 400, width: '100%' }}>
       <br />
       <Grid container style={{ display: "flex", gap: 10 }}>
-        <Grid item xl={2} lg={1} md={2} sm={2} xs={12}>
+        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
             color='primary'
