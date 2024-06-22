@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Button, Grid } from '@mui/material';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
 import "./css/styles.css"
 
+const IMAGE_DEFAULT = '/img/CI.png'
 
 const ImageUploader = ({ setImageBase64, image }) => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -36,19 +36,6 @@ const ImageUploader = ({ setImageBase64, image }) => {
     }
   };
 
-  const handleCameraCapture = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      const mediaStreamTrack = stream.getVideoTracks()[0];
-      const imageCapture = new ImageCapture(mediaStreamTrack);
-      const blob = await imageCapture.takePhoto();
-      const imageUrl = URL.createObjectURL(blob);
-      setSelectedImage(imageUrl);
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-    }
-  };
-
   return (
     <div style={{ width: "100%" }}>
 
@@ -59,35 +46,24 @@ const ImageUploader = ({ setImageBase64, image }) => {
         type="file"
         onChange={saveImage}
       />
-      <Grid style={{ display: "flex", gap: 10, width: "100%", justifyContent: "space-between" }}>
-        <Grid item sm={6} xs={6} style={{ width: "50%" }}>
-          <Button variant="contained" component="span" style={{ width: "100%" }}>
-            <DriveFolderUploadIcon />
-            <label htmlFor="image-upload">
-              <span style={{ marginLeft: 5, fontSize: 12 }}>
-                Subir Imagen
-              </span>
-            </label>
-          </Button>
-        </Grid>
-        <Grid item sm={6} xs={6} style={{ width: "50%" }}>
-          <Button variant="contained" onClick={handleCameraCapture} style={{ width: "100%" }} >
-            <CameraAltIcon />
+
+      <div className='containerProfileImage'>
+        <img src={selectedImage ? selectedImage : IMAGE_DEFAULT}
+          alt="Imagen de Perfil"
+          className='imgProfile' />
+      </div>
+
+      <Grid item lg={12} xl={12} md={12} sm={12} xs={12}>
+        <Button variant="contained" component="span" style={{ width: "98%", float: "left", padding: 10, margin: "-3px 0px 4% 1%" }}>
+          <DriveFolderUploadIcon />
+          <label htmlFor="image-upload">
             <span style={{ marginLeft: 5, fontSize: 12 }}>
-              Tomar foto
+              Subir Imagen
             </span>
-          </Button>
-        </Grid>
+          </label>
+        </Button>
       </Grid>
-      <br />
-      {selectedImage &&
-        <div className='containerProfileImage'>
-          <img src={selectedImage}
-            alt="Imagen de Perfil"
-            className='imgProfile' />
-        </div>
-      }
-      <br />
+
     </div>
   );
 };

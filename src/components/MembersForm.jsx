@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState } from 'react'
-import { Button, FormControlLabel, FormLabel, MenuItem, Radio, RadioGroup, TextField } from "@mui/material"
+import { Button, FormControlLabel, FormLabel, Grid, MenuItem, Radio, RadioGroup, TextField } from "@mui/material"
 import { Box, Checkbox } from '@mui/material';
 import { Toaster } from 'react-hot-toast';
 import { useMembers } from '../context/Context';
@@ -116,10 +116,10 @@ function MembersForm({ member, onClose }) {
       <Box
         component="form"
         sx={{
-          '& .MuiTextField-root': { margin: "8px 0", width: '100%' },
+          '& .MuiTextField-root': { m: 1, width: '95%' },
           '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
           '& .MuiFormLabel-root': { width: '100%' },
-          '& .MuiButton-root': { width: '100%', backgroundColor: "#356dac" },
+          '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#356dac", float: "right" },
           '& .MuiRadioGroup-root': { display: 'flex' },
           '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
           padding: editing ? null : 2,
@@ -148,121 +148,163 @@ function MembersForm({ member, onClose }) {
               label="Miembro Activo"
             />
           }
-          <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
-          <TextField
-            required
-            id="outlined-required"
-            label="Nombre"
-            name="first_name"
-            value={memberData?.first_name}
-            placeholder='Ej: Jhon'
-            onChange={handlerChange}
-          />
-          <TextField
-            required
-            id="outlined-required"
-            label="Apellidos"
-            name="last_name"
-            value={memberData?.last_name}
-            placeholder='Ej: Doe Smitt'
-            onChange={handlerChange}
-          />
-          <TextField
-            required
-            id="outlined-required"
-            label="CI"
-            name="ci"
-            value={memberData?.ci}
-            placeholder='CI: 35123145685'
-            onChange={handlerChange}
-          />
-          <TextField
-            required
-            id="outlined-required"
-            label="Direccion"
-            name="address"
-            value={memberData?.address}
-            placeholder='S.T Village nº 9827'
-            onChange={handlerChange}
-          />
-          {editing &&
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <MobileDatePicker
-                label="Fecha de pago *"
-                defaultValue={dayjs(memberData?.pay_date)}
-                onChange={handlerDatePaymentChange}
-              />
-            </LocalizationProvider>
-          }
-          <FormControlLabel
-            value={memberData?.has_trainer}
-            onChange={handlerChange}
-            control={
-              <Checkbox
-                name='has_trainer'
-                checked={memberData?.has_trainer}
-              />}
-            label="Solicita entrenador"
-          />
-          {memberData?.has_trainer &&
-            <>
-              <TextField
-                id="outlined-select-currency"
-                select
-                label="Entrenador"
-                defaultValue=""
-                placeholder="Selecciona entrenador"
-                name="trainer_name"
-                onChange={handlerChange}
-                value={memberData?.trainer_name}
-              >
-                {trainers.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <br />
-              <TextField
-                required
-                id="outlined-required"
-                label="Teléfono"
-                name="phone"
-                value={memberData?.phone}
-                placeholder='55565758'
-                onChange={handlerChange}
-              />
-            </>
-          }
+          <Grid container>
 
-          <FormLabel id="demo-row-radio-buttons-group-label">Género</FormLabel>
-          <RadioGroup
-            row
-            aria-labelledby="demo-row-radio-buttons-group-label"
-            name='gender'
-            onChange={handlerChange}
-            value={memberData?.gender}
-          >
-            <FormControlLabel
-              value="F"
-              control={<Radio />}
-              label="Femenino"
-              style={{ width: "fit-content" }}
-            />
-            <FormControlLabel
-              value="M"
-              control={<Radio />}
-              label="Masculino"
-              style={{ width: "fit-content" }}
-            />
-          </RadioGroup>
+            <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
+              <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
+            </Grid>
 
-          <Button disabled={adding} onClick={handlerSubmit} variant="contained">
-            {adding ? "Guardando..." : "Guardar"}
-          </Button>
+            <Grid item lg={8} xl={8} md={8} sm={12} xs={12} >
+              {/* Fila 1 */}
+              <Grid container style={{ display: "flex" }}>
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <TextField
+                    required
+                    id="outlined-required"
+                    label="Nombre"
+                    name="first_name"
+                    value={memberData?.first_name}
+                    placeholder='Ej: Jhon'
+                    onChange={handlerChange}
+                  />
+                </Grid>
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <TextField
+                    required
+                    id="outlined-required"
+                    label="Apellidos"
+                    name="last_name"
+                    value={memberData?.last_name}
+                    placeholder='Ej: Doe Smitt'
+                    onChange={handlerChange}
+                  />
+                </Grid>
+              </Grid>
+              {/* Fila 2 */}
+              <Grid container>
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <TextField
+                    required
+                    id="outlined-required"
+                    label="CI"
+                    name="ci"
+                    value={memberData?.ci}
+                    placeholder='CI: 35123145685'
+                    onChange={handlerChange}
+                  />
+                </Grid>
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <TextField
+                    required
+                    id="outlined-required"
+                    label="Direccion"
+                    name="address"
+                    value={memberData?.address}
+                    placeholder='S.T Village nº 9827'
+                    onChange={handlerChange}
+                  />
+                </Grid>
+              </Grid>
+
+              {/* FIla 3 */}
+              <Grid container>
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <FormControlLabel
+                    value={memberData?.has_trainer}
+                    onChange={handlerChange}
+                    control={
+                      <Checkbox
+                        name='has_trainer'
+                        checked={memberData?.has_trainer}
+                      />}
+                    label="Solicita entrenador"
+                  />
+                </Grid>
+
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <FormLabel id="demo-row-radio-buttons-group-label">Género</FormLabel>
+                  <RadioGroup
+                    row
+                    aria-labelledby="demo-row-radio-buttons-group-label"
+                    name='gender'
+                    onChange={handlerChange}
+                    value={memberData?.gender}
+                  >
+                    <FormControlLabel
+                      value="F"
+                      control={<Radio />}
+                      label="Femenino"
+                      style={{ width: "fit-content" }}
+                    />
+                    <FormControlLabel
+                      value="M"
+                      control={<Radio />}
+                      label="Masculino"
+                      style={{ width: "fit-content" }}
+                    />
+                  </RadioGroup>
+                </Grid>
+              </Grid>
+
+              {/* {memberData?.has_trainer && */}
+              <Grid container>
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <TextField
+                    id="outlined-select-currency"
+                    select
+                    disabled={!memberData?.has_trainer}
+                    label="Entrenador"
+                    defaultValue=""
+                    placeholder="Selecciona entrenador"
+                    name="trainer_name"
+                    onChange={handlerChange}
+                    value={memberData?.trainer_name}
+                  >
+                    {trainers.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <TextField
+                    required
+                    disabled={!memberData?.has_trainer}
+                    id="outlined-required"
+                    label="Teléfono"
+                    name="phone"
+                    value={memberData?.phone}
+                    placeholder='55565758'
+                    onChange={handlerChange}
+                  />
+                </Grid>
+              </Grid>
+              {/* } */}
+              {editing &&
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <MobileDatePicker
+                    label="Fecha de pago *"
+                    defaultValue={dayjs(memberData?.pay_date)}
+                    onChange={handlerDatePaymentChange}
+                  />
+                </LocalizationProvider>
+              }
+            </Grid>
+          </Grid>
 
         </form>
-      </Box>
+
+        <Button
+          disabled={adding}
+          onClick={handlerSubmit}
+          variant="contained"
+          style={{ margin: 16 }}
+        >
+          {adding ? "Guardando..." : "Guardar"}
+        </Button>
+      </Box >
     </>
   )
 }
