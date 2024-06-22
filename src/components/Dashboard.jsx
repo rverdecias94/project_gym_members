@@ -13,16 +13,19 @@ const pieParams = { height: 250, margin: { right: 5 } };
 const palette = ['rgb(53 109 172)', 'rgb(210 131 25 / 50%)'];
 
 export default function Dashboard() {
-  const { getTrainers, getMembers, membersList, trainersList } = useMembers();
+  const { getTrainers, getMembers, membersList, trainersList, valueTab } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
   const [elemntsByTrainer, setElemntsByTrainer] = useState([]);
   const [trainersName, setTrainerName] = useState([]);
   const [membersActive, setMembersActive] = useState([]);
 
   useEffect(() => {
-    getTrainers();
-    getMembers();
-  }, [])
+    console.log(valueTab);
+    if (valueTab === 0) {
+      getTrainers();
+      getMembers();
+    }
+  }, [valueTab])
 
   useEffect(() => {
     if (membersList.length > 0) {

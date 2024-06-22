@@ -183,6 +183,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
           <Button
             variant='contained'
             fullWidth
+            color='inherit'
             onClick={downloadPDF}
             disabled={membersDelayed.length === 0}
             sx={{ height: "100%" }}

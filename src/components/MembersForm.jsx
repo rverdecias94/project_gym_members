@@ -30,7 +30,7 @@ function MembersForm({ member, onClose }) {
   const [editing, setEditing] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
   const [trainers, setTrainers] = useState([]);
-
+  const [sendInfo, setSendInfo] = useState(false);
 
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
@@ -39,6 +39,21 @@ function MembersForm({ member, onClose }) {
       setEditing(true);
     }
   }, [])
+
+  useEffect(() => {
+    if (memberData.first_name !== ''
+      && memberData.last_name !== ''
+      && memberData.gender !== ''
+      && memberData.ci !== ''
+      && memberData.address !== ''
+    ) {
+      setSendInfo(true);
+    }
+  }, [memberData])
+
+  useEffect(() => {
+    setSendInfo(adding);
+  }, [adding])
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -55,7 +70,6 @@ function MembersForm({ member, onClose }) {
     let member = { ...memberData }
 
     member.image_profile = imageBase64;
-    console.log(member)
     editing ? await updateMember(member) : await createNewMember(member);
     setMemberData({
       first_name: '',
@@ -116,7 +130,8 @@ function MembersForm({ member, onClose }) {
       <Box
         component="form"
         sx={{
-          '& .MuiTextField-root': { m: 1, width: '95%' },
+          '& .MuiTextField-root': { m: 1, width: '100%', padding: .5 },
+          '& .MuiMobileDatePicker-root': { m: 1, width: '100%' },
           '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
           '& .MuiFormLabel-root': { width: '100%' },
           '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#356dac", float: "right" },
@@ -136,22 +151,27 @@ function MembersForm({ member, onClose }) {
           </IconButton>
         }
         <form style={{ width: "100%" }}>
-          {editing &&
-            <FormControlLabel
-              value={memberData?.active}
-              onChange={handlerChange}
-              control={
-                <Checkbox
-                  name='active'
-                  checked={memberData?.active}
-                />}
-              label="Miembro Activo"
-            />
-          }
+
           <Grid container>
 
             <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
               <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
+              {editing &&
+                <Grid container>
+                  <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
+                    <FormControlLabel
+                      value={memberData?.active}
+                      onChange={handlerChange}
+                      control={
+                        <Checkbox
+                          name='active'
+                          checked={memberData?.active}
+                        />}
+                      label="Miembro Activo"
+                    />
+                  </Grid>
+                </Grid>
+              }
             </Grid>
 
             <Grid item lg={8} xl={8} md={8} sm={12} xs={12} >
@@ -246,7 +266,7 @@ function MembersForm({ member, onClose }) {
                 </Grid>
               </Grid>
 
-              {/* {memberData?.has_trainer && */}
+              {/* FILA 4 */}
               <Grid container>
                 <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
                   <TextField
@@ -268,6 +288,7 @@ function MembersForm({ member, onClose }) {
                   </TextField>
                 </Grid>
 
+                {/* FILA 5 */}
                 <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
                   <TextField
                     required
@@ -281,7 +302,7 @@ function MembersForm({ member, onClose }) {
                   />
                 </Grid>
               </Grid>
-              {/* } */}
+
               {editing &&
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <MobileDatePicker
@@ -297,10 +318,10 @@ function MembersForm({ member, onClose }) {
         </form>
 
         <Button
-          disabled={adding}
           onClick={handlerSubmit}
           variant="contained"
-          style={{ margin: 16 }}
+          color={sendInfo ? 'primary' : 'inherit'}
+          disabled={!sendInfo}
         >
           {adding ? "Guardando..." : "Guardar"}
         </Button>

@@ -255,12 +255,13 @@ export const TableMembersList = ({ membersList = [] }) => {
           <Grid container style={{ display: "flex", flexWrap: "nowrap", gap: 15 }}>
             <Grid item xl={6} lg={6} md={6} sm={3} xs={3}>
               <Button
-                variant='outlined'
+                variant='contained'
                 onClick={downloadPDF}
                 disabled={membersList.length === 0}
                 fullWidth
+                color='inherit'
                 sx={{ mr: 1.2, height: '100%', width: "fit-context" }}
-                className='btn-pdf'
+              //className='btn-pdf'
               >
                 <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
               </Button>
@@ -268,8 +269,9 @@ export const TableMembersList = ({ membersList = [] }) => {
 
             <Grid item xl={6} lg={6} md={6} sm={9} xs={9}>
               <Button
-                variant='outlined'
+                variant='contained'
                 className='btn-check'
+                color='inherit'
                 onClick={handlerCheckBox}
                 disabled={membersList.length === 0}
                 sx={{ flexGrow: .1, float: 'right', width: "fit-context" }}

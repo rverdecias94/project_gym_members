@@ -54,7 +54,7 @@ const ImageUploader = ({ setImageBase64, image }) => {
       </div>
 
       <Grid item lg={12} xl={12} md={12} sm={12} xs={12}>
-        <Button variant="contained" component="span" style={{ width: "98%", float: "left", padding: 10, margin: "-3px 0px 4% 1%" }}>
+        <Button variant="contained" component="span" style={{ width: "100%", float: "left", padding: 10, margin: "-3px 0px 4% 1%" }}>
           <DriveFolderUploadIcon />
           <label htmlFor="image-upload">
             <span style={{ marginLeft: 5, fontSize: 12 }}>

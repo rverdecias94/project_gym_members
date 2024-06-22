@@ -185,6 +185,7 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
             variant='contained'
             onClick={downloadPDF}
             fullWidth
+            color='inherit'
             sx={{ height: "100%" }}
             disabled={membersPending.length === 0}
             className='btn-pdf'

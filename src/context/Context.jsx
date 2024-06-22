@@ -17,6 +17,7 @@ export const ContextProvider = ({ children }) => {
   const [loadingMembersList, setLoadingMembersList] = useState(false);
   const [trainersList, setTrainersList] = useState([]);
   const [adding, setAdding] = useState(false);
+  const [valueTab, setValueTab] = useState(null);
 
   const getMembers = async () => {
     setLoadingMembersList(true);
@@ -227,6 +228,8 @@ export const ContextProvider = ({ children }) => {
       loadingMembersList,
       trainersList,
       adding,
+      valueTab,
+      setValueTab,
       getMembers,
       getTrainers,
       createNewMember,

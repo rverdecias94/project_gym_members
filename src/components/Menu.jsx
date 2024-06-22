@@ -1,4 +1,4 @@
-import * as React from 'react';
+
 import PropTypes from 'prop-types';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import MembersList from './MembersList';
 import Trainers from './TrainersList';
 import Dashboard from './Dashboard';
+import { useMembers } from '../context/Context';
 
 
 function CustomTabPanel(props) {
@@ -43,28 +44,28 @@ function a11yProps(index) {
 }
 
 export default function Menu() {
-  const [value, setValue] = React.useState(0);
+  const { valueTab, setValueTab } = useMembers();
 
   const handleChange = (event, newValue) => {
-    setValue(newValue);
+    setValueTab(newValue);
   };
 
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+        <Tabs value={valueTab} onChange={handleChange} aria-label="basic tabs example">
           <Tab label="Panel" {...a11yProps(0)} />
           <Tab label="Clientes" {...a11yProps(1)} />
           <Tab label="Entrenadores" {...a11yProps(2)} />
         </Tabs>
       </Box>
-      <CustomTabPanel value={value} index={0}>
+      <CustomTabPanel value={valueTab} index={0}>
         <Dashboard />
       </CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>
+      <CustomTabPanel value={valueTab} index={1}>
         <MembersList />
       </CustomTabPanel>
-      <CustomTabPanel value={value} index={2}>
+      <CustomTabPanel value={valueTab} index={2}>
         <Trainers />
       </CustomTabPanel>
     </Box>
