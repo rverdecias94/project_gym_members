@@ -8,6 +8,8 @@ import { ContextProvider } from './context/Context';
 import Menu from './components/Menu';
 import MembersForm from './components/MembersForm';
 import TrainersForm from './components/TrainersForm';
+import Signup from './components/SignUp';
+import ResetPassword from './components/ResetPassword';
 
 
 function App() {
@@ -33,6 +35,8 @@ function App() {
         {sessionActive ? <Navbar /> : null}
         <Routes>
           <Route path='/' element={<Menu />} />
+          <Route path='/sign_up' element={<Signup />} />
+          <Route path='/reset_password' element={<ResetPassword />} />
           <Route path='/login' element={<Login />} />
           <Route path='/new_member' element={<MembersForm />} />
           <Route path='/new_trainer' element={<TrainersForm />} />

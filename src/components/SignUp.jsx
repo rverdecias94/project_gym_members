@@ -1,28 +1,32 @@
-import { Typography, Grid, TextField, Button } from "@mui/material"
-import { useState } from "react"
-import { supabase } from "../supabase/client";
+import { useState } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase/client';
+import { Button, Grid, TextField, Typography } from '@mui/material';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 
-export default function Login() {
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const Signup = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [passwordType, setPasswordType] = useState("password");
 
-  const handlerSubmit = async (e) => {
+  const navigate = useNavigate();
+
+  const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
       });
-      handlerClearStates();
+
       if (error) throw error;
+      handlerClearStates();
+      toast.success("¡Registro exitoso!", { duration: 3000 });
+      navigate('/login');
     } catch (error) {
-      toast.error("No hemos podido iniciar sesión. Credenciales incorrectas", { duration: 5000 });
+      toast.error("No hemos podido registrar el usuario", { duration: 5000 });
       console.error(error);
     }
   };
@@ -39,26 +43,24 @@ export default function Login() {
         reverseOrder={false}
       />
       <Typography variant="h5" textAlign='center' className="login_title">
-        ¡Bienvenido!
+        ¡Regístrate!
       </Typography>
 
       <Grid container style={{ display: "flex", justifyContent: "center" }}>
         <Grid item lg={4} xl={4} md={4} sm={6} xs={12}>
-          <form onSubmit={handlerSubmit} className="login_form">
-            <Link to='/sign_up' style={{ textDecoration: "none", fontFamily: "math", margin: "5rem 0", borderRadius: 5, padding: 5, background: "rgba(25, 118, 210, 0.12)", color: "rgb(21, 101, 192)" }} >
-              ¿Ya tienes cuenta? Regístrate!
-            </Link>
+          <form onSubmit={handleSignup} className="login_form">
             <TextField
               required
               id="outlined-required"
               label='Correo'
               value={email}
-              name="first_name"
-              placeholder="correo@compañia.com"
+              name="email"
+              placeholder="correo@gmail.com"
               onChange={(e) => setEmail(e.target.value)}
               fullWidth
               inputProps={{ style: { color: "black" } }}
               InputLabelProps={{ style: { color: "#356dac" } }}
+              sx={{ marginTop: 15 }}
             />
             <Grid style={{ width: "100%", position: "relative" }}>
               <TextField
@@ -68,35 +70,37 @@ export default function Login() {
                 type={passwordType}
                 value={password}
                 name="first_name"
-                placeholder="*******"
+                placeholder="dzie94"
                 onChange={(e) => setPassword(e.target.value)}
                 fullWidth
                 inputProps={{ style: { color: "black" } }}
                 InputLabelProps={{ style: { color: "#356dac" } }}
-                sx={{ marginTop: 4 }}
+                sx={{ marginTop: 3 }}
               />
               <Button
                 onClick={() => setPasswordType(passwordType === "password" ? "text" : "password")}
-                style={{ position: "absolute", right: "0", top: "2.6rem", background: "transparent" }}
+                style={{ position: "absolute", right: "0", top: "2rem", background: "transparent" }}
               >
                 {passwordType === "password" ? <VisibilityOffIcon /> : <RemoveRedEyeIcon />}
               </Button>
             </Grid>
 
-            <Grid lg={4} xl={12} md={4} sm={6} xs={12} style={{ width: "100%", marginTop: 10 }}>
-              <Link to='/reset_password' style={{ textDecoration: "none", fontFamily: "math" }}>
-                Olvidé mi contraseña
-              </Link>
-            </Grid>
             <Button
               variant="contained"
-              style={{ width: "100%", backgroundColor: "#356dac", color: "#fff", fontWeight: "bolder", marginTop: 15 }}
+              style={{ width: "100%", backgroundColor: "#356dac", color: "#fff", fontWeight: "bolder", marginTop: 20 }}
               type="submit">
-              Iniciar Sesión
+              Registrarme
             </Button>
+            <Grid lg={4} xl={12} md={4} sm={6} xs={12} style={{ width: "100%", marginTop: 10 }}>
+              <Link to='/login' style={{ textDecoration: "none", fontFamily: "math" }}>
+                !Ya tengo cuenta¡
+              </Link>
+            </Grid>
           </form>
         </Grid>
       </Grid>
     </Grid>
-  )
-}
+  );
+};
+
+export default Signup;

@@ -27,6 +27,9 @@ export default function Dashboard() {
     }
   }, [valueTab])
 
+
+
+
   useEffect(() => {
     if (membersList.length > 0) {
       let membersListActive = membersList.filter(item => item.active)
@@ -78,8 +81,9 @@ export default function Dashboard() {
     { field: 'trainer_name', headerName: 'Entrenador', width: 220 },
     { field: 'pay_date', headerName: 'Fecha de pago', width: 240 },
   ];
-  return (
-    <>
+
+  const showDasboard = () => {
+    return <>
       <Grid item xl={12} lg={12} md={12} sm={12} xs={12}
       >
         <Grid container style={{ display: "flex", justifyContent: "start", flexWrap: "wrap" }}>
@@ -205,5 +209,16 @@ export default function Dashboard() {
 
       </Grid >
     </>
-  );
+  }
+
+  const welcomeMessage = () => {
+    return <div>Hola mundo</div>
+  }
+
+  const getView = () => {
+    if (valueTab === -1) return welcomeMessage();
+    if (valueTab === 0) return showDasboard();
+  }
+
+  return getView();
 }
