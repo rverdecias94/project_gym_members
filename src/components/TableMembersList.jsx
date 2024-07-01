@@ -243,7 +243,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 <Button variant="contained" color='primary' className='btn-add-client'>
                   <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
                   <span className='text-add-client' style={{ marginLeft: 5 }}>
-                    Miembro
+                    Cliente
                   </span>
                 </Button>
               </Link>

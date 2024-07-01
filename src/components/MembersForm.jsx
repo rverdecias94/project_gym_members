@@ -165,7 +165,7 @@ function MembersForm({ member, onClose }) {
                           name='active'
                           checked={memberData?.active}
                         />}
-                      label="Miembro Activo"
+                      label="Cliente Activo"
                     />
                   </Grid>
                 </Grid>

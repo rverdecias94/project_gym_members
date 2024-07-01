@@ -92,7 +92,7 @@ export default function Dashboard() {
             <Grid container style={{ height: 250 }}>
               <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 10 }}>
                 <span style={{ background: "rgb(210 131 25 / 50%)", color: "white", width: "50%", padding: 7, textAlign: "center", borderRadius: 3 }}>
-                  Miembros activos: {membersActive.length}
+                  Clientes activos: {membersActive.length}
                 </span>
               </Grid>
               <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 10 }}>
@@ -127,7 +127,7 @@ export default function Dashboard() {
                 ]}
                 {...pieParams}
               />
-              <span>Relación Miembro/Entrenador</span>
+              <span>Relación Cliente/Entrenador</span>
             </div>
           </Grid>
 
@@ -190,7 +190,7 @@ export default function Dashboard() {
                 variant="contained"
                 style={{ display: "flex", justifyContent: "space-evenly", background: "#356dac" }}
               >
-                <PersonAddIcon sx={{ mr: 1.2 }} /> Miembro
+                <PersonAddIcon sx={{ mr: 1.2 }} /> Cliente
               </Button>
             </Link>
           </div>

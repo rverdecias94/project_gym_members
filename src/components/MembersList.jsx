@@ -129,6 +129,7 @@ function MembersList() {
           <Tab label="Por pagar" {...a11yProps(1)} />
           <Tab label="Pago atrasado" {...a11yProps(2)} />
           <Tab label="Inactivos" {...a11yProps(3)} />
+          <Tab label="Tienda" {...a11yProps(4)} />
         </Tabs>
         {/* </ScrollableTabs> */}
       </Box>
