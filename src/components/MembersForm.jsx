@@ -150,10 +150,8 @@ function MembersForm({ member, onClose }) {
             </Link>
           </IconButton>
         }
-        <form style={{ width: "100%" }}>
-
+        <form style={{ width: "100%", paddingRight: "1rem" }}>
           <Grid container>
-
             <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
               <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
               {editing &&
@@ -174,7 +172,8 @@ function MembersForm({ member, onClose }) {
               }
             </Grid>
 
-            <Grid item lg={8} xl={8} md={8} sm={12} xs={12} >
+            <Grid item lg={8} xl={8} md={8} sm={12} xs={12}
+              style={{ marginTop: "2.3rem" }}>
               {/* Fila 1 */}
               <Grid container style={{ display: "flex" }}>
                 <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
@@ -314,14 +313,13 @@ function MembersForm({ member, onClose }) {
               }
             </Grid>
           </Grid>
-
         </form>
-
         <Button
           onClick={handlerSubmit}
           variant="contained"
           color={sendInfo ? 'primary' : 'inherit'}
           disabled={!sendInfo}
+          style={{ margin: ".9rem" }}
         >
           {adding ? "Guardando..." : "Guardar"}
         </Button>

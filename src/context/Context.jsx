@@ -17,16 +17,15 @@ export const ContextProvider = ({ children }) => {
   const [loadingMembersList, setLoadingMembersList] = useState(false);
   const [trainersList, setTrainersList] = useState([]);
   const [adding, setAdding] = useState(false);
-  const [valueTab, setValueTab] = useState(null);
+  const [valueTab, setValueTab] = useState(-1);
 
   const getMembers = async () => {
     setLoadingMembersList(true);
     const { data } = await supabase.auth.getUser();
-
+    /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
     await supabase
       .from("members")
-      .select("id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name"
-      )
+      .select()
       .eq("gym_id", data?.user?.id)
       .then((res, err) => {
         setLoadingMembersList(false);
