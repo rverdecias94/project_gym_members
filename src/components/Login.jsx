@@ -84,7 +84,7 @@ export default function Login() {
             </Grid>
 
             <Grid lg={4} xl={12} md={4} sm={6} xs={12} style={{ width: "100%", marginTop: 10 }}>
-              <Link to='/reset_password' style={{ textDecoration: "none", fontFamily: "math" }}>
+              <Link to='/reset_password' style={{ fontFamily: "math", color: "#356dac" }}>
                 Olvidé mi contraseña
               </Link>
             </Grid>

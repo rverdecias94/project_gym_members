@@ -145,7 +145,7 @@ function MembersForm({ member, onClose }) {
       >
         {!editing &&
           <IconButton aria-label="back" size="large">
-            <Link to='/'>
+            <Link to='/clientes'>
               <ArrowBackIcon />
             </Link>
           </IconButton>
@@ -293,7 +293,7 @@ function MembersForm({ member, onClose }) {
                     required
                     disabled={!memberData?.has_trainer}
                     id="outlined-required"
-                    label="Teléfono"
+                    label="Tel. Cliente"
                     name="phone"
                     value={memberData?.phone}
                     placeholder='55565758'

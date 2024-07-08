@@ -17,39 +17,52 @@ export const ContextProvider = ({ children }) => {
   const [loadingMembersList, setLoadingMembersList] = useState(false);
   const [trainersList, setTrainersList] = useState([]);
   const [adding, setAdding] = useState(false);
-  const [valueTab, setValueTab] = useState(-1);
+  const [backdrop, setBackdrop] = useState(false);
+
 
   const getMembers = async () => {
-    setLoadingMembersList(true);
-    const { data } = await supabase.auth.getUser();
-    /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
-    await supabase
-      .from("members")
-      .select()
-      .eq("gym_id", data?.user?.id)
-      .then((res, err) => {
-        setLoadingMembersList(false);
-        if (err) {
-          console.error("Error fetching data:", err);
-          return;
-        }
-        if (res?.data?.length > 0) {
-          setMembersList(res.data);
-        }
-      })
-
-  }
-
-  const getTrainers = async () => {
-    const { data } = await supabase.auth.getUser();
-    const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
-
-    if (res?.data?.length > 0) {
-      setTrainersList(res.data);
+    if (
+      membersList.length === 0
+    ) {
+      setBackdrop(true);
+      setLoadingMembersList(true);
+      const { data } = await supabase.auth.getUser();
+      /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
+      await supabase
+        .from("members")
+        .select()
+        .eq("gym_id", data?.user?.id)
+        .then((res, err) => {
+          setLoadingMembersList(false);
+          setBackdrop(false);
+          if (err) {
+            console.error("Error fetching data:", err);
+            return;
+          }
+          if (res?.data?.length > 0) {
+            setMembersList(res.data);
+          }
+        })
     }
   }
 
-  const createNewMember = async (memberData) => {
+  const getTrainers = async () => {
+    if (
+      trainersList.length === 0
+    ) {
+      setBackdrop(true);
+      const { data } = await supabase.auth.getUser();
+      const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
+
+      if (res?.data?.length > 0) {
+        setTrainersList(res.data);
+        setBackdrop(false);
+      }
+    }
+  }
+
+  const createNewMember = (memberData) => {
+    setBackdrop(true);
     setAdding(true);
     const fechaActual = new Date();
     fechaActual.setMonth(fechaActual.getMonth() + 1);
@@ -66,35 +79,40 @@ export const ContextProvider = ({ children }) => {
     let dataToSave = { ...memberData }
     // Actualizar la clave pay_date en el objeto
     dataToSave.pay_date = `${año}-${mes}-${dia}`;
-    console.log(dataToSave);
-    try {
-      const { data } = await supabase.auth.getUser();
 
-      const result = await supabase.from("members").insert({
-        first_name: dataToSave.first_name,
-        last_name: dataToSave.last_name,
-        ci: dataToSave.ci,
-        address: dataToSave.address,
-        phone: dataToSave.phone,
-        gender: dataToSave.gender,
-        has_trainer: dataToSave.has_trainer,
-        trainer_name: dataToSave.trainer_name,
-        image_profile: dataToSave.image_profile,
-        pay_date: dataToSave.pay_date,
-        gym_id: data?.user?.id,
-      });
-      console.log(result)
-      if (result) {
-        toast.success("Registro guardado satisfactoriamente")
+    setTimeout(async () => {
+
+      try {
+        const { data } = await supabase.auth.getUser();
+        const result = await supabase.from("members").insert({
+          first_name: dataToSave.first_name,
+          last_name: dataToSave.last_name,
+          ci: dataToSave.ci,
+          address: dataToSave.address,
+          phone: dataToSave.phone,
+          gender: dataToSave.gender,
+          has_trainer: dataToSave.has_trainer,
+          trainer_name: dataToSave.trainer_name,
+          image_profile: dataToSave.image_profile,
+          pay_date: dataToSave.pay_date,
+          gym_id: data?.user?.id,
+        });
+        console.log(result)
+        if (result) {
+          setBackdrop(false);
+          getMembers();
+          toast.success("Registro guardado satisfactoriamente")
+        }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setAdding(false);
       }
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setAdding(false);
-    }
+    }, 2000);
   }
 
   const createNewTrainer = async (trainerData) => {
+    setBackdrop(true);
     setAdding(true);
 
     let dataToSave = { ...trainerData }
@@ -110,6 +128,7 @@ export const ContextProvider = ({ children }) => {
       });
       console.log(result)
       if (result) {
+        setBackdrop(false);
         toast.success("!Nuevo entrenador resgistrado!")
       }
     } catch (error) {
@@ -120,6 +139,7 @@ export const ContextProvider = ({ children }) => {
   }
 
   const deleteMember = async (id) => {
+    setBackdrop(true);
     const { data } = await supabase.auth.getUser();
     const { error } = await supabase.from("members")
       .delete()
@@ -128,11 +148,13 @@ export const ContextProvider = ({ children }) => {
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
       getMembers();
+      setBackdrop(false);
     } else throw new Error(error);
 
   };
 
   const deleteTrainer = async (id) => {
+    setBackdrop(true);
     const { data } = await supabase.auth.getUser();
     const { error } = await supabase.from("trainers")
       .delete()
@@ -141,32 +163,39 @@ export const ContextProvider = ({ children }) => {
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
       getTrainers();
+      setBackdrop(false);
     } else throw new Error(error);
 
   };
 
-  const updateMember = async (member) => {
+  const updateMember = (member) => {
+    setBackdrop(true);
     setAdding(true);
-    try {
-      const result = await supabase.from("members").update(member).eq("id", member?.id);
-      if (result) {
-        toast.success("Registro actualizado satisfactoriamente")
-        getMembers();
+    setTimeout(async () => {
+      try {
+        const result = await supabase.from("members").update(member).eq("id", member?.id);
+        if (result) {
+          setBackdrop(false);
+          getMembers();
+          toast.success("Registro actualizado satisfactoriamente")
+        }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setAdding(false);
       }
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setAdding(false);
-    }
+    }, 2000);
   };
 
   const updateTrainer = async (trainer) => {
+    setBackdrop(true);
     setAdding(true);
     try {
       const result = await supabase.from("trainers").update(trainer).eq("id", trainer?.id);
       if (result) {
         toast.success("Registro actualizado satisfactoriamente")
         getTrainers();
+        setBackdrop(false);
       }
     } catch (error) {
       console.error(error)
@@ -176,12 +205,14 @@ export const ContextProvider = ({ children }) => {
   };
 
   const changedStatusToActive = async (clientsList) => {
+    setBackdrop(true);
     setAdding(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
       if (result) {
         toast.success("Registro actualizado satisfactoriamente")
         getMembers();
+        setBackdrop(false);
       }
     } catch (error) {
       console.error(error)
@@ -191,12 +222,14 @@ export const ContextProvider = ({ children }) => {
   };
 
   const makePayment = async (clientsList) => {
+    setBackdrop(true);
     setAdding(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
       if (result) {
         toast.success("Pago registrado satisfactoriamente");
         getMembers();
+        setBackdrop(true);
       }
     } catch (error) {
       console.error(error)
@@ -206,6 +239,7 @@ export const ContextProvider = ({ children }) => {
   };
 
   const applyRuleToRows = async (clientsList) => {
+    setBackdrop(true);
     setAdding(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
@@ -213,6 +247,7 @@ export const ContextProvider = ({ children }) => {
       if (result) {
         toast.success("Reglas aplicadas satisfactoriamente a todos los clientes seleccionados");
         getMembers();
+        setBackdrop(true);
       }
     } catch (error) {
       console.error(error)
@@ -227,8 +262,7 @@ export const ContextProvider = ({ children }) => {
       loadingMembersList,
       trainersList,
       adding,
-      valueTab,
-      setValueTab,
+      backdrop,
       getMembers,
       getTrainers,
       createNewMember,

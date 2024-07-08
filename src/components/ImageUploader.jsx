@@ -52,9 +52,12 @@ const ImageUploader = ({ setImageBase64, image }) => {
   const webCamRef = useRef(null);
 
   useEffect(() => {
-    console.log(image)
     if (image && image !== null) {
       setSelectedImage(image);
+    }
+    else {
+      setImageSrc(null);
+      setSelectedImage(null);
     }
   }, [image])
 
@@ -82,7 +85,6 @@ const ImageUploader = ({ setImageBase64, image }) => {
   async function capture() {
     setSelectedImage(null);
     const imgSrc = webCamRef.current.getScreenshot();
-    console.log(imgSrc)
     if (imgSrc) {
       const resizedImage = await resizeBase64Image(imgSrc, 500, 500, 50);
       setImageSrc(resizedImage);
@@ -109,7 +111,7 @@ const ImageUploader = ({ setImageBase64, image }) => {
 
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-          const quality = 0.7;
+          let quality = 0.7;
           let base64Image = canvas.toDataURL('image/jpeg', quality);
 
           // Asegúrate de que el tamaño sea menor que maxSizeKB

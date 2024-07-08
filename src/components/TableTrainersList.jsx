@@ -55,7 +55,7 @@ export const TableTrainersList = ({ trainersList }) => {
   ];
 
   return (
-    <div style={{ height: 400, width: '100%' }}>
+    <div style={{ height: "auto", width: '100%', padding: "1rem" }}>
       <br />
       <Link to="/new_trainer" style={{ width: "fit-content", display: "block", color: "white", textDecoration: "none" }}>
         <Button variant="contained" style={{ display: "flex", justifyContent: "space-evenly", background: "#356dac" }}>

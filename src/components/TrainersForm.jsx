@@ -79,7 +79,7 @@ function TrainersForm({ trainer, onClose }) {
       >
         {!editing &&
           <IconButton aria-label="back" size="large">
-            <Link to='/'>
+            <Link to='/entrenadores'>
               <ArrowBackIcon />
             </Link>
           </IconButton>

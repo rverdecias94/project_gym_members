@@ -116,7 +116,7 @@ function MembersList() {
   }, [membersList])
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', padding: "1rem" }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={value}
@@ -125,22 +125,21 @@ function MembersList() {
           scrollButtons="auto"
           aria-label="scrollable auto tabs example"
         >
-          <Tab label="Activos" {...a11yProps(0)} />
-          <Tab label="Por pagar" {...a11yProps(1)} />
-          <Tab label="Pago atrasado" {...a11yProps(2)} />
+          <Tab label="Por pagar" {...a11yProps(0)} />
+          <Tab label="Pago atrasado" {...a11yProps(1)} />
+          <Tab label="Activos" {...a11yProps(2)} />
           <Tab label="Inactivos" {...a11yProps(3)} />
-          <Tab label="Tienda" {...a11yProps(4)} />
         </Tabs>
         {/* </ScrollableTabs> */}
       </Box>
       <CustomTabPanel value={value} index={0}>
-        <TableMembersList membersList={membersStatus?.active} />
-      </CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>
         <TablePendingPay membersPendingPayment={membersPendingPayment} />
       </CustomTabPanel>
-      <CustomTabPanel value={value} index={2}>
+      <CustomTabPanel value={value} index={1}>
         <TablePagoRetardado membersPaymentDelayed={membersPaymentDelayed} />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={2}>
+        <TableMembersList membersList={membersStatus?.active} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={3}>
         <MembersInactive membersList={membersStatus?.inactive} />

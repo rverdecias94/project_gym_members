@@ -41,6 +41,9 @@
   justify-content: space-between;
 }
 
+/* Estilos generales para los botones */
+
+
 /* Responsive client secction */
 @media only screen and (max-width: 768px) {
 
@@ -55,9 +58,22 @@
 
   .container-add-client {
     position: fixed;
-    bottom: 4.2rem;
+    bottom: 5.2rem;
     z-index: 999;
     right: 2.5rem;
+  }
+
+  .navbar_mobile {
+    display: flex;
+    justify-content: center;
+    position: fixed;
+    bottom: 0rem;
+    z-index: 999;
+    right: 0;
+    width: 100vw;
+    height: 3rem;
+    padding: 1rem;
+    background-color: #356dac;
   }
 
   .btn-add-client {
