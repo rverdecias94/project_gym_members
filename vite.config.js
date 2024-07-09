@@ -16,7 +16,6 @@ export default defineConfig({
         theme_color: 'rgb(53, 109, 172)',
         background_color: 'rgb(53, 109, 172)',
         display: 'standalone',
-        display_override: ['window-controls-overlay'],
         lang: 'es-ES',
         start_url: '/',
         scope: '/',
