@@ -18,19 +18,26 @@ export default defineConfig({
         display: 'standalone',
         display_override: ['window-controls-overlay'],
         lang: 'es-ES',
-        start_url: '/login',
+        start_url: '/',
         scope: '/',
         orientation: 'portrait',
         icons: [
           {
-            src: '/CI.png',
-            sizes: '294x172',
+            src: 'pwa-64x64.png',
+            sizes: '64x64',
             type: 'image/png',
           },
           {
-            src: '/logo.png',
-            sizes: '139x50',
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
             type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           },
         ],
       },
