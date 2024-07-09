@@ -285,7 +285,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       <br />
       {loadingMembersList && <span>Cargando listado de clientes...</span>}
       {adding && <span>Aplicando reglas a clientes seleccionados...</span>}
-      <Grid container style={{ paddingBottom: 40 }}>
+      <Grid container style={{ paddingBottom: '9rem' }}>
         <DataGrid
           rows={members}
           columns={columns}

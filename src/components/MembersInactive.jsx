@@ -101,16 +101,18 @@ export const MembersInactive = ({ membersList = [] }) => {
         </Grid>
       </Grid>
       <br />
-      <DataGrid
-        rows={membersList}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-      />
+      <Grid container style={{ paddingBottom: '9rem' }}>
+        <DataGrid
+          rows={membersList}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 5 },
+            },
+          }}
+          pageSizeOptions={[5, 10]}
+        />
+      </Grid>
       <ViewDetails
         handleClose={handleClose}
         open={open}

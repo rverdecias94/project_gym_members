@@ -189,7 +189,7 @@ export default function Dashboard() {
 
         </Grid>
         <br />
-        <div style={{ padding: "1rem" }}>
+        <div style={{ padding: "1rem 1rem 5rem 1rem" }}>
           <Divider />
           <div style={{ marginTop: 20, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
             <span>Listado de clientes</span>

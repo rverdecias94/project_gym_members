@@ -216,16 +216,18 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
       </Grid>
       <br />
       {adding && <span>Actializando...</span>}
-      <DataGrid
-        rows={membersDelayed}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-      />
+      <Grid container style={{ paddingBottom: '5rem' }}>
+        <DataGrid
+          rows={membersDelayed}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 5 },
+            },
+          }}
+          pageSizeOptions={[5, 10]}
+        />
+      </Grid>
       <ViewDetails
         handleClose={handleClose}
         open={open}

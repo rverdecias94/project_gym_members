@@ -5,7 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditTrainer from './EditTrainer';
 import { Link } from 'react-router-dom';
-import { Button } from '@mui/material';
+import { Button, Grid } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 // eslint-disable-next-line react/prop-types
@@ -63,17 +63,18 @@ export const TableTrainersList = ({ trainersList }) => {
         </Button>
       </Link>
       <br />
-      <DataGrid
-        rows={trainersList}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-      />
-
+      <Grid container style={{ paddingBottom: '5rem' }}>
+        <DataGrid
+          rows={trainersList}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 5 },
+            },
+          }}
+          pageSizeOptions={[5, 10]}
+        />
+      </Grid>
       <DeleteDialog handleClose={handleClose} info={trainerInfo} open={openDelete} type={2} />
       <EditTrainer handleClose={handleClose} trainerInfo={trainerInfo} open={openEdit} />
     </div>

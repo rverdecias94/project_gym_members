@@ -218,17 +218,19 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
       </Grid>
       <br />
       {adding && <span>Actializando...</span>}
-      <DataGrid
-        rows={membersPending}
-        columns={columns}
-        paginationPerPage={5}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-      />
+      <Grid container style={{ paddingBottom: '5rem' }}>
+        <DataGrid
+          rows={membersPending}
+          columns={columns}
+          paginationPerPage={5}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 5 },
+            },
+          }}
+          pageSizeOptions={[5, 10]}
+        />
+      </Grid>
       <ViewDetails
         handleClose={handleClose}
         open={open}

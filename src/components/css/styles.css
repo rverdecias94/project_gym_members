@@ -58,9 +58,9 @@
 
   .container-add-client {
     position: fixed;
-    bottom: 5.2rem;
+    bottom: 4rem;
     z-index: 999;
-    right: 2.5rem;
+    right: 2rem;
   }
 
   .navbar_mobile {
@@ -80,7 +80,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 50% !important;
+    border-radius: 25% !important;
     width: 30px !important;
     height: 60px !important;
   }
