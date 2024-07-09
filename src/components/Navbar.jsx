@@ -20,7 +20,6 @@ export default function Navbar() {
 
       <span style={{ display: "flex", alignItems: "center" }}>
         <img src="/logo.png" alt="logo" style={{ position: "absolute", width: 85, height: 30, borderRadius: 4, top: 8 }} />
-        <span style={{ marginTop: 25, fontFamily: "monospace", width: 88, textAlign: "center" }}>Gym Manager</span>
       </span>
       <div className='navbar_mobile'>
         <Link to="/panel" style={{ color: "white", textDecoration: "none", marginLeft: 20 }}>
