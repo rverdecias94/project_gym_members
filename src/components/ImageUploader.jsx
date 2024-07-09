@@ -8,7 +8,7 @@ import Webcam from 'react-webcam';
 import PropTypes from 'prop-types';
 import FlipCameraIosIcon from '@mui/icons-material/FlipCameraIos';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-const IMAGE_DEFAULT = '/img/CI.png'
+const IMAGE_DEFAULT = '/CI.png'
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
