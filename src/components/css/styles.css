@@ -42,7 +42,14 @@
 }
 
 /* Estilos generales para los botones */
-
+.btn_nav {
+  background: #39689d00;
+  color: white;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 /* Responsive client secction */
 @media only screen and (max-width: 768px) {
@@ -58,7 +65,7 @@
 
   .container-add-client {
     position: fixed;
-    bottom: 4rem;
+    bottom: 4.6rem;
     z-index: 999;
     right: 2rem;
   }
@@ -71,7 +78,7 @@
     z-index: 999;
     right: 0;
     width: 100vw;
-    height: 3rem;
+    height: 4rem;
     padding: 1rem;
     background-color: #356dac;
   }

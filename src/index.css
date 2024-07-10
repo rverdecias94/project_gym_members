@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: Roboto, Helvetica, Arial, sans-serif;
 }
 
 
@@ -24,14 +25,13 @@
 
 /* NAVBAR */
 .navbar {
-  padding: 15px;
+  padding: 30px;
   background-color: #356dac;
   display: flex;
   justify-content: space-between;
   font-family: sans-serif;
   font-weight: 700;
   color: white;
-  /*  width: 100vw; */
 }
 
 .btn_logout {
