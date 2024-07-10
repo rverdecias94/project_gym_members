@@ -5,20 +5,24 @@ import { Toaster, toast } from 'react-hot-toast';
 import { Link } from "react-router-dom";
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import { useMembers } from "../context/Context";
 
 export default function Login() {
 
+  const { setBackdrop } = useMembers();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordType, setPasswordType] = useState("password");
 
   const handlerSubmit = async (e) => {
+    setBackdrop(true);
     e.preventDefault();
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      setBackdrop(false);
       handlerClearStates();
       if (error) throw error;
     } catch (error) {

@@ -273,6 +273,7 @@ export const ContextProvider = ({ children }) => {
       deleteTrainer,
       changedStatusToActive,
       makePayment,
+      setBackdrop,
       applyRuleToRows,
     }}>
     {children}
