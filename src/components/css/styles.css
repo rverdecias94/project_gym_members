@@ -49,6 +49,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: pointer;
+}
+
+.btn_nav:active {
+  background: #ffffff;
+  color: #39689d00;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
 }
 
 /* Responsive client secction */

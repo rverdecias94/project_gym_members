@@ -103,6 +103,7 @@ export const MembersInactive = ({ membersList = [] }) => {
       <br />
       <Grid container style={{ paddingBottom: '9rem' }}>
         <DataGrid
+          autoHeight
           rows={membersList}
           columns={columns}
           initialState={{

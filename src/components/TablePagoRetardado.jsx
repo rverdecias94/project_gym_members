@@ -218,6 +218,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
       {adding && <span>Actializando...</span>}
       <Grid container style={{ paddingBottom: '5rem' }}>
         <DataGrid
+          autoHeight
           rows={membersDelayed}
           columns={columns}
           initialState={{

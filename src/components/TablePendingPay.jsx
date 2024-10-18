@@ -220,6 +220,7 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
       {adding && <span>Actializando...</span>}
       <Grid container style={{ paddingBottom: '5rem' }}>
         <DataGrid
+          autoHeight
           rows={membersPending}
           columns={columns}
           paginationPerPage={5}

@@ -20,29 +20,33 @@ export const ContextProvider = ({ children }) => {
   const [backdrop, setBackdrop] = useState(false);
 
 
-  const getMembers = async () => {
+
+  const getMembers = async (editing = false) => {
+
     if (
-      membersList.length === 0
+      membersList.length === 0 || editing
     ) {
       setBackdrop(true);
       setLoadingMembersList(true);
-      const { data } = await supabase.auth.getUser();
-      /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
-      await supabase
-        .from("members")
-        .select()
-        .eq("gym_id", data?.user?.id)
-        .then((res, err) => {
-          setLoadingMembersList(false);
-          setBackdrop(false);
-          if (err) {
-            console.error("Error fetching data:", err);
-            return;
-          }
-          if (res?.data?.length > 0) {
-            setMembersList(res.data);
-          }
-        })
+      setTimeout(async () => {
+        const { data } = await supabase.auth.getUser();
+        /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
+        await supabase
+          .from("members")
+          .select()
+          .eq("gym_id", data?.user?.id)
+          .then((res, err) => {
+            setLoadingMembersList(false);
+            setBackdrop(false);
+            if (err) {
+              console.error("Error fetching data:", err);
+              return;
+            }
+            if (res?.data?.length > 0) {
+              setMembersList(res.data);
+            }
+          })
+      }, 1000)
     }
   }
 
@@ -50,14 +54,17 @@ export const ContextProvider = ({ children }) => {
     if (
       trainersList.length === 0
     ) {
-      setBackdrop(true);
-      const { data } = await supabase.auth.getUser();
-      const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
+      setTimeout(async () => {
 
-      if (res?.data?.length > 0) {
-        setTrainersList(res.data);
-        setBackdrop(false);
-      }
+        setBackdrop(true);
+        const { data } = await supabase.auth.getUser();
+        const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
+
+        if (res?.data?.length > 0) {
+          setTrainersList(res.data);
+          setBackdrop(false);
+        }
+      }, 1000);
     }
   }
 
@@ -176,7 +183,7 @@ export const ContextProvider = ({ children }) => {
         const result = await supabase.from("members").update(member).eq("id", member?.id);
         if (result) {
           setBackdrop(false);
-          getMembers();
+          getMembers(true);
           toast.success("Registro actualizado satisfactoriamente")
         }
       } catch (error) {
@@ -211,7 +218,7 @@ export const ContextProvider = ({ children }) => {
       const result = await supabase.from('members').upsert(clientsList);
       if (result) {
         toast.success("Registro actualizado satisfactoriamente")
-        getMembers();
+        getMembers(true);
         setBackdrop(false);
       }
     } catch (error) {
@@ -228,7 +235,7 @@ export const ContextProvider = ({ children }) => {
       const result = await supabase.from('members').upsert(clientsList);
       if (result) {
         toast.success("Pago registrado satisfactoriamente");
-        getMembers();
+        getMembers(true);
         setBackdrop(true);
       }
     } catch (error) {
@@ -246,7 +253,7 @@ export const ContextProvider = ({ children }) => {
       console.log(result);
       if (result) {
         toast.success("Reglas aplicadas satisfactoriamente a todos los clientes seleccionados");
-        getMembers();
+        getMembers(true);
         setBackdrop(true);
       }
     } catch (error) {

@@ -7,8 +7,6 @@ import Navbar from './components/Navbar';
 import { ContextProvider } from './context/Context';
 import MembersForm from './components/MembersForm';
 import TrainersForm from './components/TrainersForm';
-import Signup from './components/SignUp';
-import ResetPassword from './components/ResetPassword';
 import Dashboard from './components/Dashboard';
 import MembersList from './components/MembersList';
 import Trainers from './components/TrainersList';
@@ -18,6 +16,10 @@ import { BackdropProvider } from './components/BackdropProvider';
 function App() {
   const [sessionActive, setsessionActive] = useState(false);
   const navigate = useNavigate();
+  const [profile, setProfile] = useState({
+    avatar: null,
+    name: null,
+  });
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
@@ -26,6 +28,14 @@ function App() {
         setsessionActive(false);
       } else {
         navigate('/panel')
+        if (session?.user?.user_metadata) {
+          let { avatar_url, name } = session.user.user_metadata;
+          setProfile((prev) => ({
+            ...prev,
+            name: name,
+            avatar: avatar_url
+          }))
+        }
         setsessionActive(true);
       }
     })
@@ -36,11 +46,9 @@ function App() {
     <div style={{ width: "100%", height: "100vh", padding: "0px !important", }}>
       <ContextProvider>
         <BackdropProvider>
-          {sessionActive ? <Navbar /> : null}
+          {sessionActive ? <Navbar profile={profile} /> : null}
           <Routes>
             <Route path='/panel' element={<Dashboard />} />
-            <Route path='/sign_up' element={<Signup />} />
-            <Route path='/reset_password' element={<ResetPassword />} />
             <Route path='/login' element={<Login />} />
             <Route path='/clientes' element={<MembersList />} />
             <Route path='/entrenadores' element={<Trainers />} />

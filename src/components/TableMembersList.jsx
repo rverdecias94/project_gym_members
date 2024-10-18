@@ -50,6 +50,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       setTrainers(trainers);
     }
   }, [])
+
   useEffect(() => {
     setMembersOriginal(membersList);
     setMembers(membersList);
@@ -116,7 +117,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       width: 100,
       renderCell: (params) => (
 
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
           <FormControlLabel
             control={
               <Checkbox

@@ -65,6 +65,7 @@ export const TableTrainersList = ({ trainersList }) => {
       <br />
       <Grid container style={{ paddingBottom: '5rem' }}>
         <DataGrid
+          autoHeight
           rows={trainersList}
           columns={columns}
           initialState={{

@@ -20,17 +20,24 @@ function MembersForm({ member, onClose }) {
   const [memberData, setMemberData] = useState({
     first_name: '',
     last_name: '',
-    gender: '',
+    gender: 'M',
     ci: '',
     address: '',
     phone: '',
     has_trainer: false,
     trainer_name: null,
   })
+  const [errors, setErrors] = useState({
+    first_name: false,
+    last_name: false,
+    ci: false,
+    phone: false,
+  });
+
   const [editing, setEditing] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
   const [trainers, setTrainers] = useState([]);
-  const [sendInfo, setSendInfo] = useState(false);
+  //const [sendInfo, setSendInfo] = useState(false);
 
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
@@ -40,20 +47,6 @@ function MembersForm({ member, onClose }) {
     }
   }, [])
 
-  useEffect(() => {
-    if (memberData.first_name !== ''
-      && memberData.last_name !== ''
-      && memberData.gender !== ''
-      && memberData.ci !== ''
-      && memberData.address !== ''
-    ) {
-      setSendInfo(true);
-    }
-  }, [memberData])
-
-  useEffect(() => {
-    setSendInfo(adding);
-  }, [adding])
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -70,6 +63,7 @@ function MembersForm({ member, onClose }) {
     let member = { ...memberData }
 
     member.image_profile = imageBase64;
+    console.log(editing)
     editing ? await updateMember(member) : await createNewMember(member);
     setMemberData({
       first_name: '',
@@ -87,7 +81,7 @@ function MembersForm({ member, onClose }) {
     }
   }
 
-  const handlerChange = (e) => {
+  /* const handlerChange = (e) => {
     setMemberData(prev => ({
       ...prev,
       [e.target.name]: e.target.name === 'has_trainer' || e.target.name === 'active' ? e.target.checked : e.target.value
@@ -99,7 +93,70 @@ function MembersForm({ member, onClose }) {
         trainer_name: null
       }))
     }
-  }
+  } */
+
+  const handlerChange = (e) => {
+    const { name, value, checked, type } = e.target;
+
+    let newValue = type === 'checkbox' ? checked : value;
+    let isValid = true;
+
+    // Validaciones
+    if (name === 'first_name' || name === 'last_name') {
+      isValid = !/\d/.test(value);
+      newValue = value.replace(/\d/g, '');
+    } else if (name === 'ci') {
+      isValid = /^\d{0,11}$/.test(value);
+      newValue = value.replace(/\D/g, '').slice(0, 11);
+    } else if (name === 'phone') {
+      isValid = /^\d{0,8}$/.test(value);
+      newValue = value.replace(/\D/g, '').slice(0, 8);
+    }
+
+    setMemberData(prev => ({
+      ...prev,
+      [name]: newValue
+    }));
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: !isValid
+    }));
+
+    if (name === 'has_trainer' && !checked) {
+      setMemberData(prev => ({
+        ...prev,
+        trainer_name: null
+      }));
+    }
+  };
+
+  const isFormValid = () => {
+    if (memberData.has_trainer) {
+      return (
+        !errors.first_name && //campo requerido
+        !errors.last_name && //campo requerido
+        !errors.ci && //campo requerido
+        memberData.address !== '' && //campo requerido
+        memberData.ci.length === 11 &&
+        memberData.first_name !== '' &&
+        memberData.last_name !== '' &&
+        !errors.phone &&
+        memberData.phone.length === 8 &&
+        memberData.trainer_name !== ''
+      );
+    }
+    return (
+      !errors.first_name && //campo requerido
+      !errors.last_name && //campo requerido
+      !errors.ci && //campo requerido
+      memberData.address !== '' && //campo requerido
+      memberData.ci.length === 11 &&
+      memberData.first_name !== '' &&
+      memberData.last_name !== ''
+    );
+  };
+
 
   const handlerDatePaymentChange = (e) => {
 
@@ -138,7 +195,7 @@ function MembersForm({ member, onClose }) {
           '& .MuiRadioGroup-root': { display: 'flex' },
           '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
           padding: editing ? null : 2,
-          width: editing ? null : "100vw"
+          //width: editing ? null : "100vw"
         }}
         noValidate
         autoComplete="off"
@@ -241,7 +298,7 @@ function MembersForm({ member, onClose }) {
                 </Grid>
 
                 <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <FormLabel id="demo-row-radio-buttons-group-label">Género</FormLabel>
+                  <FormLabel style={{ marginLeft: "20px" }} id="demo-row-radio-buttons-group-label">Género</FormLabel>
                   <RadioGroup
                     row
                     aria-labelledby="demo-row-radio-buttons-group-label"
@@ -250,15 +307,15 @@ function MembersForm({ member, onClose }) {
                     value={memberData?.gender}
                   >
                     <FormControlLabel
-                      value="F"
-                      control={<Radio />}
-                      label="Femenino"
-                      style={{ width: "fit-content" }}
-                    />
-                    <FormControlLabel
                       value="M"
                       control={<Radio />}
                       label="Masculino"
+                      style={{ width: "fit-content" }}
+                    />
+                    <FormControlLabel
+                      value="F"
+                      control={<Radio />}
+                      label="Femenino"
                       style={{ width: "fit-content" }}
                     />
                   </RadioGroup>
@@ -317,9 +374,9 @@ function MembersForm({ member, onClose }) {
         <Button
           onClick={handlerSubmit}
           variant="contained"
-          color={sendInfo ? 'primary' : 'inherit'}
-          disabled={!sendInfo}
-          style={{ margin: ".9rem" }}
+          disabled={!isFormValid()}
+          color={isFormValid() ? "primary" : "inherit"}
+          style={{ margin: "5px 12px 100px" }}
         >
           {adding ? "Guardando..." : "Guardar"}
         </Button>
