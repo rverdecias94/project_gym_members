@@ -58,7 +58,7 @@ export default function Dashboard() {
         handlerElemntsByTrainer(membersTrainers)
       }
       setMembersActive(membersListActive);
-      setTrainerName(membersTrainers.trainers)
+      setTrainerName(membersTrainers.trainers?.filter(trainer => trainer !== null))
     }
   }, [membersList])
 

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import { supabase } from "../supabase/client";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export const Context = createContext();
 
@@ -18,54 +19,49 @@ export const ContextProvider = ({ children }) => {
   const [trainersList, setTrainersList] = useState([]);
   const [adding, setAdding] = useState(false);
   const [backdrop, setBackdrop] = useState(false);
+  const navigate = useNavigate();
 
 
+  const getMembers = async () => {
 
-  const getMembers = async (editing = false) => {
+    setBackdrop(true);
+    setLoadingMembersList(true);
+    setTimeout(async () => {
+      const { data } = await supabase.auth.getUser();
+      /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
+      await supabase
+        .from("members")
+        .select()
+        .eq("gym_id", data?.user?.id)
+        .then((res, err) => {
+          setLoadingMembersList(false);
+          setBackdrop(false);
+          if (err) {
+            console.error("Error fetching data:", err);
+            return;
+          }
+          if (res?.data?.length > 0) {
+            setMembersList(res.data.sort((a, b) => b.id - a.id));
+          }
+        })
+    }, 1000)
 
-    if (
-      membersList.length === 0 || editing
-    ) {
-      setBackdrop(true);
-      setLoadingMembersList(true);
-      setTimeout(async () => {
-        const { data } = await supabase.auth.getUser();
-        /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
-        await supabase
-          .from("members")
-          .select()
-          .eq("gym_id", data?.user?.id)
-          .then((res, err) => {
-            setLoadingMembersList(false);
-            setBackdrop(false);
-            if (err) {
-              console.error("Error fetching data:", err);
-              return;
-            }
-            if (res?.data?.length > 0) {
-              setMembersList(res.data);
-            }
-          })
-      }, 1000)
-    }
   }
 
   const getTrainers = async () => {
-    if (
-      trainersList.length === 0
-    ) {
-      setTimeout(async () => {
 
-        setBackdrop(true);
-        const { data } = await supabase.auth.getUser();
-        const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
+    setTimeout(async () => {
 
-        if (res?.data?.length > 0) {
-          setTrainersList(res.data);
-          setBackdrop(false);
-        }
-      }, 1000);
-    }
+      setBackdrop(true);
+      const { data } = await supabase.auth.getUser();
+      const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
+
+      if (res?.data?.length > 0) {
+        setTrainersList(res.data);
+        setBackdrop(false);
+      } else { setBackdrop(false); }
+    }, 1000);
+
   }
 
   const createNewMember = (memberData) => {
@@ -104,11 +100,14 @@ export const ContextProvider = ({ children }) => {
           pay_date: dataToSave.pay_date,
           gym_id: data?.user?.id,
         });
-        console.log(result)
+
+        setBackdrop(false);
+        navigate('/clientes');
         if (result) {
-          setBackdrop(false);
-          getMembers();
           toast.success("Registro guardado satisfactoriamente")
+          await getMembers();
+        } else {
+          toast.error("Registro no guardado")
         }
       } catch (error) {
         console.error(error)
@@ -133,13 +132,17 @@ export const ContextProvider = ({ children }) => {
         image_profile: dataToSave.image_profile,
         gym_id: data?.user?.id,
       });
-      console.log(result)
+
+      setBackdrop(false);
+      navigate('/entrenadores');
       if (result) {
-        setBackdrop(false);
-        toast.success("!Nuevo entrenador resgistrado!")
+        toast.success("¡Nuevo entrenador resgistrado!")
+        getTrainers();
+      } else {
+        toast.error("¡Falló la creación del entrenador!")
       }
     } catch (error) {
-      console.error(error)
+      toast.error(error)
     } finally {
       setAdding(false);
     }
@@ -152,11 +155,12 @@ export const ContextProvider = ({ children }) => {
       .delete()
       .eq("gym_id", data?.user?.id)
       .eq("id", id);
+    setBackdrop(false);
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
       getMembers();
-      setBackdrop(false);
     } else throw new Error(error);
+
 
   };
 
@@ -167,22 +171,22 @@ export const ContextProvider = ({ children }) => {
       .delete()
       .eq("gym_id", data?.user?.id)
       .eq("id", id);
+    setBackdrop(false);
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
       getTrainers();
-      setBackdrop(false);
     } else throw new Error(error);
-
   };
 
-  const updateMember = (member) => {
+  const updateClient = (member) => {
     setBackdrop(true);
     setAdding(true);
     setTimeout(async () => {
       try {
         const result = await supabase.from("members").update(member).eq("id", member?.id);
+        setBackdrop(false);
+        navigate('/clientes');
         if (result) {
-          setBackdrop(false);
           getMembers(true);
           toast.success("Registro actualizado satisfactoriamente")
         }
@@ -199,10 +203,13 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
     try {
       const result = await supabase.from("trainers").update(trainer).eq("id", trainer?.id);
+      setBackdrop(false);
       if (result) {
         toast.success("Registro actualizado satisfactoriamente")
+        navigate('/entrenadores');
         getTrainers();
-        setBackdrop(false);
+      } else {
+        toast.error("A ocurrido un error actualizando la información")
       }
     } catch (error) {
       console.error(error)
@@ -216,10 +223,12 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
+      setBackdrop(false);
       if (result) {
         toast.success("Registro actualizado satisfactoriamente")
         getMembers(true);
-        setBackdrop(false);
+      } else {
+        toast.error("A ocurrido un error actualizando la información")
       }
     } catch (error) {
       console.error(error)
@@ -233,10 +242,12 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
+      setBackdrop(true);
       if (result) {
         toast.success("Pago registrado satisfactoriamente");
         getMembers(true);
-        setBackdrop(true);
+      } else {
+        toast.error("A ocurrido un error actualizando el estado del pago");
       }
     } catch (error) {
       console.error(error)
@@ -250,11 +261,12 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
-      console.log(result);
+      setBackdrop(true);
       if (result) {
         toast.success("Reglas aplicadas satisfactoriamente a todos los clientes seleccionados");
         getMembers(true);
-        setBackdrop(true);
+      } else {
+        toast.error("Error aplicando las reglas");
       }
     } catch (error) {
       console.error(error)
@@ -274,7 +286,7 @@ export const ContextProvider = ({ children }) => {
       getTrainers,
       createNewMember,
       createNewTrainer,
-      updateMember,
+      updateClient,
       updateTrainer,
       deleteMember,
       deleteTrainer,

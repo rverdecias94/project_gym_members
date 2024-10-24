@@ -7,19 +7,35 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useMembers } from '../context/Context';
-import { Checkbox, FormControlLabel, TextField } from '@mui/material';
+import { Checkbox, FormControlLabel, MenuItem, TextField } from '@mui/material';
 import { useState } from 'react';
+import { useEffect } from 'react';
 
 
 
 export default function AddRuleDialog({
   handleClose, selectedRows, setSelectedRows, open, handlerChangeAmount, amountDays }) {
 
-  const { applyRuleToRows } = useMembers();
+  const { applyRuleToRows, trainersList } = useMembers();
   const [inactivateUsers, setActivateUsers] = useState(false);
   const [addMonth, setAddMonth] = useState(false);
   const [addDays, setAddDays] = useState(false);
+  const [new_trainer, setNewTrainer] = useState(false);
+  const [trainers, setTrainers] = useState(trainersList);
+  const [trainer_name, setTrainerName] = useState([]);
 
+  useEffect(() => {
+    if (trainersList?.length > 0) {
+      const trainers = [];
+
+      trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
+
+      trainersList.forEach(element => {
+        trainers.push({ value: element.name, label: element.name });
+      });
+      setTrainers(trainers);
+    }
+  }, [])
 
   const handleApplyRule = () => {
     if (inactivateUsers) {
@@ -67,10 +83,25 @@ export default function AddRuleDialog({
         setSelectedRows([]);
         setAddDays(false);
       }
+    } else if (new_trainer) {
+      let newRows = selectedRows.map(elem => {
+        let newTrainer = trainer_name;
+        return {
+          ...elem,
+          trainer_name: newTrainer
+        };
+      });
+      if (newRows.length > 0) {
+        applyRuleToRows(newRows);
+        handleClose(false);
+        setSelectedRows([]);
+        setAddDays(false);
+      }
     }
   };
-
-
+  const handlerChange = (e) => {
+    setTrainerName(e?.target?.value)
+  }
 
   return (
     <React.Fragment>
@@ -81,7 +112,7 @@ export default function AddRuleDialog({
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"Seleccione una regla a aplicar"}
+          {"Seleccione una regla a aplicar a los clientes seleccionados"}
         </DialogTitle>
         <DialogContent>
           <FormControlLabel
@@ -89,6 +120,7 @@ export default function AddRuleDialog({
             onChange={() => {
               setAddDays(false);
               setAddMonth(false);
+              setNewTrainer(false);
               setActivateUsers(!inactivateUsers);
               handlerChangeAmount("")
             }}
@@ -105,6 +137,7 @@ export default function AddRuleDialog({
               setActivateUsers(false);
               setAddDays(false);
               setAddMonth(!addMonth);
+              setNewTrainer(false);
               handlerChangeAmount("")
             }
             }
@@ -115,6 +148,45 @@ export default function AddRuleDialog({
               />}
             label="Adicionar un mes a la fecha de pago"
           />
+          <br />
+          <FormControlLabel
+            value={new_trainer}
+            onChange={() => {
+              setActivateUsers(false);
+              setAddMonth(false)
+              setAddDays(false)
+              setNewTrainer(!new_trainer)
+              handlerChangeAmount("")
+            }}
+            control={
+              <Checkbox
+                name='active'
+                checked={new_trainer}
+              />}
+            label="Nuevo entrenador"
+          />
+          {new_trainer &&
+            <TextField
+              id="outlined-select-currency"
+              select
+              label="Entrenador"
+              defaultValue="Todos"
+              fullWidth
+              placeholder="Entrenador"
+              name="trainer_name"
+              onChange={handlerChange}
+              value={trainer_name}
+              size='small'
+              sx={{ height: '100%' }}
+            >
+              {trainers.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          }
+          <br />
           <FormControlLabel
             value={addDays}
             onChange={() => {
@@ -122,6 +194,7 @@ export default function AddRuleDialog({
               setAddMonth(false)
               setAddDays(!addDays)
               handlerChangeAmount("")
+              setNewTrainer(false)
             }}
             control={
               <Checkbox
@@ -146,7 +219,7 @@ export default function AddRuleDialog({
         <DialogActions>
           <Button onClick={handleClose}>Cancelar</Button>
           <Button
-            disabled={!addMonth && !inactivateUsers && (!addDays || amountDays === "")}
+            disabled={!addMonth && !inactivateUsers && (!addDays || amountDays === "") && !new_trainer}
             onClick={handleApplyRule}
             autoFocus>
             Aceptar

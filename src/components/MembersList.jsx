@@ -125,21 +125,21 @@ function MembersList() {
           scrollButtons="auto"
           aria-label="scrollable auto tabs example"
         >
-          <Tab label="Por pagar" {...a11yProps(0)} />
-          <Tab label="Pago atrasado" {...a11yProps(1)} />
-          <Tab label="Activos" {...a11yProps(2)} />
+          <Tab label="Activos" {...a11yProps(0)} />
+          <Tab label="Por pagar" {...a11yProps(1)} />
+          <Tab label="Pago atrasado" {...a11yProps(2)} />
           <Tab label="Inactivos" {...a11yProps(3)} />
         </Tabs>
         {/* </ScrollableTabs> */}
       </Box>
       <CustomTabPanel value={value} index={0}>
-        <TablePendingPay membersPendingPayment={membersPendingPayment} />
+        <TableMembersList membersList={membersStatus?.active} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
-        <TablePagoRetardado membersPaymentDelayed={membersPaymentDelayed} />
+        <TablePendingPay membersPendingPayment={membersPendingPayment} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={2}>
-        <TableMembersList membersList={membersStatus?.active} />
+        <TablePagoRetardado membersPaymentDelayed={membersPaymentDelayed} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={3}>
         <MembersInactive membersList={membersStatus?.inactive} />

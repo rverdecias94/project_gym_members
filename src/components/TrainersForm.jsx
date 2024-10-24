@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState } from 'react';
-import { Button, TextField } from "@mui/material";
+import { Button, Grid, TextField } from "@mui/material";
 import { Box } from '@mui/material';
 import { Toaster } from 'react-hot-toast';
 import { useMembers } from '../context/Context';
@@ -20,7 +20,11 @@ function TrainersForm({ trainer, onClose }) {
   })
   const [editing, setEditing] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
-
+  const [errors, setErrors] = useState({
+    name: false,
+    last_name: false,
+    ci: false,
+  });
 
   useEffect(() => {
     if (trainer && Object.keys(trainer).length > 0) {
@@ -49,12 +53,39 @@ function TrainersForm({ trainer, onClose }) {
   }
 
   const handlerChange = (e) => {
+    let { name, value } = e.target;
+
+    let newValue = value;
+    let isValid = true;
+
+    if (name === 'first_name' || name === 'last_name') {
+      isValid = !/\d/.test(value);
+      newValue = value.replace(/\d/g, '');
+    } else if (name === 'ci') {
+      isValid = /^\d{0,11}$/.test(value);
+      newValue = value.replace(/\D/g, '').slice(0, 11);
+    } else if (name === 'phone') {
+      isValid = /^\d{0,8}$/.test(value);
+      newValue = value.replace(/\D/g, '').slice(0, 8);
+    }
+
     setTrainerData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
-    }))
-  }
+      [name]: newValue
+    }));
 
+    setErrors(prev => ({
+      ...prev,
+      [name]: !isValid
+    }));
+  }
+  const isFormValid = () => {
+    return (
+      !errors?.name &&
+      !errors?.last_name &&
+      !errors?.ci
+    );
+  };
 
   return (
     <>
@@ -65,14 +96,14 @@ function TrainersForm({ trainer, onClose }) {
       <Box
         component="form"
         sx={{
-          '& .MuiTextField-root': { margin: "8px 0", width: '100%' },
+          '& .MuiTextField-root': { margin: "8px 2.5%", width: '95%' },
           '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
           '& .MuiFormLabel-root': { width: '100%' },
-          '& .MuiButton-root': { width: '100%', backgroundColor: "#356dac" },
+          '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#356dac" },
           '& .MuiRadioGroup-root': { display: 'flex' },
           '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
           padding: editing ? null : 2,
-          width: editing ? null : "100vw"
+
         }}
         noValidate
         autoComplete="off"
@@ -84,41 +115,52 @@ function TrainersForm({ trainer, onClose }) {
             </Link>
           </IconButton>
         }
-        <form style={{ width: "100%" }}>
-          <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
-          <TextField
-            required
-            id="outlined-required"
-            label="Nombre"
-            name="name"
-            value={trainerData?.name}
-            placeholder='Ej: Jhon'
-            onChange={handlerChange}
-          />
-          <TextField
-            required
-            id="outlined-required"
-            label="Apellidos"
-            name="last_name"
-            value={trainerData?.last_name}
-            placeholder='Ej: Doe Smitt'
-            onChange={handlerChange}
-          />
-          <TextField
-            required
-            id="outlined-required"
-            label="CI"
-            name="ci"
-            value={trainerData?.ci}
-            placeholder='CI: 35123145685'
-            onChange={handlerChange}
-          />
-
-          <Button disabled={adding} onClick={handlerSubmit} variant="contained">
-            {adding ? "Guardando..." : "Guardar"}
-          </Button>
-
+        <form>
+          <Grid container>
+            <Grid item lg={6} xl={6} md={6} sm={12} xs={12}>
+              <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
+            </Grid>
+            <Grid item lg={6} xl={6} md={6} sm={12} xs={12} style={{ marginTop: "2.5rem" }}>
+              <TextField
+                required
+                id="outlined-required"
+                label="Nombre"
+                name="name"
+                value={trainerData?.name}
+                placeholder='Ej: Jhon'
+                onChange={handlerChange}
+              />
+              <TextField
+                required
+                id="outlined-required"
+                label="Apellidos"
+                name="last_name"
+                value={trainerData?.last_name}
+                placeholder='Ej: Doe Smitt'
+                onChange={handlerChange}
+              />
+              <TextField
+                required
+                id="outlined-required"
+                label="CI"
+                name="ci"
+                value={trainerData?.ci}
+                placeholder='CI: 35123145685'
+                onChange={handlerChange}
+              />
+              <Button
+                onClick={handlerSubmit}
+                variant="contained"
+                disabled={!isFormValid()}
+                color={isFormValid() ? "primary" : "inherit"}
+                style={{ margin: "5px 12px 100px" }}
+              >
+                {adding ? "Guardando..." : "Guardar"}
+              </Button>
+            </Grid>
+          </Grid>
         </form>
+
       </Box>
     </>
   )

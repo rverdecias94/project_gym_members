@@ -120,11 +120,11 @@ const PhoneSignIn = () => {
       ) : (
         <div>
           <TextField
-            label="Código OTP"
+            label="Código"
             type="text"
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value)}
-            placeholder="Introduce el código OTP"
+            placeholder="_ _ _ _ _ _"
             fullWidth
           />
           <Button
@@ -132,7 +132,7 @@ const PhoneSignIn = () => {
             onClick={handleVerifyOtp}
             style={{ marginTop: '20px' }}
           >
-            Verificar OTP
+            Verificar Código
           </Button>
         </div>
       )}

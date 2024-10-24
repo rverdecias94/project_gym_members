@@ -22,7 +22,7 @@ export default function Navbar({ profile: { avatar = null, name = "Admin" } }) {
         reverseOrder={false}
       />
 
-      <span style={{ display: "flex", alignItems: "center" }}>
+      <span style={{ display: "flex", alignItems: "center", width: "30%" }}>
         {/* <img src="/logo.png" alt="logo" style={{ position: "absolute", width: 85, height: 44, borderRadius: 5, top: 20 }} /> */}
       </span>
       <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around" }}>

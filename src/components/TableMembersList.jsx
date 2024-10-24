@@ -21,6 +21,7 @@ import jsPDF from 'jspdf';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
@@ -174,7 +175,90 @@ export const TableMembersList = ({ membersList = [] }) => {
         </div>
       ),
     },
+    /* {
+      field: '',
+      headerName: 'Contacto',
+      width: 130,
+      renderCell: ({ row }) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {
+            row.phone !== "" &&
+            <WhatsAppIcon style={{ color: "green" }}
+              // onClick={() => enviarNotificacion(row)}
+              onClick={() => enviarNotificacionesMasivas(row)}
+            />
+          }
+        </div>
+      ),
+    }, */
   ];
+
+
+
+  const enviarNotificacionesMasivas = async () => {
+    const clientesConDeuda = [
+      {
+        first_name: "Roberto",
+        last_name: "Verdecia",
+        pay_date: "2024-10-25",
+        phone: "56408532"
+      },
+      {
+        first_name: "Yani",
+        last_name: "Verdecia",
+        pay_date: "2024-10-24",
+        phone: "58582428"
+      },
+    ]
+    try {
+      for (const cliente of clientesConDeuda) {
+        // Llamar a la función que envía la notificación a cada cliente
+        await enviarNotificacion(cliente);
+      }
+      console.log('Notificaciones enviadas correctamente.');
+    } catch (error) {
+      console.error('Error al enviar las notificaciones:', error);
+    }
+  };
+
+  const enviarNotificacion = async ({ first_name, last_name, phone, pay_date }) => {
+    let nombre = [first_name, last_name].join(" ");
+    const phoneNumber = `53${phone}`;
+    /* const message = encodeURIComponent(`Hola ${nombre}, le recordamos que próximamente se cumplirá su fecha de pago (${pay_date}).`); */
+    try {
+      const response = await fetch('/rest/v1/rpc/sendWhatsappNotification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apiKey: 'https://gjgclazfoptzgjdbxvgd.supabase.co',
+        },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          nombre: nombre,
+          pay_date: pay_date,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log(`Notificación enviada`, data);
+      } else {
+        console.error(`Error enviando notificación`, data);
+      }
+    } catch (error) {
+      console.error('Error en cliente:', error);
+    }
+  };
+
+  /* const enviarNotificacion2 = ({ first_name, last_name, pay_date, phone }) => {
+    let nombre = [first_name, last_name].join(" ");
+    const phoneNumber = `53${phone}`;
+    const message = encodeURIComponent(`Hola ${nombre}, le recordamos que próximamente se cumplirá su fecha de pago (${pay_date}).`);
+
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+    //window.open(`https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${message}&type=phone_number&app_absent=0`, '_blank');
+  }; */
 
   const downloadPDF = () => {
     const data = [...membersList];
@@ -204,6 +288,9 @@ export const TableMembersList = ({ membersList = [] }) => {
         <Grid item xl={8} lg={7} md={7} sm={12} xs={12}>
           <Grid container style={{ display: "flex", justifyContent: "start", gap: 15 }}>
             <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
+              <button onClick={enviarNotificacionesMasivas}>
+                Enviar Notificaciones por WhatsApp
+              </button>
               <Button
                 variant='outlined'
                 disabled={selectedRows.length === 0}

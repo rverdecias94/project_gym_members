@@ -16,7 +16,7 @@ import IconButton from '@mui/material/IconButton';
 import { Link } from 'react-router-dom';
 
 function MembersForm({ member, onClose }) {
-  const { createNewMember, adding, updateMember, trainersList } = useMembers();
+  const { createNewMember, adding, updateClient, trainersList } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
     last_name: '',
@@ -64,7 +64,7 @@ function MembersForm({ member, onClose }) {
 
     member.image_profile = imageBase64;
     console.log(editing)
-    editing ? await updateMember(member) : await createNewMember(member);
+    editing ? await updateClient(member) : await createNewMember(member);
     setMemberData({
       first_name: '',
       last_name: '',
@@ -137,23 +137,23 @@ function MembersForm({ member, onClose }) {
         !errors.first_name && //campo requerido
         !errors.last_name && //campo requerido
         !errors.ci && //campo requerido
-        memberData.address !== '' && //campo requerido
-        memberData.ci.length === 11 &&
-        memberData.first_name !== '' &&
-        memberData.last_name !== '' &&
+        memberData?.address !== '' && //campo requerido
+        memberData?.ci?.length === 11 &&
+        memberData?.first_name !== '' &&
+        memberData?.last_name !== '' &&
         !errors.phone &&
-        memberData.phone.length === 8 &&
-        memberData.trainer_name !== ''
+        memberData?.phone?.length === 8 &&
+        memberData?.trainer_name !== ''
       );
     }
     return (
-      !errors.first_name && //campo requerido
-      !errors.last_name && //campo requerido
-      !errors.ci && //campo requerido
-      memberData.address !== '' && //campo requerido
-      memberData.ci.length === 11 &&
-      memberData.first_name !== '' &&
-      memberData.last_name !== ''
+      !errors?.first_name && //campo requerido
+      !errors?.last_name && //campo requerido
+      !errors?.ci && //campo requerido
+      memberData?.address !== '' && //campo requerido
+      memberData?.ci?.length === 11 &&
+      memberData?.first_name !== '' &&
+      memberData?.last_name !== ''
     );
   };
 
@@ -284,18 +284,20 @@ function MembersForm({ member, onClose }) {
 
               {/* FIla 3 */}
               <Grid container>
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <FormControlLabel
-                    value={memberData?.has_trainer}
-                    onChange={handlerChange}
-                    control={
-                      <Checkbox
-                        name='has_trainer'
-                        checked={memberData?.has_trainer}
-                      />}
-                    label="Solicita entrenador"
-                  />
-                </Grid>
+                {trainers.length > 0 &&
+                  <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                    <FormControlLabel
+                      value={memberData?.has_trainer}
+                      onChange={handlerChange}
+                      control={
+                        <Checkbox
+                          name='has_trainer'
+                          checked={memberData?.has_trainer}
+                        />}
+                      label="Solicita entrenador"
+                    />
+                  </Grid>
+                }
 
                 <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
                   <FormLabel style={{ marginLeft: "20px" }} id="demo-row-radio-buttons-group-label">Género</FormLabel>
@@ -323,42 +325,42 @@ function MembersForm({ member, onClose }) {
               </Grid>
 
               {/* FILA 4 */}
-              <Grid container>
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <TextField
-                    id="outlined-select-currency"
-                    select
-                    disabled={!memberData?.has_trainer}
-                    label="Entrenador"
-                    defaultValue=""
-                    placeholder="Selecciona entrenador"
-                    name="trainer_name"
-                    onChange={handlerChange}
-                    value={memberData?.trainer_name}
-                  >
-                    {trainers.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
+              {memberData?.has_trainer &&
+                <Grid container>
+                  <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                    <TextField
+                      id="outlined-select-currency"
+                      select
+                      disabled={!memberData?.has_trainer}
+                      label="Entrenador"
+                      defaultValue=""
+                      placeholder="Selecciona entrenador"
+                      name="trainer_name"
+                      onChange={handlerChange}
+                      value={memberData?.trainer_name}
+                    >
+                      {trainers.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
 
-                {/* FILA 5 */}
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <TextField
-                    required
-                    disabled={!memberData?.has_trainer}
-                    id="outlined-required"
-                    label="Tel. Cliente"
-                    name="phone"
-                    value={memberData?.phone}
-                    placeholder='55565758'
-                    onChange={handlerChange}
-                  />
+                  <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                    <TextField
+                      required
+                      disabled={!memberData?.has_trainer}
+                      id="outlined-required"
+                      label="Tel. Cliente"
+                      name="phone"
+                      value={memberData?.phone}
+                      placeholder='55565758'
+                      onChange={handlerChange}
+                    />
+                  </Grid>
                 </Grid>
-              </Grid>
-
+              }
               {editing &&
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <MobileDatePicker

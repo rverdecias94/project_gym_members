@@ -26,7 +26,7 @@ function App() {
       if (!session) {
         navigate('/login');
         setsessionActive(false);
-      } else {
+      } else if (event === "INITIAL_SESSION") {
         navigate('/panel')
         if (session?.user?.user_metadata) {
           let { avatar_url, name } = session.user.user_metadata;
