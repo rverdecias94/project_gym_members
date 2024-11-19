@@ -8,10 +8,13 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import "./css/styles.css"
 import ViewDetails from './ViewDetails';
 import ContactPageIcon from '@mui/icons-material/ContactPage';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import { useTheme } from '@mui/material/styles';
 
 
 // eslint-disable-next-line react/prop-types
 export const TablePendingPay = ({ membersPendingPayment = [] }) => {
+  const theme = useTheme();
   const { trainersList, makePayment, adding } = useMembers();
   const [membersPendingOriginal, setMembersPendingOriginal] = useState([]);
   const [membersPending, setMembersPending] = useState([]);
@@ -43,7 +46,6 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
 
   useEffect(() => {
     if (trainer_name !== "") {
-      console.log(trainer_name)
       let members = [...membersPendingOriginal]
       if (trainer_name !== "Sin Entrenador" && trainer_name !== "Todos") {
         setMembersPending(members.filter(elem => elem.trainer_name === trainer_name));
@@ -118,7 +120,35 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
         </div>
       ),
     },
+    {
+      field: '',
+      headerName: 'Contacto',
+      width: 130,
+      renderCell: ({ row }) => (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          height: "100%",
+          justifyContent: "center"
+        }}>
+          {
+            row.phone !== "" &&
+            <WhatsAppIcon style={{ color: theme.palette.primary.main, cursor: "pointer" }}
+              onClick={() => enviarNotificacion(row)}
+            />
+          }
+        </div>
+      ),
+    },
   ];
+
+  const enviarNotificacion = ({ first_name, last_name, pay_date, phone }) => {
+    let nombre = [first_name, last_name].join(" ");
+    const phoneNumber = `53${phone}`;
+    const message = encodeURIComponent(`Hola ${nombre}, le recordamos que próximamente se cumplirá su fecha de pago (${pay_date}).`);
+
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+  };
 
   const handlerMakePayment = async () => {
     if (selectedRows.length > 0) {

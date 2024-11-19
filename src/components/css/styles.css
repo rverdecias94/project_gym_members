@@ -62,7 +62,26 @@
   cursor: pointer;
 }
 
+.logo {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%
+}
+
+.icon-edit {
+  position: absolute;
+  right: 1rem;
+  top: 15px;
+}
+
 /* Responsive client secction */
+@media only screen and (max-width: 1024px) {
+  .hide {
+    display: none;
+  }
+}
+
 @media only screen and (max-width: 768px) {
 
   .text-dw-pdf,
@@ -91,7 +110,14 @@
     width: 100vw;
     height: 4rem;
     padding: 1rem;
-    background-color: #356dac;
+    background-color: #217b7c;
+  }
+
+  .logo_mobile {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%
   }
 
   .btn-add-client {

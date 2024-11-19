@@ -59,7 +59,7 @@ const Signup = () => {
               onChange={(e) => setEmail(e.target.value)}
               fullWidth
               inputProps={{ style: { color: "black" } }}
-              InputLabelProps={{ style: { color: "#356dac" } }}
+              InputLabelProps={{ style: { color: "#217b7c" } }}
               sx={{ marginTop: 15 }}
             />
             <Grid style={{ width: "100%", position: "relative" }}>
@@ -74,7 +74,7 @@ const Signup = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 fullWidth
                 inputProps={{ style: { color: "black" } }}
-                InputLabelProps={{ style: { color: "#356dac" } }}
+                InputLabelProps={{ style: { color: "#217b7c" } }}
                 sx={{ marginTop: 3 }}
               />
               <Button
@@ -87,7 +87,7 @@ const Signup = () => {
 
             <Button
               variant="contained"
-              style={{ width: "100%", backgroundColor: "#356dac", color: "#fff", fontWeight: "bolder", marginTop: 20 }}
+              style={{ width: "100%", backgroundColor: "#217b7c", color: "#fff", fontWeight: "bolder", marginTop: 20 }}
               type="submit">
               Registrarme
             </Button>

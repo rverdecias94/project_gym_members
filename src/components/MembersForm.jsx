@@ -63,7 +63,7 @@ function MembersForm({ member, onClose }) {
     let member = { ...memberData }
 
     member.image_profile = imageBase64;
-    console.log(editing)
+
     editing ? await updateClient(member) : await createNewMember(member);
     setMemberData({
       first_name: '',
@@ -151,6 +151,7 @@ function MembersForm({ member, onClose }) {
       !errors?.last_name && //campo requerido
       !errors?.ci && //campo requerido
       memberData?.address !== '' && //campo requerido
+      memberData?.phone?.length === 8 && //campo requerido
       memberData?.ci?.length === 11 &&
       memberData?.first_name !== '' &&
       memberData?.last_name !== ''
@@ -191,7 +192,7 @@ function MembersForm({ member, onClose }) {
           '& .MuiMobileDatePicker-root': { m: 1, width: '100%' },
           '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
           '& .MuiFormLabel-root': { width: '100%' },
-          '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#356dac", float: "right" },
+          '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#217b7c", float: "right" },
           '& .MuiRadioGroup-root': { display: 'flex' },
           '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
           padding: editing ? null : 2,
@@ -325,8 +326,8 @@ function MembersForm({ member, onClose }) {
               </Grid>
 
               {/* FILA 4 */}
-              {memberData?.has_trainer &&
-                <Grid container>
+              <Grid container>
+                {memberData?.has_trainer &&
                   <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
                     <TextField
                       id="outlined-select-currency"
@@ -346,21 +347,21 @@ function MembersForm({ member, onClose }) {
                       ))}
                     </TextField>
                   </Grid>
-
-                  <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                    <TextField
-                      required
-                      disabled={!memberData?.has_trainer}
-                      id="outlined-required"
-                      label="Tel. Cliente"
-                      name="phone"
-                      value={memberData?.phone}
-                      placeholder='55565758'
-                      onChange={handlerChange}
-                    />
-                  </Grid>
+                }
+                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                  <TextField
+                    required
+                    id="outlined-required"
+                    label="Tel. Cliente"
+                    name="phone"
+                    value={memberData?.phone}
+                    placeholder='55565758'
+                    onChange={handlerChange}
+                  />
                 </Grid>
-              }
+              </Grid>
+
+
               {editing &&
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <MobileDatePicker

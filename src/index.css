@@ -26,7 +26,7 @@
 /* NAVBAR */
 .navbar {
   padding: 10px 37px;
-  background-color: #356dac;
+  height: auto;
   display: flex;
   justify-content: space-between;
   font-family: sans-serif;
@@ -35,12 +35,20 @@
   align-items: center;
 }
 
+.navbar-light {
+  background-color: #217b7c;
+}
+
+.navbar-dark {
+  background-color: #0a1628;
+}
+
 .btn_logout {
   background: white;
   border: none;
   border-radius: 5px;
   padding: 5px 5px;
-  color: #356dac;
+  color: #217b7c;
   cursor: pointer;
   font-family: sans-serif;
   font-weight: 700;

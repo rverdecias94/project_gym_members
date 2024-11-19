@@ -1,5 +1,5 @@
 
-import { Button, Divider, Grid } from '@mui/material';
+import { Button, Divider, Grid, useTheme } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { useMembers } from '../context/Context';
@@ -7,59 +7,69 @@ import { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-
+import { supabase } from '../supabase/client';
 
 const pieParams = { height: 250, margin: { right: 5 } };
-const palette = ['rgb(53 109 172)', 'rgb(210 131 25 / 50%)'];
 
 export default function Dashboard() {
-  const { getTrainers, getMembers, membersList, trainersList } = useMembers();
+  const theme = useTheme();
+
+  const { getTrainers, getMembers, membersList, trainersList, setNavBarOptions } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
   const [elemntsByTrainer, setElemntsByTrainer] = useState([]);
   const [trainersName, setTrainerName] = useState([]);
   const [membersActive, setMembersActive] = useState([]);
-  //const [initialMsg, setInitalMsg] = useState(true);
 
-
+  const palette = [theme.palette.primary.main, theme.palette.secondary.dark];
   useEffect(() => {
     setTimeout(() => {
       getTrainers();
       getMembers();
+      setNavBarOptions(true);
     }, 500)
   }, [])
 
 
   useEffect(() => {
-    if (membersList.length > 0) {
-      let membersListActive = membersList.filter(item => item.active)
+    const dataForDashborad = async () => {
+      if (membersList.length > 0) {
+        let membersListActive = membersList.filter(item => item.active)
 
-      let membersTrainers = membersListActive.reduce((acc, member) => {
-        if (member.has_trainer) {
-          const trainerName = member.trainer_name;
-          if (!acc.trainers?.includes(trainerName)) {
-            acc.trainers.push(trainerName);
+        const { data } = await supabase.auth.getUser();
+        await supabase
+          .from("info_general_gym")
+          .update({ clients: membersListActive.length })
+          .eq("owner_id", data?.user?.id);
+
+
+        let membersTrainers = membersListActive.reduce((acc, member) => {
+          if (member.has_trainer) {
+            const trainerName = member.trainer_name;
+            if (!acc.trainers?.includes(trainerName)) {
+              acc.trainers.push(trainerName);
+            }
+            if (!acc.groupByTrainer[trainerName]) {
+              acc.groupByTrainer[trainerName] = [];
+            }
+            acc.groupByTrainer[trainerName].push(member);
+            acc.withTrainer.push(member);
+          } else {
+            acc.withoutTrainer.push(member);
           }
-          if (!acc.groupByTrainer[trainerName]) {
-            acc.groupByTrainer[trainerName] = [];
-          }
-          acc.groupByTrainer[trainerName].push(member);
-          acc.withTrainer.push(member);
-        } else {
-          acc.withoutTrainer.push(member);
+          member.gender === "M" ? acc.male.push(member) : acc.female.push(member);
+          return acc;
+
+        }, { groupByTrainer: [], withTrainer: [], withoutTrainer: [], male: [], female: [], trainers: [] });
+
+        if (membersTrainers) {
+          setRelationMembersTrainers(membersTrainers);
+          handlerElemntsByTrainer(membersTrainers)
         }
-        member.gender === "M" ? acc.male.push(member) : acc.female.push(member);
-        return acc;
-
-      }, { groupByTrainer: [], withTrainer: [], withoutTrainer: [], male: [], female: [], trainers: [] });
-
-      if (membersTrainers) {
-        setRelationMembersTrainers(membersTrainers);
-        console.log(membersTrainers)
-        handlerElemntsByTrainer(membersTrainers)
+        setMembersActive(membersListActive);
+        setTrainerName(membersTrainers.trainers?.filter(trainer => trainer !== null))
       }
-      setMembersActive(membersListActive);
-      setTrainerName(membersTrainers.trainers?.filter(trainer => trainer !== null))
     }
+    dataForDashborad();
   }, [membersList])
 
 
@@ -89,19 +99,31 @@ export default function Dashboard() {
         <Grid container style={{ display: "flex", justifyContent: "start", flexWrap: "wrap" }}>
 
           {((membersActive.length > 0 || trainersList.length > 0)) &&
-            <Grid item xl={3} lg={3} md={6} sm={6} xs={12} style={{ marginBottom: 20 }}>
-              <Grid container style={{ height: 250 }}>
-                <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 10 }}>
-                  <span style={{ background: "rgb(210 131 25 / 50%)", color: "white", width: "50%", padding: 7, textAlign: "center", borderRadius: 3 }}>
-                    Clientes activos: {membersActive.length}
-                  </span>
-                </Grid>
-                <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 10 }}>
-                  <span style={{ background: "rgb(210 131 25 / 50%)", color: "white", width: "50%", padding: 7, textAlign: "center", borderRadius: 3 }}>
-                    Entrenadores: {trainersList.length}
-                  </span>
-                </Grid>
-              </Grid>
+            <Grid item xl={3} lg={3} md={6} sm={6} xs={12} style={{
+              textAlign: 'center'
+            }}>
+              <BarChart
+                sx={{
+                  '& .MuiBarElement-root:nth-of-type(1)': {
+                    fill: theme.palette.mode === 'dark' ? theme.palette.primary.main : theme.palette.primary.main,
+                  },
+                  '& .MuiBarElement-root:nth-of-type(2)': { fill: theme.palette.mode === 'dark' ? theme.palette.secondary.main : theme.palette.secondary.dark },
+                }}
+                xAxis={[{
+                  scaleType: 'band',
+                  data: ['Clientes activos', 'Entrenadores'],
+                  categoryGapRatio: 0.5,
+                  barGapRatio: 1
+                }]}
+                series={[{ data: [membersActive.length, trainersList.length] }]}
+                height={250}
+                slotProps={{
+                  bar: {
+                    clipPath: `inset(0px round 3px 3px 0px 0px)`,
+                  },
+                }}
+              />
+              <span>Totales</span>
             </Grid>
           }
 
@@ -141,7 +163,10 @@ export default function Dashboard() {
             }}>
               <BarChart
                 sx={{
-                  '& .MuiBarElement-root': { fill: "#356dac" },
+                  '& .MuiBarElement-root:nth-of-type(1)': {
+                    fill: theme.palette.mode === 'dark' ? theme.palette.primary.main : theme.palette.primary.main,
+                  },
+                  '& .MuiBarElement-root:nth-of-type(2)': { fill: theme.palette.mode === 'dark' ? theme.palette.secondary.main : theme.palette.secondary.dark },
                 }}
                 xAxis={[{
                   scaleType: 'band',
@@ -167,7 +192,12 @@ export default function Dashboard() {
             }}>
               <BarChart
                 sx={{
-                  '& .MuiBarElement-root': { fill: "#356dac" },
+                  '& .MuiBarElement-root:nth-of-type(odd)': {
+                    fill: theme.palette.mode === 'dark' ? theme.palette.primary.main : theme.palette.primary.main,
+                  },
+                  '& .MuiBarElement-root:nth-of-type(even)': {
+                    fill: theme.palette.mode === 'dark' ? theme.palette.secondary.main : theme.palette.secondary.dark,
+                  },
                 }}
                 xAxis={[{
                   scaleType: 'band', data: trainersName, categoryGapRatio: 0.5,
@@ -196,7 +226,7 @@ export default function Dashboard() {
             <Link to="/new_member" style={{ color: "white", textDecoration: "none" }}>
               <Button
                 variant="contained"
-                style={{ display: "flex", justifyContent: "space-evenly", background: "#356dac" }}
+                style={{ display: "flex", justifyContent: "space-evenly", background: theme.palette.mode === 'dark' ? theme.palette.accent.main : theme.palette.accent.dark, color: "white" }}
               >
                 <PersonAddIcon sx={{ mr: 1.2 }} /> Cliente
               </Button>

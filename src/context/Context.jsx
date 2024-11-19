@@ -19,16 +19,16 @@ export const ContextProvider = ({ children }) => {
   const [trainersList, setTrainersList] = useState([]);
   const [adding, setAdding] = useState(false);
   const [backdrop, setBackdrop] = useState(false);
+  const [navBarOptions, setNavBarOptions] = useState(false);
   const navigate = useNavigate();
 
 
-  const getMembers = async () => {
 
+  const getMembers = async () => {
     setBackdrop(true);
     setLoadingMembersList(true);
     setTimeout(async () => {
       const { data } = await supabase.auth.getUser();
-      /* "id,created_at,first_name,last_name,address,phone,active,pay_date,ci,has_trainer,gender,trainer_name" */
       await supabase
         .from("members")
         .select()
@@ -69,22 +69,14 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
     const fechaActual = new Date();
     fechaActual.setMonth(fechaActual.getMonth() + 1);
-    // Verificar si el mes resultante es enero para ajustar el año
     if (fechaActual.getMonth() === 0) {
       fechaActual.setFullYear(fechaActual.getFullYear() + 1);
     }
 
-    // Formatear la fecha en formato día, mes, año
-    const dia = fechaActual.getDate();
-    const mes = fechaActual.getMonth() + 1;
-    const año = fechaActual.getFullYear();
-
     let dataToSave = { ...memberData }
-    // Actualizar la clave pay_date en el objeto
-    dataToSave.pay_date = `${año}-${mes}-${dia}`;
+    dataToSave.pay_date = fechaActual;
 
     setTimeout(async () => {
-
       try {
         const { data } = await supabase.auth.getUser();
         const result = await supabase.from("members").insert({
@@ -122,7 +114,6 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
 
     let dataToSave = { ...trainerData }
-    console.log(dataToSave);
     try {
       const { data } = await supabase.auth.getUser();
       const result = await supabase.from("trainers").insert({
@@ -282,6 +273,7 @@ export const ContextProvider = ({ children }) => {
       trainersList,
       adding,
       backdrop,
+      navBarOptions,
       getMembers,
       getTrainers,
       createNewMember,
@@ -294,6 +286,7 @@ export const ContextProvider = ({ children }) => {
       makePayment,
       setBackdrop,
       applyRuleToRows,
+      setNavBarOptions
     }}>
     {children}
   </Context.Provider>

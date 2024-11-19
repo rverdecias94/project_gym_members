@@ -74,7 +74,6 @@ const ImageUploader = ({ setImageBase64, image }) => {
   const saveImage = async (event) => {
     setImageSrc(null);
     const file = event.target.files[0];
-    console.log(file)
     if (file) {
       const resizedImage = await resizeImage(file, 500, 500, 50);
       setSelectedImage(resizedImage);
@@ -221,7 +220,7 @@ const ImageUploader = ({ setImageBase64, image }) => {
               <Button
                 variant="contained"
                 color='success'
-                style={{ width: "fit-content", padding: 10, margin: "4% 0px 0px 0px", backgroundColor: "#356dac" }}
+                style={{ width: "fit-content", padding: 10, margin: "4% 0px 0px 0px", backgroundColor: "#217b7c" }}
                 onClick={() => setFacingMode(facingMode === 'user' ? 'environment' : 'user')}
               >
                 <FlipCameraIosIcon />

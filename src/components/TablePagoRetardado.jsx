@@ -7,10 +7,13 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import jsPDF from 'jspdf';
 import ViewDetails from './ViewDetails';
 import ContactPageIcon from '@mui/icons-material/ContactPage';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import { useTheme } from '@mui/material/styles';
 
 
 // eslint-disable-next-line react/prop-types
 export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
+  const theme = useTheme();
   const [selectedRows, setSelectedRows] = useState([]);
   const { trainersList, makePayment, adding } = useMembers();
   const [membersPaymentDelayedOriginal, setMembersPaymentDelayedOriginal] = useState([]);
@@ -118,7 +121,35 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         </div>
       ),
     },
+    {
+      field: '',
+      headerName: 'Contacto',
+      width: 130,
+      renderCell: ({ row }) => (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          height: "100%",
+          justifyContent: "center"
+        }}>
+          {
+            row.phone !== "" &&
+            <WhatsAppIcon style={{ color: theme.palette.primary.main, cursor: "pointer" }}
+              onClick={() => enviarNotificacion(row)}
+            />
+          }
+        </div>
+      ),
+    },
   ];
+
+  const enviarNotificacion = ({ first_name, last_name, pay_date, phone }) => {
+    let nombre = [first_name, last_name].join(" ");
+    const phoneNumber = `53${phone}`;
+    const message = encodeURIComponent(`Hola ${nombre}, le informamos que su fecha de pago ya venció el pasado (${pay_date}).`);
+
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+  };
 
   const handlerMakePayment = () => {
     const fechaActual = new Date();
