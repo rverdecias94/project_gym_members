@@ -75,6 +75,53 @@
   top: 15px;
 }
 
+.charts-container {
+  display: flex !important;
+  justify-content: start !important;
+  flex-wrap: nowrap !important;
+  gap: 15px !important;
+  padding: 15px;
+}
+
+.chart-box-dark {
+  text-align: center;
+  background: #162131;
+  border: 1px solid #6164c7;
+  border-radius: 8px;
+  position: relative;
+}
+
+.chart-box-light {
+  text-align: center;
+  background: #ebecfd;
+  border: 1px solid #8c90fc;
+  border-radius: 8px;
+  position: relative;
+}
+
+.chart-box-dark:hover,
+.chart-box-light:hover {
+  box-shadow: 0px 2px 11px -3px #8c90fc;
+  border: 1px solid #6164c7;
+  transition: all 0.3s ease-in-out;
+  -webkit-transition: all 0.3s ease-in-out;
+}
+
+.client-btn-light {
+  background: #e49c10 !important;
+  color: white !important;
+  border: 1px solid #e49c10 !important;
+}
+
+.client-btn-dark {
+  background: #e49c10 !important;
+  color: white !important;
+}
+
+.client-btn-dark:hover {
+  background: #c88a0d !important;
+}
+
 /* Responsive client secction */
 @media only screen and (max-width: 1024px) {
   .hide {
@@ -83,6 +130,11 @@
 }
 
 @media only screen and (max-width: 768px) {
+  .charts-container {
+    display: flex !important;
+    justify-content: start !important;
+    flex-wrap: wrap !important;
+  }
 
   .text-dw-pdf,
   .text-add-client {
@@ -110,7 +162,7 @@
     width: 100vw;
     height: 4rem;
     padding: 1rem;
-    background-color: #217b7c;
+    background-color: #6164c7;
   }
 
   .logo_mobile {

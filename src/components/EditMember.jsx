@@ -15,14 +15,12 @@ export default function EditMember({ handleClose, memberInfo, open }) {
       <Dialog
         open={open}
         onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-        fullScreen
+        maxWidth={"lg"}
       >
         <DialogTitle id="alert-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {"Editar"}
           <IconButton aria-label="cancel" size="large">
-            <CancelIcon onClick={handleClose} sx={{ color: "#1976d2" }}></CancelIcon>
+            <CancelIcon onClick={handleClose} sx={{ color: "#6164c7" }}></CancelIcon>
           </IconButton>
         </DialogTitle>
         <DialogContent>

@@ -220,7 +220,7 @@ const ImageUploader = ({ setImageBase64, image }) => {
               <Button
                 variant="contained"
                 color='success'
-                style={{ width: "fit-content", padding: 10, margin: "4% 0px 0px 0px", backgroundColor: "#217b7c" }}
+                style={{ width: "fit-content", padding: 10, margin: "4% 0px 0px 0px", backgroundColor: "#6164c7" }}
                 onClick={() => setFacingMode(facingMode === 'user' ? 'environment' : 'user')}
               >
                 <FlipCameraIosIcon />

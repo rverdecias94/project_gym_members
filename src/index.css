@@ -25,7 +25,8 @@
 
 /* NAVBAR */
 .navbar {
-  padding: 10px 37px;
+  padding: 15px 37px;
+  margin-bottom: 10px;
   height: auto;
   display: flex;
   justify-content: space-between;
@@ -36,7 +37,7 @@
 }
 
 .navbar-light {
-  background-color: #217b7c;
+  background-color: #4f52b2;
 }
 
 .navbar-dark {
@@ -48,7 +49,7 @@
   border: none;
   border-radius: 5px;
   padding: 5px 5px;
-  color: #217b7c;
+  color: #4f52b2;
   cursor: pointer;
   font-family: sans-serif;
   font-weight: 700;

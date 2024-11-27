@@ -7,6 +7,8 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 // eslint-disable-next-line react/prop-types
 const SignIn = ({ mode, toggleTheme }) => {
+
+  const backgroundColor = "linear-gradient(180deg, rgb(220 221 249 / 50%), #aaace4de)"
   const theme = useTheme();
   return (
     <Grid
@@ -16,7 +18,7 @@ const SignIn = ({ mode, toggleTheme }) => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.background.default,
+        background: theme.palette.mode === 'dark' ? theme.palette.background.default : backgroundColor,
         padding: '20px',
         position: 'relative',
       }}
@@ -24,11 +26,12 @@ const SignIn = ({ mode, toggleTheme }) => {
       <IconButton title="Oscuro / Claro" onClick={toggleTheme} color="inherit" style={{ marginRight: 10, position: "absolute", top: "1rem", right: "1rem" }}>
         {mode ? <DarkModeIcon /> : <Brightness7 />}
       </IconButton>
-      <Grid item lg={4} xl={4} md={5} sm={6} xs={12} style={{
+
+      <Grid item lg={3} xl={3} md={4} sm={6} xs={12} style={{
         textAlign: "center",
         background: theme.palette.mode === 'dark' ? "#141e2c" : theme.palette.primary.main,
-        boxShadow: "0px 0px 10px -1px #ccc",
-        height: "85vh",
+        boxShadow: theme.palette.mode === 'dark' ? "0px 0px 5px 1px cyan" : "0px 0px 5px 1px white",
+        height: "70vh",
         borderRadius: "3%",
         display: "flex",
         flexDirection: "column",
@@ -38,14 +41,23 @@ const SignIn = ({ mode, toggleTheme }) => {
         <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
           <img className="" src="/logo.png" alt="logo" style={{ width: 200, height: 200 }} />
         </span>
-        <Typography variant="h4"
-          sx={{
-            marginBottom: '30px',
-            fontWeight: 'bold',
-            color: "white",
-          }}>
-          ¡Bienvenido!
-        </Typography>
+        <div>
+          <Typography variant="h6"
+            sx={{
+              fontWeight: 'bold',
+              color: "white",
+            }}>
+            Nunca fue tan fácil
+          </Typography>
+          <Typography variant="h6"
+            sx={{
+              marginBottom: '30px',
+              fontWeight: 'bold',
+              color: "white",
+            }}>
+            ¡Simplifica la gestión de tu gimnasio!
+          </Typography>
+        </div>
         <GoogleSignIn />
       </Grid>
     </Grid>

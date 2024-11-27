@@ -192,7 +192,7 @@ function MembersForm({ member, onClose }) {
           '& .MuiMobileDatePicker-root': { m: 1, width: '100%' },
           '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
           '& .MuiFormLabel-root': { width: '100%' },
-          '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#217b7c", float: "right" },
+          '& .MuiButton-root': { width: 'fit-context', float: "right" },
           '& .MuiRadioGroup-root': { display: 'flex' },
           '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
           padding: editing ? null : 2,
@@ -378,8 +378,9 @@ function MembersForm({ member, onClose }) {
           onClick={handlerSubmit}
           variant="contained"
           disabled={!isFormValid()}
-          color={isFormValid() ? "primary" : "inherit"}
-          style={{ margin: "5px 12px 100px" }}
+          sx={{
+            margin: "5px 12px 100px", color: "white", backgroundColor: "#e49c10"
+          }}
         >
           {adding ? "Guardando..." : "Guardar"}
         </Button>

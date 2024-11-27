@@ -20,30 +20,43 @@ export const ContextProvider = ({ children }) => {
   const [adding, setAdding] = useState(false);
   const [backdrop, setBackdrop] = useState(false);
   const [navBarOptions, setNavBarOptions] = useState(false);
+  const [needsUpdateClients, setNeedsUpdateClients] = useState(true);
+  const [needsUpdateTrainer, setNeedsUpdateTrainer] = useState(true);
   const navigate = useNavigate();
 
 
+  const handlerNeedUpdateClients = async (value) => {
+    setNeedsUpdateClients(value);
+  }
+  const handlerFillMembersList = async (data) => {
+    setMembersList(data.sort((a, b) => b.id - a.id));
+  }
 
   const getMembers = async () => {
-    setBackdrop(true);
-    setLoadingMembersList(true);
     setTimeout(async () => {
-      const { data } = await supabase.auth.getUser();
-      await supabase
-        .from("members")
-        .select()
-        .eq("gym_id", data?.user?.id)
-        .then((res, err) => {
-          setLoadingMembersList(false);
-          setBackdrop(false);
-          if (err) {
-            console.error("Error fetching data:", err);
-            return;
-          }
-          if (res?.data?.length > 0) {
-            setMembersList(res.data.sort((a, b) => b.id - a.id));
-          }
-        })
+      console.log(needsUpdateClients)
+      if (needsUpdateClients) {
+        setLoadingMembersList(true);
+        setBackdrop(true);
+        const { data } = await supabase.auth.getUser();
+        await supabase
+          .from("members")
+          .select()
+          .eq("gym_id", data?.user?.id)
+          .then(async (res, err) => {
+            setLoadingMembersList(false);
+            await handlerNeedUpdateClients(false);
+            if (err) {
+              setBackdrop(false);
+              console.error("Error fetching data:", err);
+              return;
+            }
+            if (res?.data?.length > 0) {
+              await handlerFillMembersList(res.data);
+              setBackdrop(false);
+            }
+          })
+      }
     }, 1000)
 
   }
@@ -51,22 +64,24 @@ export const ContextProvider = ({ children }) => {
   const getTrainers = async () => {
 
     setTimeout(async () => {
-
-      setBackdrop(true);
-      const { data } = await supabase.auth.getUser();
-      const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
-
-      if (res?.data?.length > 0) {
-        setTrainersList(res.data);
-        setBackdrop(false);
-      } else { setBackdrop(false); }
+      if (needsUpdateTrainer) {
+        setBackdrop(true);
+        const { data } = await supabase.auth.getUser();
+        const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
+        if (res?.data?.length > 0) {
+          setTrainersList(res.data);
+          setNeedsUpdateTrainer(false)
+          setBackdrop(false);
+        } else { setBackdrop(false); }
+      }
     }, 1000);
 
   }
 
-  const createNewMember = (memberData) => {
+  const createNewMember = async (memberData) => {
     setBackdrop(true);
     setAdding(true);
+    await handlerNeedUpdateClients(true);
     const fechaActual = new Date();
     fechaActual.setMonth(fechaActual.getMonth() + 1);
     if (fechaActual.getMonth() === 0) {
@@ -92,12 +107,11 @@ export const ContextProvider = ({ children }) => {
           pay_date: dataToSave.pay_date,
           gym_id: data?.user?.id,
         });
-
         setBackdrop(false);
         navigate('/clientes');
         if (result) {
           toast.success("Registro guardado satisfactoriamente")
-          await getMembers();
+          await getMembers(true);
         } else {
           toast.error("Registro no guardado")
         }
@@ -141,6 +155,7 @@ export const ContextProvider = ({ children }) => {
 
   const deleteMember = async (id) => {
     setBackdrop(true);
+    await handlerNeedUpdateClients(true);
     const { data } = await supabase.auth.getUser();
     const { error } = await supabase.from("members")
       .delete()
@@ -149,7 +164,7 @@ export const ContextProvider = ({ children }) => {
     setBackdrop(false);
     if (!error) {
       toast.success("Registro eliminado satisfactoriamente")
-      getMembers();
+      await getMembers(true);
     } else throw new Error(error);
 
 
@@ -169,16 +184,17 @@ export const ContextProvider = ({ children }) => {
     } else throw new Error(error);
   };
 
-  const updateClient = (member) => {
+  const updateClient = async (member) => {
     setBackdrop(true);
     setAdding(true);
+    await handlerNeedUpdateClients(true);
     setTimeout(async () => {
       try {
         const result = await supabase.from("members").update(member).eq("id", member?.id);
         setBackdrop(false);
         navigate('/clientes');
         if (result) {
-          getMembers(true);
+          await getMembers(true);
           toast.success("Registro actualizado satisfactoriamente")
         }
       } catch (error) {
@@ -212,12 +228,13 @@ export const ContextProvider = ({ children }) => {
   const changedStatusToActive = async (clientsList) => {
     setBackdrop(true);
     setAdding(true);
+    await handlerNeedUpdateClients(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
       setBackdrop(false);
       if (result) {
         toast.success("Registro actualizado satisfactoriamente")
-        getMembers(true);
+        await getMembers(true);
       } else {
         toast.error("A ocurrido un error actualizando la información")
       }
@@ -231,12 +248,13 @@ export const ContextProvider = ({ children }) => {
   const makePayment = async (clientsList) => {
     setBackdrop(true);
     setAdding(true);
+    await handlerNeedUpdateClients(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
-      setBackdrop(true);
+      setBackdrop(false);
       if (result) {
         toast.success("Pago registrado satisfactoriamente");
-        getMembers(true);
+        await getMembers(true);
       } else {
         toast.error("A ocurrido un error actualizando el estado del pago");
       }
@@ -250,12 +268,13 @@ export const ContextProvider = ({ children }) => {
   const applyRuleToRows = async (clientsList) => {
     setBackdrop(true);
     setAdding(true);
+    await handlerNeedUpdateClients(true);
     try {
       const result = await supabase.from('members').upsert(clientsList);
       setBackdrop(true);
       if (result) {
         toast.success("Reglas aplicadas satisfactoriamente a todos los clientes seleccionados");
-        getMembers(true);
+        await getMembers(true);
       } else {
         toast.error("Error aplicando las reglas");
       }

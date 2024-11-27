@@ -98,7 +98,7 @@ function TrainersForm({ trainer, onClose }) {
           '& .MuiTextField-root': { margin: "8px 2.5%", width: '95%' },
           '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
           '& .MuiFormLabel-root': { width: '100%' },
-          '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#217b7c" },
+          '& .MuiButton-root': { width: 'fit-context', backgroundColor: "#6164c7" },
           '& .MuiRadioGroup-root': { display: 'flex' },
           '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
           padding: editing ? null : 2,

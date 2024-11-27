@@ -201,11 +201,10 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
-            color='primary'
+            sx={{ height: "100%", color: "white", background: "#e49c10" }}
             fullWidth
             disabled={selectedRows?.length === 0}
             onClick={handlerMakePayment}
-            sx={{ height: "100%" }}
           >
             Registrar Pago
           </Button>
@@ -214,7 +213,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
           <Button
             variant='contained'
             fullWidth
-            color='inherit'
+            color='primary'
             onClick={downloadPDF}
             disabled={membersDelayed.length === 0}
             sx={{ height: "100%" }}

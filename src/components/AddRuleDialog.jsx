@@ -219,6 +219,9 @@ export default function AddRuleDialog({
         <DialogActions>
           <Button onClick={handleClose}>Cancelar</Button>
           <Button
+            variant='contained'
+            color='secondary'
+            sx={{ color: "white" }}
             disabled={!addMonth && !inactivateUsers && (!addDays || amountDays === "") && !new_trainer}
             onClick={handleApplyRule}
             autoFocus>

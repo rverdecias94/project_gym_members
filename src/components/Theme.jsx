@@ -5,10 +5,11 @@ export const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#27afb1', // Color secundario
+      main: '#6164c7', // Color secundario
+      accent: '#ef74b9',
     },
     secondary: {
-      main: '#4c6995', // Color primario
+      main: '#e49c10',
     },
     accent: {
       main: '#4c6995', // Color acento
@@ -27,13 +28,15 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#56d1cb',
+      main: '#6164c7',
+      optional: "#fffaa5",
+      accent: '#56d1cb'
     },
     secondary: {
       main: '#32aaf4',
     },
     accent: {
-      main: '#32aaf4',
+      main: '#e49c10',
     },
     background: {
       default: '#162131',

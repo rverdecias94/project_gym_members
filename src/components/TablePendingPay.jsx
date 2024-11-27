@@ -205,7 +205,7 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
             disabled={selectedRows?.length === 0}
             onClick={handlerMakePayment}
             fullWidth
-            sx={{ height: "100%" }}
+            sx={{ height: "100%", color: "white", background: "#e49c10" }}
           >
             Registrar Pago
           </Button>
@@ -215,7 +215,7 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
             variant='contained'
             onClick={downloadPDF}
             fullWidth
-            color='inherit'
+            color='primary'
             sx={{ height: "100%" }}
             disabled={membersPending.length === 0}
             className='btn-pdf'

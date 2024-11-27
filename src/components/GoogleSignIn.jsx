@@ -38,7 +38,7 @@ const GoogleSignIn = () => {
           color: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.primary.main,
         }}
       >
-        Iniciar sesión con Google
+        Iniciar sesión
       </Typography>
     </Button>
   );

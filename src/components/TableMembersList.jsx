@@ -26,7 +26,7 @@ import { supabase } from '../supabase/client';
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
-  const { loadingMembersList, adding, trainersList } = useMembers();
+  const { adding, trainersList } = useMembers();
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openRule, setOpenRule] = useState(false);
@@ -264,7 +264,7 @@ export const TableMembersList = ({ membersList = [] }) => {
             }
             <Grid item xl={4} lg={4} md={4} sm={12} xs={12} className='container-add-client'>
               <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none" }}>
-                <Button variant="contained" color="secondary" className='btn-add-client' style={{ color: "white" }}>
+                <Button variant="contained" className='btn-add-client' style={{ color: "white", background: "#e49c10" }}>
                   <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
                   <span className='text-add-client' style={{ marginLeft: 5 }}>
                     Cliente
@@ -288,6 +288,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                   float: 'right',
                   width: "fit-context",
                   color: "white",
+                  backgroundColor: "#6164c7"
                 }}
               >
                 <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
@@ -305,6 +306,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                   float: 'right',
                   width: "fit-context",
                   color: "white",
+                  backgroundColor: "#6164c7"
                 }}
               >
                 <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Selec. Todos" : "Desmarcar Todos"}
@@ -314,7 +316,6 @@ export const TableMembersList = ({ membersList = [] }) => {
         </Grid>
       </Grid>
       <br />
-      {loadingMembersList && <span>Cargando listado de clientes...</span>}
       {adding && <span>Aplicando reglas a clientes seleccionados...</span>}
       <Grid container style={{ paddingBottom: '9rem' }}>
         <DataGrid

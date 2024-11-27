@@ -15,8 +15,8 @@ export const NavButton = ({ to, icon, text }) => {
           style={{
             border: "none",
             background: "transparent",
-            borderBottom: isActive ? '4px solid white' : 'none',
-            color: 'white',
+            borderBottom: isActive ? '4px solid #e49c10' : 'none',
+            color: isActive ? '#e49c10' : "white",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
