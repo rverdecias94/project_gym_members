@@ -7,6 +7,10 @@ import { supabase } from '../supabase/client';
 import { Button, Grid, TextField, Typography } from "@mui/material";
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import { Toaster, toast } from 'react-hot-toast';
+import dayjs from 'dayjs';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 
 const CustomSwitch = styled(Switch)(({ theme }) => ({
   width: 62,
@@ -103,6 +107,31 @@ const AdminPanel = () => {
     }
   };
 
+  const updateNextPaymentDate = async (row, newDate) => {
+    const updatedRow = {
+      ...row,
+      next_payment_date: newDate ? dayjs(newDate).format("YYYY-MM-DD") : null,
+    };
+
+    try {
+      const { error } = await supabase
+        .from("info_general_gym")
+        .update(updatedRow)
+        .eq("owner_id", row.owner_id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("¡Fecha de pago actualizada con éxito!", { duration: 5000 });
+      getAllGyms(); // Refresca los datos
+    } catch (error) {
+      console.error("Error al actualizar la fecha:", error);
+      toast.error("Error al actualizar la fecha de pago.", { duration: 5000 });
+    }
+  };
+
+
   const updateActiveStatus = async (row) => {
     const updatedRow = {
       ...row,
@@ -141,7 +170,19 @@ const AdminPanel = () => {
         </div>
       ),
     },
-    { field: 'next_payment_date', headerName: 'Fecha de Pago', width: 110 },
+    {
+      field: 'next_payment_date',
+      headerName: 'Fecha de Pago',
+      width: 180,
+      renderCell: ({ row }) => (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <MobileDatePicker
+            defaultValue={row.next_payment_date ? dayjs(row.next_payment_date) : null}
+            onChange={(newDate) => updateNextPaymentDate(row, newDate)}
+          />
+        </LocalizationProvider>
+      ),
+    },
     {
       field: 'state',
       headerName: 'Provincia',

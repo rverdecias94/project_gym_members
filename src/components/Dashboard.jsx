@@ -11,11 +11,6 @@ import { supabase } from '../supabase/client';
 
 const pieParams = { height: 250, margin: { right: 5 } };
 
-const getLastFiveYears = () => {
-  const currentYear = new Date().getFullYear();
-  return Array.from({ length: 5 }, (_, i) => currentYear - i);
-};
-
 export default function Dashboard() {
   const theme = useTheme();
 
@@ -27,7 +22,7 @@ export default function Dashboard() {
   const [membersByMonth, setMembersByMonth] = useState(Array(12).fill(0));
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [membersByYear, setMembersByYear] = useState({});
-  const [lastFiveYears, setLastFiveYears] = useState([]);
+  const [years, setYears] = useState([]);
 
   const palette = [theme.palette.primary.main, theme.palette.primary.accent];
   useEffect(() => {
@@ -36,7 +31,6 @@ export default function Dashboard() {
       getMembers();
       setNavBarOptions(true);
     }, 500)
-    setLastFiveYears(getLastFiveYears());
   }, [])
 
 
@@ -94,6 +88,8 @@ export default function Dashboard() {
           .update({ clients: membersListActive.length })
           .eq("owner_id", data?.user?.id);
 
+        let yearsFounded = [];
+
         let membersTrainers = membersListActive.reduce((acc, member) => {
           if (member.has_trainer) {
             const trainerName = member.trainer_name;
@@ -115,6 +111,10 @@ export default function Dashboard() {
           const year = createdAt.getFullYear();
           const month = createdAt.getMonth();
 
+          if (!yearsFounded.includes(year)) {
+            yearsFounded.push(year);
+          }
+
           if (!acc.membersByYear[year]) {
             acc.membersByYear[year] = Array(12).fill(0);
           }
@@ -131,6 +131,8 @@ export default function Dashboard() {
           membersByMonth: Array(12).fill(0),
           membersByYear: {},
         });
+
+        setYears(yearsFounded)
 
         if (membersTrainers) {
           setRelationMembersTrainers(membersTrainers);
@@ -329,7 +331,7 @@ export default function Dashboard() {
                   onChange={handleYearChange}
                   sx={{ position: "absolute", top: 0, right: 0 }}
                 >
-                  {lastFiveYears.map(year => (
+                  {years.length > 0 && years.map(year => (
                     <MenuItem key={year} value={year}>
                       {year}
                     </MenuItem>

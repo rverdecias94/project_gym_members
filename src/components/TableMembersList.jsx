@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { supabase } from '../supabase/client';
+import FileUpload from './FileUpload';
 
 
 // eslint-disable-next-line react/prop-types
@@ -65,7 +66,6 @@ export const TableMembersList = ({ membersList = [] }) => {
         .from("info_general_gym")
         .update({ clients: membersList.length })
         .eq("owner_id", data?.user?.id);
-
     }
 
     updateClientsLength();
@@ -220,7 +220,7 @@ export const TableMembersList = ({ membersList = [] }) => {
     <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
       <Grid container className='container-options'>
-        <Grid item xl={8} lg={7} md={7} sm={12} xs={12}>
+        <Grid item xl={6} lg={6} md={6} sm={12} xs={12}>
           <Grid container style={{ display: "flex", justifyContent: "start", gap: 15 }}>
             <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
 
@@ -275,27 +275,10 @@ export const TableMembersList = ({ membersList = [] }) => {
           </Grid>
         </Grid>
 
-        <Grid item xl={4} lg={5} md={5} sm={12} xs={12} className='container-options-sec_2'>
+        <Grid item xl={6} lg={6} md={6} sm={12} xs={12} className='container-options-sec_2'>
           <Grid container style={{ display: "flex", flexWrap: "nowrap", gap: 15 }}>
-            <Grid item xl={6} lg={6} md={6} sm={3} xs={3}>
-              <Button
-                variant='contained'
-                onClick={downloadPDF}
-                disabled={membersList.length === 0}
-                fullWidth
-                sx={{
-                  flexGrow: .1,
-                  float: 'right',
-                  width: "fit-context",
-                  color: "white",
-                  backgroundColor: "#6164c7"
-                }}
-              >
-                <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
-              </Button>
-            </Grid>
 
-            <Grid item xl={6} lg={6} md={6} sm={9} xs={9}>
+            <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
               <Button
                 variant='contained'
                 className='btn-check'
@@ -309,9 +292,32 @@ export const TableMembersList = ({ membersList = [] }) => {
                   backgroundColor: "#6164c7"
                 }}
               >
-                <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Selec. Todos" : "Desmarcar Todos"}
+                <CheckBoxIcon /> {membersList.length !== selectedRows.length ? " Todos" : " Todos"}
               </Button>
             </Grid>
+            <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
+              <FileUpload />
+            </Grid>
+            <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
+              <Button
+                variant='contained'
+                onClick={downloadPDF}
+                disabled={membersList.length === 0}
+                fullWidth
+                sx={{
+                  flexGrow: .1,
+                  float: 'right',
+                  width: "fit-context",
+                  color: "white",
+                  backgroundColor: "#6164c7",
+                }}
+              >
+                <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
+              </Button>
+            </Grid>
+
+
+
           </Grid>
         </Grid>
       </Grid>

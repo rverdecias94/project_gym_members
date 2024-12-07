@@ -65,7 +65,7 @@ const GeneralInfo = ({ id }) => {
         if (data && data.length > 0) {
           const nextPaymentDate = new Date(data[0].next_payment_date);
           const today = new Date();
-
+          console.log(nextPaymentDate)
           if (nextPaymentDate < today) {
             setUserInactive(true);
           }
@@ -79,6 +79,7 @@ const GeneralInfo = ({ id }) => {
               navigate("/panel");
             }
           } else if (data[0].active === false) {
+            console.log(data[0].active)
             setUserInactive(true);
           } else {
             setWithOutAccount(true);
