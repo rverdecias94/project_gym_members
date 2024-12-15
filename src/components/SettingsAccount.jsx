@@ -190,6 +190,18 @@ export default function SettingsAccount({
 
     /* validateFields(name, value); */
   };
+
+
+  const handleDownload = () => {
+    const fileUrl = `/files/Listado_clientes.xlsx`;
+
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = 'Listado_clientes.xlsx';
+    link.click();
+  };
+
+
   return (
 
     <Dialog
@@ -244,7 +256,6 @@ export default function SettingsAccount({
             />
           </Grid>
           <Grid item xl={6} lg={6} md={4} sm={4} xs={12}>
-
             <TextField
               id="outlined-read-only-input"
               label="Cuenta inactiva en"
@@ -293,11 +304,26 @@ export default function SettingsAccount({
                 ))}
               </Select>
             </FormControl>
-            <span>Tema por defecto</span>
-            <CustomSwitch
-              onChange={switchStatusChange}
-              checked={modeDark}
-            />
+
+            <Grid container>
+              <Grid item xl={6} lg={6} md={6} sm={12} xs={12}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleDownload}
+                >
+                  Descargar Excel | Clientes
+                </Button>
+              </Grid>
+              <Grid item xl={6} lg={6} md={6} sm={12} xs={12}>
+                <span>Tema por defecto</span>
+                <CustomSwitch
+                  onChange={switchStatusChange}
+                  checked={modeDark}
+                />
+              </Grid>
+            </Grid>
+
 
           </Grid>
         </Grid>

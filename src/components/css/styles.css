@@ -122,6 +122,20 @@
   background: #c88a0d !important;
 }
 
+.screen-blocked {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f19603c4;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100000;
+  filter: blur(.5);
+}
+
+
 /* Responsive client secction */
 @media only screen and (max-width: 1024px) {
   .hide {
