@@ -10,8 +10,12 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
+import { useMembers } from '../context/Context';
 
 const FileUpload = () => {
+
+  const { importClients } = useMembers();
+
   const [data, setData] = useState([]);
   const [open, setOpen] = useState(false);
   const inputFileRef = useRef(null);
@@ -84,11 +88,16 @@ const FileUpload = () => {
 
   const handleClose = () => {
     setOpen(false);
-    setData([]); // Reiniciar el estado data al cerrar el modal
+    setData([]);
   };
 
   const saveClients = () => {
-    console.log(data);
+    let clientsToImport = [...data]
+    clientsToImport.forEach(client => {
+      Reflect.deleteProperty(client, 'id')
+    });
+    setOpen(false);
+    importClients(clientsToImport);
   };
 
   const columns = useMemo(() => [

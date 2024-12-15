@@ -49,46 +49,48 @@ const GeneralInfo = ({ id }) => {
   const [isSaveButtonEnabled, setIsSaveButtonEnabled] = useState(false);
 
   useEffect(() => {
-    const existsUser = async () => {
-      const { data } = await supabase
-        .from('info_general_gym')
-        .select('owner_id')
-        .eq('owner_id', id)
-
-      if (data && data.length > 0) {
-        // Buscar el usuario en la tabla de gimnasios
+    const existsUser = () => {
+      setTimeout(async () => {
         const { data } = await supabase
           .from('info_general_gym')
-          .select()
+          .select('owner_id')
           .eq('owner_id', id)
 
         if (data && data.length > 0) {
-          const nextPaymentDate = new Date(data[0].next_payment_date);
-          const today = new Date();
-          console.log(nextPaymentDate)
-          if (nextPaymentDate < today) {
-            setUserInactive(true);
-          }
-          else if (data[0].active === true) {
-            const containsDefault = Object.values(data[0]).some(value =>
-              typeof value === 'string' && value.includes("DEFAULT_")
-            );
-            if (containsDefault) {
-              setCreateProfile(true);
-            } else {
-              navigate("/panel");
+          // Buscar el usuario en la tabla de gimnasios
+          const { data } = await supabase
+            .from('info_general_gym')
+            .select()
+            .eq('owner_id', id)
+
+          if (data && data.length > 0) {
+            const nextPaymentDate = new Date(data[0].next_payment_date);
+            const today = new Date();
+            console.log(nextPaymentDate)
+            if (nextPaymentDate < today) {
+              setUserInactive(true);
             }
-          } else if (data[0].active === false) {
-            console.log(data[0].active)
-            setUserInactive(true);
-          } else {
-            setWithOutAccount(true);
+            else if (data[0].active === true) {
+              const containsDefault = Object.values(data[0]).some(value =>
+                typeof value === 'string' && value.includes("DEFAULT_")
+              );
+              if (containsDefault) {
+                setCreateProfile(true);
+              } else {
+                navigate("/panel");
+              }
+            } else if (data[0].active === false) {
+              console.log(data[0].active)
+              setUserInactive(true);
+            } else {
+              setWithOutAccount(true);
+            }
           }
+        } else {
+          saveUser();
+          setWithOutAccount(true);
         }
-      } else {
-        saveUser();
-        setWithOutAccount(true);
-      }
+      }, 0);
     }
 
     const saveUser = () => {
