@@ -42,29 +42,31 @@ function App() {
   };
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session)
-      if (!session && location.pathname !== '/admin') {
-        navigate('/login');
-      } else if (event === "SIGNED_IN ") {
-        navigate('/panel');
-      } else if (session && event === "INITIAL_SESSION") {
-        const userUUID = session?.user?.id;
-        setUserId(userUUID);
-        navigate('/general_info')
+    setTimeout(() => {
+      supabase.auth.onAuthStateChange((event, session) => {
+        setSession(session)
+        if (!session && location.pathname !== '/admin') {
+          navigate('/login');
+        } else if (event === "SIGNED_IN ") {
+          navigate('/panel');
+        } else if (session && event === "INITIAL_SESSION") {
+          const userUUID = session?.user?.id;
+          setUserId(userUUID);
+          navigate('/general_info')
 
-        if (session?.user?.user_metadata) {
-          let { avatar_url, name, phone } = session.user.user_metadata;
-          setProfile((prev) => ({
-            ...prev,
-            name: name,
-            avatar: avatar_url,
-            phone: phone,
-            id: session.user.id
-          }))
+          if (session?.user?.user_metadata) {
+            let { avatar_url, name, phone } = session.user.user_metadata;
+            setProfile((prev) => ({
+              ...prev,
+              name: name,
+              avatar: avatar_url,
+              phone: phone,
+              id: session.user.id
+            }))
+          }
         }
-      }
-    })
+      })
+    }, 0);
   }, [])
 
   return (
