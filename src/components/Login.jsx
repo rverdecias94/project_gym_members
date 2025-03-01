@@ -65,8 +65,3 @@ const SignIn = ({ mode, toggleTheme }) => {
 };
 
 export default SignIn;
-
-{/*  <PhoneSignIn />
-        <Typography variant="body1" style={{ margin: '20px 0', fontSize: '18px', color: '#888' }}>
-          O
-        </Typography> */}

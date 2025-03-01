@@ -292,7 +292,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                   backgroundColor: "#6164c7"
                 }}
               >
-                <CheckBoxIcon /> {membersList.length !== selectedRows.length ? " Todos" : " Todos"}
+                <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Sel. Todos" : "Desel. Todos"}
               </Button>
             </Grid>
             <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
