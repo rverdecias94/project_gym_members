@@ -75,7 +75,7 @@ function App() {
       <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
         <ContextProvider>
           <BackdropProvider>
-            {userId && session !== "SIGNED_OUT" && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+            {userId && session === "SIGNED_IN" && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
             <Routes>
               <Route path='/panel' element={<Dashboard />} />
               <Route path='/login' element={<Login mode={darkMode} toggleTheme={toggleTheme} />} />

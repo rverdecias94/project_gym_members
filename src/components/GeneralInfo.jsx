@@ -66,7 +66,6 @@ const GeneralInfo = ({ id }) => {
           if (data && data.length > 0) {
             const nextPaymentDate = new Date(data[0].next_payment_date);
             const today = new Date();
-            console.log(nextPaymentDate)
             if (nextPaymentDate < today) {
               setUserInactive(true);
             }
@@ -80,7 +79,6 @@ const GeneralInfo = ({ id }) => {
                 navigate("/panel");
               }
             } else if (data[0].active === false) {
-              console.log(data[0].active)
               setUserInactive(true);
             } else {
               setWithOutAccount(true);
@@ -233,11 +231,15 @@ const GeneralInfo = ({ id }) => {
           <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
             Su cuenta está inactiva temporalmente hasta que sea efectuado el pago mensual del uso de la aplicación.
           </Typography>
+          <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
+            Usted será regresado al inicio de sesión, por favor contacte con el administrador.
+          </Typography>
+          <TimerButton setReload={handleReload} timer={"seconds"} />
         </Grid>
       }
 
       {
-        withOutAccount &&
+        withOutAccount && !userInactive &&
         <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
           <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
             ¡Registro exitoso!
@@ -245,7 +247,7 @@ const GeneralInfo = ({ id }) => {
           <Typography variant="h6" style={{ marginBottom: '30px', textAlign: "center" }}>
             La activación de su solicitud está en curso. Este proceso suele tardar alrededor de 10 minutos, agradecemos su paciencia.
           </Typography>
-          <TimerButton setReload={handleReload} />
+          <TimerButton setReload={handleReload} timer={"minutes"} />
         </Grid>
       }
 
