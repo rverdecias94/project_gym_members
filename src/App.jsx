@@ -22,7 +22,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [userId, setUserId] = useState(false);
-  const [session, setSession] = useState("SIGNED_OUT");
+  const [event, setEvent] = useState("SIGNED_OUT");
   const [profile, setProfile] = useState({
     avatar: null,
     name: null,
@@ -44,10 +44,12 @@ function App() {
   useEffect(() => {
     setTimeout(() => {
       supabase.auth.onAuthStateChange((event, session) => {
-        setSession(session)
+        setEvent(event)
         if (!session && location.pathname !== '/admin') {
           navigate('/login');
         } else if (event === "SIGNED_IN ") {
+          const userUUID = session?.user?.id;
+          setUserId(userUUID);
           navigate('/panel');
         } else if (session && event === "INITIAL_SESSION") {
           const userUUID = session?.user?.id;
@@ -75,7 +77,8 @@ function App() {
       <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
         <ContextProvider>
           <BackdropProvider>
-            {userId && session === "SIGNED_IN" && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+
+            {userId && event === "SIGNED_IN" && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
             <Routes>
               <Route path='/panel' element={<Dashboard />} />
               <Route path='/login' element={<Login mode={darkMode} toggleTheme={toggleTheme} />} />
