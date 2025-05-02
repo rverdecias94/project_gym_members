@@ -75,7 +75,7 @@ function App() {
       <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
         <ContextProvider>
           <BackdropProvider>
-            {event !== "SIGNED_OUT" && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+            {event !== "SIGNED_OUT" && window.location.pathname !== '/login' && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
             <Routes>
               <Route path='/panel' element={<Dashboard />} />
               <Route path='/login' element={<Login mode={darkMode} toggleTheme={toggleTheme} />} />
