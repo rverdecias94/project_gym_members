@@ -40,50 +40,6 @@ export default function Dashboard() {
 
   }, [])
 
-
-
-  /*  useEffect(() => {
-     const dataForDashborad = async () => {
-       if (membersList.length > 0) {
-         let membersListActive = membersList.filter(item => item.active) 
- 
-         const { data } = await supabase.auth.getUser();
-         await supabase
-           .from("info_general_gym")
-           .update({ clients: membersListActive.length })
-           .eq("owner_id", data?.user?.id);
- 
- 
-         let membersTrainers = membersListActive.reduce((acc, member) => {
-           if (member.has_trainer) {
-             const trainerName = member.trainer_name;
-             if (!acc.trainers?.includes(trainerName)) {
-               acc.trainers.push(trainerName);
-             }
-             if (!acc.groupByTrainer[trainerName]) {
-               acc.groupByTrainer[trainerName] = [];
-             }
-             acc.groupByTrainer[trainerName].push(member);
-             acc.withTrainer.push(member);
-           } else {
-             acc.withoutTrainer.push(member);
-           }
-           member.gender === "M" ? acc.male.push(member) : acc.female.push(member);
-           return acc;
- 
-         }, { groupByTrainer: [], withTrainer: [], withoutTrainer: [], male: [], female: [], trainers: [] });
- 
-         if (membersTrainers) {
-           setRelationMembersTrainers(membersTrainers);
-           handlerElemntsByTrainer(membersTrainers)
-         }
-         setMembersActive(membersListActive);
-         setTrainerName(membersTrainers.trainers?.filter(trainer => trainer !== null))
-       }
-     }
-     dataForDashborad();
-   }, [membersList]) */
-
   useEffect(() => {
     const dataForDashboard = () => {
       setTimeout(async () => {

@@ -41,7 +41,7 @@ const GeneralInfo = ({ id }) => {
     owner_phone: "",
     state: "",
     city: "",
-    clients: "",
+    clients: null,
   })
   const [state, setProvincia] = useState('');
   const [city, setMunicipio] = useState('');
@@ -51,12 +51,13 @@ const GeneralInfo = ({ id }) => {
   useEffect(() => {
     const existsUser = () => {
       setTimeout(async () => {
+        if (!id || id === undefined) return;
         const { data } = await supabase
           .from('info_general_gym')
           .select('owner_id')
           .eq('owner_id', id)
 
-        if (data && data.length > 0) {
+        if (data && data.length > 0 && id !== undefined) {
           // Buscar el usuario en la tabla de gimnasios
           const { data } = await supabase
             .from('info_general_gym')
@@ -131,6 +132,7 @@ const GeneralInfo = ({ id }) => {
     let infoToSave = { ...gymInfo }
     setTimeout(async () => {
       try {
+        if (!id) return;
         const result = await supabase
           .from("info_general_gym")
           .update(infoToSave)

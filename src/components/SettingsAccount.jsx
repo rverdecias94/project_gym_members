@@ -105,12 +105,13 @@ export default function SettingsAccount({
 
   useEffect(() => {
     const existsUser = async () => {
+      if (!profile.id) return;
       const { data } = await supabase
         .from('info_general_gym')
         .select()
         .eq('owner_id', profile.id)
 
-      if (data.length > 0) {
+      if (data?.length > 0) {
         let {
           owner_id,
           gym_name,

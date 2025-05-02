@@ -19,8 +19,8 @@ export default function EditMember({ handleClose, memberInfo, open }) {
       >
         <DialogTitle id="alert-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {"Editar"}
-          <IconButton aria-label="cancel" size="large">
-            <CancelIcon onClick={handleClose} sx={{ color: "#6164c7" }}></CancelIcon>
+          <IconButton aria-label="cancel" size="large" onClick={handleClose}>
+            <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
           </IconButton>
         </DialogTitle>
         <DialogContent>

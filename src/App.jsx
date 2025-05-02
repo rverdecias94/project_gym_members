@@ -48,8 +48,6 @@ function App() {
         if (!session && location.pathname !== '/admin') {
           navigate('/login');
         } else if (event === "SIGNED_IN ") {
-          const userUUID = session?.user?.id;
-          setUserId(userUUID);
           navigate('/panel');
         } else if (session && event === "INITIAL_SESSION") {
           const userUUID = session?.user?.id;
@@ -77,8 +75,7 @@ function App() {
       <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
         <ContextProvider>
           <BackdropProvider>
-
-            {userId && event === "SIGNED_IN" && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+            {event !== "SIGNED_OUT" && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
             <Routes>
               <Route path='/panel' element={<Dashboard />} />
               <Route path='/login' element={<Login mode={darkMode} toggleTheme={toggleTheme} />} />

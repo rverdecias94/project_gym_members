@@ -114,6 +114,7 @@ const AdminPanel = () => {
     };
 
     try {
+      if (!row.owner_id) return;
       const { error } = await supabase
         .from("info_general_gym")
         .update(updatedRow)
@@ -139,6 +140,7 @@ const AdminPanel = () => {
     };
 
     try {
+      if (!row.owner_id) return;
       const result = await supabase
         .from("info_general_gym")
         .update(updatedRow)

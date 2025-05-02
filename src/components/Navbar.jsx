@@ -116,7 +116,10 @@ export default function Navbar({ profile, mode, toggleTheme }) {
             <img className="logo_mobile logo" src="/logo.png" alt="logo" />
           </span>
         </div>
-        {navBarOptions &&
+
+        {navBarOptions && location.pathname !== "/admin" &&
+          location.pathname !== "/login" &&
+          location.pathname !== "/general_info" &&
           <div>
             <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around", marginLeft: "22rem" }}>
               <NavButton to="/panel" icon={<AssessmentIcon />} text="Panel" />

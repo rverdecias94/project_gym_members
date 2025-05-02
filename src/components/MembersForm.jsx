@@ -81,20 +81,6 @@ function MembersForm({ member, onClose }) {
     }
   }
 
-  /* const handlerChange = (e) => {
-    setMemberData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.name === 'has_trainer' || e.target.name === 'active' ? e.target.checked : e.target.value
-    }))
-
-    if (e.target.name === 'has_trainer' && !e.target.checked) {
-      setMemberData(prev => ({
-        ...prev,
-        trainer_name: null
-      }))
-    }
-  } */
-
   const handlerChange = (e) => {
     const { name, value, checked, type } = e.target;
 
