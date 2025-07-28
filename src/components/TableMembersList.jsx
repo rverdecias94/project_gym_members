@@ -19,6 +19,8 @@ import {
   Divider,
   Dialog,
   DialogTitle,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
@@ -52,6 +54,9 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [id, setId] = useState('');
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -255,7 +260,7 @@ export const TableMembersList = ({ membersList = [] }) => {
 
           {
             membersList.length !== 0 &&
-            <Grid sx={{ display: "flex", alignItems: "center", width: "20%" }}>
+            <Grid sx={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: 15, width: isMobile ? "100%" : "20%" }}>
               <TextField
                 id="outlined-select-currency"
                 select
@@ -282,8 +287,8 @@ export const TableMembersList = ({ membersList = [] }) => {
 
         <Divider />
 
-        <Grid className='container-options-sec_2' sx={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
-          <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none", width: "fit-content" }}>
+        <Grid className='container-options-sec_2' sx={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: 2, position: "relative" }}>
+          <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none", width: "fit-content" }} className={isMobile ? 'btn-add-client-mobile' : ""}>
             <Button variant="contained" className='btn-add-client' style={{ color: "white", background: "#e49c10" }}>
               <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
               <span className='text-add-client' style={{ marginLeft: 5 }}>
@@ -292,7 +297,7 @@ export const TableMembersList = ({ membersList = [] }) => {
             </Button>
           </Link>
 
-          <Grid container style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 15, width: "50%" }}>
+          <Grid container style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(1, 1fr)" : "repeat(4, 1fr)", gap: 15, width: isMobile ? "100%" : "50%" }}>
             <Grid item>
               <Button
                 variant="outlined"
