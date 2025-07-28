@@ -5,7 +5,7 @@ import { PieChart } from '@mui/x-charts/PieChart';
 import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { supabase } from '../supabase/client';
 
@@ -13,6 +13,7 @@ const pieParams = { height: 250, margin: { right: 5 } };
 
 export default function Dashboard() {
   const theme = useTheme();
+  const location = useLocation();
 
   const { getDashboardData, membersList, trainersList, setNavBarOptions } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
@@ -27,17 +28,9 @@ export default function Dashboard() {
   const palette = [theme.palette.primary.main, theme.palette.primary.accent];
   useEffect(() => {
     setTimeout(() => {
-
       getDashboardData();
       setNavBarOptions(true);
     }, 500)
-
-
-
-
-
-
-
   }, [])
 
   useEffect(() => {
@@ -141,12 +134,12 @@ export default function Dashboard() {
 
   const showDasboard = () => {
     return <>
+
       <Grid item xl={12} lg={12} md={12} sm={12} xs={12}
       >
-
         <div>
           <Grid container className='charts-container'>
-            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden" }}>
               {membersActive.length > 0 ?
                 <div>
                   <BarChart
@@ -186,7 +179,7 @@ export default function Dashboard() {
               }
             </Grid>
 
-            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: relationMembersTrainers?.male?.length > 0 || relationMembersTrainers?.female?.length > 0 ? 'visible' : 'hidden' }}>
 
               {relationMembersTrainers?.male?.length > 0 || relationMembersTrainers?.female?.length > 0 ?
                 <div>
@@ -227,7 +220,7 @@ export default function Dashboard() {
               }
             </Grid>
 
-            <Grid item xl={6} lg={6} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+            <Grid item xl={6} lg={6} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: relationMembersTrainers?.withoutTrainer?.length > 0 || relationMembersTrainers?.withTrainer?.length > 0 ? "visible" : "hidden" }}>
 
               {
                 relationMembersTrainers?.withoutTrainer?.length > 0 ||
@@ -271,51 +264,7 @@ export default function Dashboard() {
           </Grid>
 
           <Grid container className='charts-container'>
-            <Grid item xl={6} lg={6} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
-
-              {
-                elemntsByTrainer.length > 0 || trainersName.length > 0 ?
-                  <div>
-                    <BarChart
-                      sx={{
-                        '& .MuiBarElement-root:nth-of-type(odd)': {
-                          fill: theme.palette.mode === 'dark' ? theme.palette.primary.main : theme.palette.primary.main,
-                        },
-                        '& .MuiBarElement-root:nth-of-type(even)': {
-                          fill: theme.palette.mode === 'dark' ? theme.palette.secondary.main : theme.palette.primary.accent,
-                        },
-                      }}
-                      xAxis={[{
-                        scaleType: 'band', data: trainersName, categoryGapRatio: 0.5,
-                        barGapRatio: 1,
-                      }]}
-                      series={[{
-                        data: elemntsByTrainer
-                      }]}
-                      height={250}
-                      slotProps={{
-                        bar: {
-                          clipPath: `inset(0px round 3px 3px 0px 0px)`,
-                        },
-                      }}
-                    />
-                    <span>Entrenador / Cliente</span>
-                  </div>
-                  :
-                  <>
-                    <Skeleton
-                      variant="rectangular"
-                      animation="wave"
-                      width="100%"
-                      height={250}
-                      sx={{ borderRadius: '4px', backgroundColor: "transparent", }}
-                    />
-                    <Skeleton animation="wave" variant="text" width="40%" sx={{ mt: 1, backgroundColor: "transparent", }} />
-                  </>
-              }
-            </Grid>
-
-            <Grid Grid item xl={6} lg={6} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+            <Grid Grid item xl={6} lg={6} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden" }}>
               {
                 membersActive.length > 0 ?
                   <div>
@@ -377,7 +326,49 @@ export default function Dashboard() {
                   </>
               }
             </Grid>
+            <Grid item xl={6} lg={6} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: elemntsByTrainer.length > 0 ? "visible" : "hidden" }}>
 
+              {
+                elemntsByTrainer.length > 0 || trainersName.length > 0 ?
+                  <div>
+                    <BarChart
+                      sx={{
+                        '& .MuiBarElement-root:nth-of-type(odd)': {
+                          fill: theme.palette.mode === 'dark' ? theme.palette.primary.main : theme.palette.primary.main,
+                        },
+                        '& .MuiBarElement-root:nth-of-type(even)': {
+                          fill: theme.palette.mode === 'dark' ? theme.palette.secondary.main : theme.palette.primary.accent,
+                        },
+                      }}
+                      xAxis={[{
+                        scaleType: 'band', data: trainersName, categoryGapRatio: 0.5,
+                        barGapRatio: 1,
+                      }]}
+                      series={[{
+                        data: elemntsByTrainer
+                      }]}
+                      height={250}
+                      slotProps={{
+                        bar: {
+                          clipPath: `inset(0px round 3px 3px 0px 0px)`,
+                        },
+                      }}
+                    />
+                    <span>Entrenador / Cliente</span>
+                  </div>
+                  :
+                  <>
+                    <Skeleton
+                      variant="rectangular"
+                      animation="wave"
+                      width="100%"
+                      height={250}
+                      sx={{ borderRadius: '4px', backgroundColor: "transparent", }}
+                    />
+                    <Skeleton animation="wave" variant="text" width="40%" sx={{ mt: 1, backgroundColor: "transparent", }} />
+                  </>
+              }
+            </Grid>
           </Grid>
         </div >
 
@@ -386,7 +377,9 @@ export default function Dashboard() {
           <Divider />
           <div style={{ marginTop: 20, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
             <span>Listado de clientes</span>
-            <Link to="/new_member" style={{ color: "white", textDecoration: "none" }}>
+            <Link to="/new_member"
+              state={{ from: location.pathname }}
+              style={{ color: "white", textDecoration: "none" }}>
               <Button
                 variant="contained"
                 className={theme.palette.mode === 'dark' ? "client-btn-dark" : "client-btn-light"}
@@ -410,6 +403,7 @@ export default function Dashboard() {
         </div>
 
       </Grid >
+
     </>
   }
 

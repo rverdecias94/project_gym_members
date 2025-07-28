@@ -213,22 +213,25 @@ export const ContextProvider = ({ children }) => {
   const updateClient = async (member) => {
     setBackdrop(true);
     setAdding(true);
-    await handlerNeedUpdateClients(true);
-    setTimeout(async () => {
-      try {
-        const result = await supabase.from("members").update(member).eq("id", member?.id);
-        setBackdrop(false);
-        navigate('/clientes');
-        if (result) {
-          await getMembers(true);
-          toast.success("Registro actualizado satisfactoriamente")
+    const { data } = await supabase.auth.getUser();
+    let memberToSave = { ...member };
+    memberToSave.gym_id = data?.user?.id,
+      setTimeout(async () => {
+        try {
+          await handlerNeedUpdateClients(true);
+          const result = await supabase.from("members").update(memberToSave).eq("id", member?.id);
+          setBackdrop(false);
+          navigate('/clientes');
+          if (result) {
+            await getMembers(true);
+            toast.success("Registro actualizado satisfactoriamente")
+          }
+        } catch (error) {
+          console.error(error)
+        } finally {
+          setAdding(false);
         }
-      } catch (error) {
-        console.error(error)
-      } finally {
-        setAdding(false);
-      }
-    }, 2000);
+      }, 2000);
   };
 
   const updateTrainer = async (trainer) => {

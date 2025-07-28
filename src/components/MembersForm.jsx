@@ -13,7 +13,13 @@ import dayjs from 'dayjs';
 import ImageUploader from './ImageUploader';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import IconButton from '@mui/material/IconButton';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import CancelIcon from '@mui/icons-material/Cancel';
+
 
 function MembersForm({ member, onClose }) {
   const { createNewMember, adding, updateClient, trainersList } = useMembers();
@@ -37,7 +43,11 @@ function MembersForm({ member, onClose }) {
   const [editing, setEditing] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
   const [trainers, setTrainers] = useState([]);
-  //const [sendInfo, setSendInfo] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/clientes";
 
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
@@ -45,6 +55,8 @@ function MembersForm({ member, onClose }) {
       setImageBase64(member?.image_profile ?? null)
       setEditing(true);
     }
+    else
+      setOpen(true);
   }, [])
 
 
@@ -164,6 +176,10 @@ function MembersForm({ member, onClose }) {
     }))
   };
 
+  const handlerClose = () => {
+    setOpen(false);
+    navigate(from);
+  }
 
   return (
     <>
@@ -171,206 +187,223 @@ function MembersForm({ member, onClose }) {
         position="top-center"
         reverseOrder={false}
       />
-      <Box
-        component="form"
-        sx={{
-          '& .MuiTextField-root': { m: 1, width: '100%', padding: .5 },
-          '& .MuiMobileDatePicker-root': { m: 1, width: '100%' },
-          '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
-          '& .MuiFormLabel-root': { width: '100%' },
-          '& .MuiButton-root': { width: 'fit-context', float: "right" },
-          '& .MuiRadioGroup-root': { display: 'flex' },
-          '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
-          padding: editing ? null : 2,
-          //width: editing ? null : "100vw"
-        }}
-        noValidate
-        autoComplete="off"
+
+
+      <Dialog
+        open={open}
+        onClose={() => handlerClose()}
+        maxWidth={"xl"}
       >
-        {!editing &&
-          <IconButton aria-label="back" size="large">
-            <Link to='/clientes'>
-              <ArrowBackIcon />
-            </Link>
+        <DialogTitle id="alert-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {"Nuevo Cliente"}
+          <IconButton aria-label="cancel" size="large" onClick={() => handlerClose()}>
+            <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
           </IconButton>
-        }
-        <form style={{ width: "100%", paddingRight: "1rem" }}>
-          <Grid container>
-            <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
-              <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
-              {editing &&
-                <Grid container>
-                  <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
-                    <FormControlLabel
-                      value={memberData?.active}
-                      onChange={handlerChange}
-                      control={
-                        <Checkbox
-                          name='active'
-                          checked={memberData?.active}
-                        />}
-                      label="Cliente Activo"
-                    />
-                  </Grid>
-                </Grid>
-              }
-            </Grid>
-
-            <Grid item lg={8} xl={8} md={8} sm={12} xs={12}
-              style={{ marginTop: "2.3rem" }}>
-              {/* Fila 1 */}
-              <Grid container style={{ display: "flex" }}>
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <TextField
-                    required
-                    id="outlined-required"
-                    label="Nombre"
-                    name="first_name"
-                    value={memberData?.first_name}
-                    placeholder='Ej: Jhon'
-                    onChange={handlerChange}
-                  />
-                </Grid>
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <TextField
-                    required
-                    id="outlined-required"
-                    label="Apellidos"
-                    name="last_name"
-                    value={memberData?.last_name}
-                    placeholder='Ej: Doe Smitt'
-                    onChange={handlerChange}
-                  />
-                </Grid>
-              </Grid>
-              {/* Fila 2 */}
+        </DialogTitle>
+        <DialogContent>
+          <Box
+            component="form"
+            sx={{
+              '& .MuiTextField-root': { m: 1, width: '100%', padding: .5 },
+              '& .MuiMobileDatePicker-root': { m: 1, width: '100%' },
+              '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
+              '& .MuiFormLabel-root': { width: '100%' },
+              '& .MuiButton-root': { width: 'fit-context', float: "right" },
+              '& .MuiRadioGroup-root': { display: 'flex' },
+              '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
+              padding: editing ? null : 2,
+              //width: editing ? null : "100vw"
+            }}
+            noValidate
+            autoComplete="off"
+          >
+            {!editing &&
+              <IconButton aria-label="back" size="small">
+                <Link to='/clientes'>
+                  <ArrowBackIcon />
+                </Link>
+              </IconButton>
+            }
+            <form style={{ width: "100%", paddingRight: "1rem" }}>
               <Grid container>
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <TextField
-                    required
-                    id="outlined-required"
-                    label="CI"
-                    name="ci"
-                    value={memberData?.ci}
-                    placeholder='CI: 35123145685'
-                    onChange={handlerChange}
-                  />
+                <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
+                  <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
+                  {editing &&
+                    <Grid container>
+                      <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
+                        <FormControlLabel
+                          value={memberData?.active}
+                          onChange={handlerChange}
+                          control={
+                            <Checkbox
+                              name='active'
+                              checked={memberData?.active}
+                            />}
+                          label="Cliente Activo"
+                        />
+                      </Grid>
+                    </Grid>
+                  }
                 </Grid>
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <TextField
-                    required
-                    id="outlined-required"
-                    label="Direccion"
-                    name="address"
-                    value={memberData?.address}
-                    placeholder='S.T Village nº 9827'
-                    onChange={handlerChange}
-                  />
-                </Grid>
-              </Grid>
 
-              {/* FIla 3 */}
-              <Grid container>
-                {trainers.length > 0 &&
-                  <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                    <FormControlLabel
-                      value={memberData?.has_trainer}
-                      onChange={handlerChange}
-                      control={
-                        <Checkbox
-                          name='has_trainer'
-                          checked={memberData?.has_trainer}
-                        />}
-                      label="Solicita entrenador"
-                    />
+                <Grid item lg={8} xl={8} md={8} sm={12} xs={12}
+                  style={{ marginTop: "2.3rem" }}>
+                  {/* Fila 1 */}
+                  <Grid container style={{ display: "flex" }}>
+                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                      <TextField
+                        required
+                        id="outlined-required"
+                        label="Nombre"
+                        name="first_name"
+                        value={memberData?.first_name}
+                        placeholder='Ej: Jhon'
+                        onChange={handlerChange}
+                      />
+                    </Grid>
+                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                      <TextField
+                        required
+                        id="outlined-required"
+                        label="Apellidos"
+                        name="last_name"
+                        value={memberData?.last_name}
+                        placeholder='Ej: Doe Smitt'
+                        onChange={handlerChange}
+                      />
+                    </Grid>
                   </Grid>
-                }
-
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <FormLabel style={{ marginLeft: "20px" }} id="demo-row-radio-buttons-group-label">Género</FormLabel>
-                  <RadioGroup
-                    row
-                    aria-labelledby="demo-row-radio-buttons-group-label"
-                    name='gender'
-                    onChange={handlerChange}
-                    value={memberData?.gender}
-                  >
-                    <FormControlLabel
-                      value="M"
-                      control={<Radio />}
-                      label="Masculino"
-                      style={{ width: "fit-content" }}
-                    />
-                    <FormControlLabel
-                      value="F"
-                      control={<Radio />}
-                      label="Femenino"
-                      style={{ width: "fit-content" }}
-                    />
-                  </RadioGroup>
-                </Grid>
-              </Grid>
-
-              {/* FILA 4 */}
-              <Grid container>
-                {memberData?.has_trainer &&
-                  <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                    <TextField
-                      id="outlined-select-currency"
-                      select
-                      disabled={!memberData?.has_trainer}
-                      label="Entrenador"
-                      defaultValue=""
-                      placeholder="Selecciona entrenador"
-                      name="trainer_name"
-                      onChange={handlerChange}
-                      value={memberData?.trainer_name}
-                    >
-                      {trainers.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                  {/* Fila 2 */}
+                  <Grid container>
+                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                      <TextField
+                        required
+                        id="outlined-required"
+                        label="CI"
+                        name="ci"
+                        value={memberData?.ci}
+                        placeholder='CI: 35123145685'
+                        onChange={handlerChange}
+                      />
+                    </Grid>
+                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                      <TextField
+                        required
+                        id="outlined-required"
+                        label="Direccion"
+                        name="address"
+                        value={memberData?.address}
+                        placeholder='S.T Village nº 9827'
+                        onChange={handlerChange}
+                      />
+                    </Grid>
                   </Grid>
-                }
-                <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                  <TextField
-                    required
-                    id="outlined-required"
-                    label="Tel. Cliente"
-                    name="phone"
-                    value={memberData?.phone}
-                    placeholder='55565758'
-                    onChange={handlerChange}
-                  />
+
+                  {/* FIla 3 */}
+                  <Grid container>
+                    {trainers.length > 0 &&
+                      <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                        <FormControlLabel
+                          value={memberData?.has_trainer}
+                          onChange={handlerChange}
+                          control={
+                            <Checkbox
+                              name='has_trainer'
+                              checked={memberData?.has_trainer}
+                            />}
+                          label="Solicita entrenador"
+                        />
+                      </Grid>
+                    }
+
+                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                      <FormLabel style={{ marginLeft: "20px" }} id="demo-row-radio-buttons-group-label">Género</FormLabel>
+                      <RadioGroup
+                        row
+                        aria-labelledby="demo-row-radio-buttons-group-label"
+                        name='gender'
+                        onChange={handlerChange}
+                        value={memberData?.gender}
+                      >
+                        <FormControlLabel
+                          value="M"
+                          control={<Radio />}
+                          label="Masculino"
+                          style={{ width: "fit-content" }}
+                        />
+                        <FormControlLabel
+                          value="F"
+                          control={<Radio />}
+                          label="Femenino"
+                          style={{ width: "fit-content" }}
+                        />
+                      </RadioGroup>
+                    </Grid>
+                  </Grid>
+
+                  {/* FILA 4 */}
+                  <Grid container>
+                    {memberData?.has_trainer &&
+                      <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                        <TextField
+                          id="outlined-select-currency"
+                          select
+                          disabled={!memberData?.has_trainer}
+                          label="Entrenador"
+                          defaultValue=""
+                          placeholder="Selecciona entrenador"
+                          name="trainer_name"
+                          onChange={handlerChange}
+                          value={memberData?.trainer_name}
+                        >
+                          {trainers.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    }
+                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
+                      <TextField
+                        required
+                        id="outlined-required"
+                        label="Tel. Cliente"
+                        name="phone"
+                        value={memberData?.phone}
+                        placeholder='55565758'
+                        onChange={handlerChange}
+                      />
+                    </Grid>
+                  </Grid>
+
+
+                  {editing &&
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <MobileDatePicker
+                        label="Fecha de pago *"
+                        defaultValue={dayjs(memberData?.pay_date)}
+                        onChange={handlerDatePaymentChange}
+                      />
+                    </LocalizationProvider>
+                  }
                 </Grid>
               </Grid>
+            </form>
+            <Button
+              onClick={handlerSubmit}
+              variant="contained"
+              disabled={!isFormValid()}
+              sx={{
+                margin: "5px 12px 100px", color: "white", backgroundColor: "#e49c10"
+              }}
+            >
+              {adding ? "Guardando..." : "Guardar"}
+            </Button>
+          </Box >
+        </DialogContent>
+      </Dialog>
 
-
-              {editing &&
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <MobileDatePicker
-                    label="Fecha de pago *"
-                    defaultValue={dayjs(memberData?.pay_date)}
-                    onChange={handlerDatePaymentChange}
-                  />
-                </LocalizationProvider>
-              }
-            </Grid>
-          </Grid>
-        </form>
-        <Button
-          onClick={handlerSubmit}
-          variant="contained"
-          disabled={!isFormValid()}
-          sx={{
-            margin: "5px 12px 100px", color: "white", backgroundColor: "#e49c10"
-          }}
-        >
-          {adding ? "Guardando..." : "Guardar"}
-        </Button>
-      </Box >
     </>
   )
 }

@@ -12,6 +12,13 @@ import {
   MenuItem,
   Grid,
   Tooltip,
+  Alert,
+  List,
+  ListItem,
+  Typography,
+  Divider,
+  Dialog,
+  DialogTitle,
 } from '@mui/material';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
@@ -22,7 +29,8 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { supabase } from '../supabase/client';
-import FileUpload from './FileUpload';
+import CancelIcon from '@mui/icons-material/Cancel';
+import IconButton from '@mui/material/IconButton';
 
 
 // eslint-disable-next-line react/prop-types
@@ -39,6 +47,11 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [membersOriginal, setMembersOriginal] = useState([]);
   const [members, setMembers] = useState([]);
 
+  const [open, setOpen] = useState(false);
+
+  const [id, setId] = useState('');
+  const [resultados, setResultados] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -84,6 +97,23 @@ export const TableMembersList = ({ membersList = [] }) => {
       }
     }
   }, [trainer_name]);
+
+  const buscarRegistro = async () => {
+    console.log(id)
+    setError(null);
+
+    const { data, error } = await supabase
+      .from('members') // Reemplaza por el nombre de tu tabla
+      .select('*')
+      .eq('id', id);
+
+    if (error) {
+      setError('Error al buscar el registro');
+      setResultados([]);
+    } else {
+      setResultados(data);
+    }
+  };
 
   const handleOpenDelete = (member) => {
     setOpenDelete(true);
@@ -220,67 +250,78 @@ export const TableMembersList = ({ membersList = [] }) => {
     <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
       <Grid container className='container-options'>
-        <Grid item xl={6} lg={6} md={6} sm={12} xs={12}>
-          <Grid container style={{ display: "flex", justifyContent: "start", gap: 15 }}>
-            <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
+        <Grid item xl={12} lg={12} md={12} sm={12} xs={12}>
 
+
+          {
+            membersList.length !== 0 &&
+            <Grid sx={{ display: "flex", alignItems: "center", width: "20%" }}>
+              <TextField
+                id="outlined-select-currency"
+                select
+                label="Filtro por entrenador"
+                defaultValue="Todos"
+                fullWidth
+                placeholder="Entrenador"
+                name="trainer_name"
+                onChange={handlerChange}
+                value={trainer_name}
+                size='small'
+                sx={{ mr: 1.2, height: '100%' }}
+              >
+                {trainers.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          }
+
+        </Grid>
+
+        <Divider />
+
+        <Grid className='container-options-sec_2' sx={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
+          <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none", width: "fit-content" }}>
+            <Button variant="contained" className='btn-add-client' style={{ color: "white", background: "#e49c10" }}>
+              <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
+              <span className='text-add-client' style={{ marginLeft: 5 }}>
+                Cliente
+              </span>
+            </Button>
+          </Link>
+
+          <Grid container style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 15, width: "50%" }}>
+            <Grid item>
               <Button
-                variant='contained'
+                variant="outlined"
+                size='small'
+                fullWidth
+                onClick={() => setOpen(true)}
+                sx={{ height: '100%' }}
+              >
+                Asociar Cliente
+              </Button>
+            </Grid>
+            <Grid item >
+              <Button
+                variant='outlined'
                 disabled={selectedRows.length === 0}
                 fullWidth
-                color='primary'
+                size='small'
                 onClick={handleOpenRule}
                 sx={{
                   mr: 1.2, height: '100%',
-                  color: "white",
                 }}
               >
                 Aplicar regla
               </Button>
             </Grid>
-            {
-              membersList.length !== 0 &&
-              <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
-                <TextField
-                  id="outlined-select-currency"
-                  select
-                  label="Entrenador"
-                  defaultValue="Todos"
-                  fullWidth
-                  placeholder="Entrenador"
-                  name="trainer_name"
-                  onChange={handlerChange}
-                  value={trainer_name}
-                  size='small'
-                  sx={{ mr: 1.2, height: '100%' }}
-                >
-                  {trainers.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            }
-            <Grid item xl={4} lg={4} md={4} sm={12} xs={12} className='container-add-client'>
-              <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none" }}>
-                <Button variant="contained" className='btn-add-client' style={{ color: "white", background: "#e49c10" }}>
-                  <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
-                  <span className='text-add-client' style={{ marginLeft: 5 }}>
-                    Cliente
-                  </span>
-                </Button>
-              </Link>
-            </Grid>
-          </Grid>
-        </Grid>
 
-        <Grid item xl={6} lg={6} md={6} sm={12} xs={12} className='container-options-sec_2'>
-          <Grid container style={{ display: "flex", flexWrap: "nowrap", gap: 15 }}>
-
-            <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
+            <Grid >
               <Button
-                variant='contained'
+                variant='outlined'
                 className='btn-check'
                 onClick={handlerCheckBox}
                 disabled={membersList.length === 0}
@@ -288,19 +329,15 @@ export const TableMembersList = ({ membersList = [] }) => {
                   flexGrow: .1,
                   float: 'right',
                   width: "fit-context",
-                  color: "white",
-                  backgroundColor: "#6164c7"
                 }}
               >
                 <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Sel. Todos" : "Desel. Todos"}
               </Button>
             </Grid>
-            <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
-              <FileUpload />
-            </Grid>
-            <Grid item xl={4} lg={4} md={4} sm={4} xs={4}>
+
+            <Grid >
               <Button
-                variant='contained'
+                variant='outlined'
                 onClick={downloadPDF}
                 disabled={membersList.length === 0}
                 fullWidth
@@ -308,16 +345,11 @@ export const TableMembersList = ({ membersList = [] }) => {
                   flexGrow: .1,
                   float: 'right',
                   width: "fit-context",
-                  color: "white",
-                  backgroundColor: "#6164c7",
                 }}
               >
                 <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
               </Button>
             </Grid>
-
-
-
           </Grid>
         </Grid>
       </Grid>
@@ -350,6 +382,79 @@ export const TableMembersList = ({ membersList = [] }) => {
         amountDays={amountDays}
         setSelectedRows={setSelectedRows}
       />
+
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="md"
+        fullWidth
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {"Asociar cliente al sistema"}
+          <IconButton aria-label="cancel" size="large" onClick={() => setOpen(false)}>
+            <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
+          </IconButton>
+        </DialogTitle>
+        <Grid container style={{ display: "grid", gridTemplateColumns: "1fr ", gap: 15, padding: "5rem" }}>
+          <TextField
+            label="Escribe el ID"
+            variant="outlined"
+            value={id}
+            onChange={e => setId(e.target.value)}
+            fullWidth
+            margin="normal"
+            size='small'
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={buscarRegistro}
+            fullWidth
+            size='small'
+
+          >
+            Buscar
+          </Button>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <List>
+            {resultados.map(registro => (
+              <ListItem
+                key={registro.id}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  mb: 2,
+                  p: 2,
+                }}
+              >
+                <Typography variant="body1">
+                  <strong>Nombre:</strong> {registro.first_name}
+                </Typography>
+                <Typography variant="body1">
+                  <strong>Apellido:</strong> {registro.last_name}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  sx={{ mt: 1 }}
+                  onClick={() => handleOpenEdit(registro)}
+                >
+                  Click
+                </Button>
+              </ListItem>
+            ))}
+          </List>
+        </Grid>
+      </Dialog>
       <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} />
     </Grid>
   );

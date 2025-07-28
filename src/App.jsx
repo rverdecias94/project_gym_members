@@ -1,7 +1,7 @@
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase/client';
-import { ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { lightTheme, darkTheme } from './components/Theme';  // Importa los temas
 import Login from './components/Login';
 import NotFound from './components/NotFound';
@@ -16,6 +16,8 @@ import { BackdropProvider } from './components/BackdropProvider';
 import GeneralInfo from './components/GeneralInfo';
 import LoginAdmin from './admin/Login';
 import AdminPanel from './admin/AdminPanel';
+import { Toaster } from 'react-hot-toast';
+import Welcome from './components/Welcome';
 
 
 function App() {
@@ -28,17 +30,33 @@ function App() {
     name: null,
     phone: null,
   });
+  const [darkMode, setDarkMode] = useState(false);
 
-  // Detecta preferencia de color del sistema
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [darkMode, setDarkMode] = useState(prefersDarkMode);
+  useEffect(() => {
+    const fetchTheme = async (userId) => {
+      const { data } = await supabase
+        .from("info_general_gym")
+        .select("theme")
+        .eq("owner_id", userId)
+        .single();
+
+      if (data) {
+        setDarkMode(data.theme);
+      }
+    };
+    fetchTheme(userId);
+  }, [userId]);
 
   // Cambia el tema dependiendo del estado darkMode
   const theme = useMemo(() => (darkMode ? darkTheme : lightTheme), [darkMode]);
 
   // Alterna entre temas
-  const toggleTheme = () => {
+  const toggleTheme = async () => {
     setDarkMode((prevMode) => !prevMode);
+    await supabase
+      .from("info_general_gym")
+      .update({ theme: !darkMode })
+      .eq("owner_id", userId);
   };
 
   useEffect(() => {
@@ -46,6 +64,8 @@ function App() {
       supabase.auth.onAuthStateChange((event, session) => {
         setEvent(event)
         if (!session && location.pathname !== '/admin') {
+          const userUUID = session?.user?.id;
+          setUserId(userUUID);
           navigate('/login');
         } else if (event === "SIGNED_IN ") {
           navigate('/panel');
@@ -73,13 +93,23 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+          toastOptions={{
+            style: {
+              zIndex: 3500,
+            },
+          }}
+        />
         <ContextProvider>
           <BackdropProvider>
             {event && window.location.pathname !== '/login' && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
             <Routes>
               <Route path='/panel' element={<Dashboard />} />
-              <Route path='/login' element={<Login mode={darkMode} toggleTheme={toggleTheme} />} />
+              <Route path='/login' element={<Login id={userId} />} />
               <Route path='/clientes' element={<MembersList />} />
+              <Route path='/bienvenido' element={<Welcome />} />
               <Route path='/entrenadores' element={<Trainers />} />
               <Route path='/general_info' element={<GeneralInfo id={userId} />} />
               <Route path='/new_member' element={<MembersForm />} />

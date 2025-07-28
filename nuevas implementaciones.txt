@@ -1,0 +1,12 @@
+En el formulario de registro de cliente dar la posibilidad de definir una fecha de pago anterior a la actual, dar la opcion de pagar hasta 2 meses
+
+Crear formulario de entrada de productos para una tienda virtual
+
+crear una pagina para utilizando un codigo unico del usuario obtener la informacion, rellenar los campos faltantes y vincular con el gimnasio
+
+Quitar el telefono de cliente de los campos requeridos
+
+
+
+
+

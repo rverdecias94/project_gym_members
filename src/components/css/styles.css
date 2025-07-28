@@ -169,9 +169,9 @@
   .navbar_mobile {
     display: flex;
     justify-content: center;
-    position: fixed;
-    bottom: 0rem;
-    z-index: 999;
+    top: 100vh;
+    bottom: 2rem;
+    z-index: 999999999 !important;
     right: 0;
     width: 100vw;
     height: 4rem;
