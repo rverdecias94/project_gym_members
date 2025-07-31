@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Button, FormControlLabel, FormLabel, Grid, MenuItem, Radio, RadioGroup, TextField } from "@mui/material"
 import { Box, Checkbox } from '@mui/material';
-import { Toaster } from 'react-hot-toast';
 import { useMembers } from '../context/Context';
 import { useEffect } from 'react';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -183,12 +182,6 @@ function MembersForm({ member, onClose }) {
 
   return (
     <>
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-      />
-
-
       <Dialog
         open={open}
         onClose={() => handlerClose()}

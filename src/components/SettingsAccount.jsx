@@ -17,7 +17,7 @@ import { provincias } from "./Provincias";
 import { LocalizationProvider, MobileTimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { Toaster, toast } from 'react-hot-toast';
+import { useSnackbar } from '../context/Snackbar';
 
 
 
@@ -80,6 +80,7 @@ const CustomSwitch = styled(Switch)(({ theme }) => ({
 export default function SettingsAccount({
   handleClose, open, profile }) {
 
+  const { showMessage } = useSnackbar();
   const [modeDark, setModeDark] = useState(null)
   const [gymInfo, setGymInfo] = useState({
     owner_id: "",
@@ -201,7 +202,7 @@ export default function SettingsAccount({
           .eq("owner_id", owner_id);
 
         if (result) {
-          toast.success("¡Información actualizada con éxito!", { duration: 3000 })
+          showMessage("¡Información actualizada con éxito!", "success");
           handleClose();
         }
       } catch (error) {
@@ -280,7 +281,7 @@ export default function SettingsAccount({
       !state ||
       !city
     ) {
-      toast.error("Por favor complete todos los campos obligatorios.", { duration: 3000 })
+      showMessage("Por favor complete todos los campos obligatorios.", "error");
       return false;
     }
 
@@ -290,14 +291,14 @@ export default function SettingsAccount({
       (!isNaN(daily_payment) && Number(daily_payment) > 0);
 
     if (!hasValidPayment) {
-      toast.error("Debe ingresar al menos un costo válido (mensual o diario).", { duration: 3000 })
+      showMessage("Debe ingresar al menos un costo válido (mensual o diario).", "error");
       return false;
     }
 
     // Validación de horarios
     const hasSchedule = Object.values(schedules).some(day => day.length > 0);
     if (!hasSchedule) {
-      toast.error("Debe configurar al menos un horario.", { duration: 3000 })
+      showMessage("Debe configurar al menos un horario.", "error");
       return false;
     }
 
@@ -307,21 +308,6 @@ export default function SettingsAccount({
 
   return (
     <>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-        gutter={8}
-        containerClassName=""
-        containerStyle={{}}
-        toastOptions={{
-          className: '',
-          duration: 3000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-        }}
-      />
       <Dialog
         open={open}
         onClose={handleClose}

@@ -1,5 +1,5 @@
 
-import { Button, Divider, Grid, useTheme, Select, MenuItem, Skeleton } from '@mui/material';
+import { Button, Divider, Grid, useTheme, Select, MenuItem, Skeleton, useMediaQuery } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { useMembers } from '../context/Context';
@@ -15,7 +15,7 @@ export default function Dashboard() {
   const theme = useTheme();
   const location = useLocation();
 
-  const { getDashboardData, membersList, trainersList, setNavBarOptions } = useMembers();
+  const { getDashboardData, membersList, trainersList, setNavBarOptions, daysRemaining } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
   const [elemntsByTrainer, setElemntsByTrainer] = useState([]);
   const [trainersName, setTrainerName] = useState([]);
@@ -24,8 +24,9 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [membersByYear, setMembersByYear] = useState({});
   const [years, setYears] = useState([]);
-
   const palette = [theme.palette.primary.main, theme.palette.primary.accent];
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   useEffect(() => {
     setTimeout(() => {
       getDashboardData();
@@ -138,8 +139,15 @@ export default function Dashboard() {
       <Grid item xl={12} lg={12} md={12} sm={12} xs={12}
       >
         <div>
+          {
+            isMobile && daysRemaining <= 3 &&
+            <span style={{ position: 'absolute', marginLeft: "4rem" }}>
+              Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
+            </span>
+          }
+
           <Grid container className='charts-container'>
-            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden" }}>
+            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden", marginTop: "2rem" }}>
               {membersActive.length > 0 ?
                 <div>
                   <BarChart

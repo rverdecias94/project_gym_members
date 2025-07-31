@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase/client';
 import { ThemeProvider, CssBaseline } from '@mui/material';
@@ -16,13 +16,13 @@ import { BackdropProvider } from './components/BackdropProvider';
 import GeneralInfo from './components/GeneralInfo';
 import LoginAdmin from './admin/Login';
 import AdminPanel from './admin/AdminPanel';
-import { Toaster } from 'react-hot-toast';
 import Welcome from './components/Welcome';
+import TermsAndConditions from './components/TermsAndConditions';
 
 
 function App() {
   const navigate = useNavigate();
-  const location = useLocation();
+  /* const location = useLocation(); */
   const [userId, setUserId] = useState(false);
   const [event, setEvent] = useState("SIGNED_OUT");
   const [profile, setProfile] = useState({
@@ -63,7 +63,7 @@ function App() {
     setTimeout(() => {
       supabase.auth.onAuthStateChange((event, session) => {
         setEvent(event)
-        if (!session && location.pathname !== '/admin') {
+        if (!session && window.location.pathname !== '/admin' && window.location.pathname !== '/terms-conditions' && window.location.pathname !== '/admin/panel') {
           const userUUID = session?.user?.id;
           setUserId(userUUID);
           navigate('/login');
@@ -93,18 +93,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
-        <Toaster
-          position="top-right"
-          reverseOrder={false}
-          toastOptions={{
-            style: {
-              zIndex: 3500,
-            },
-          }}
-        />
         <ContextProvider>
           <BackdropProvider>
-            {event && window.location.pathname !== '/login' && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+            {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
             <Routes>
               <Route path='/panel' element={<Dashboard />} />
               <Route path='/login' element={<Login id={userId} />} />
@@ -116,6 +107,7 @@ function App() {
               <Route path='/new_trainer' element={<TrainersForm />} />
               <Route path='/admin' element={<LoginAdmin />} />
               <Route path='/admin/panel' element={<AdminPanel />} />
+              <Route path='/terms-conditions' element={<TermsAndConditions />} />
               <Route path='*' element={<NotFound />} />
             </Routes>
           </BackdropProvider>

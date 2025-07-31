@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { supabase } from '../supabase/client';
-import { Toaster, toast } from 'react-hot-toast';
+
 import LogoutIcon from '@mui/icons-material/Logout';
 import {
   Box,
@@ -23,6 +23,7 @@ import SettingsAccount from './SettingsAccount';
 import { useTheme, styled } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MobileBottomNav from './MobileBottomNav';
+import { useSnackbar } from '../context/Snackbar';
 
 const settings = ['Perfil'];
 
@@ -60,17 +61,18 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const themeClass = theme.palette.mode === 'dark' ? 'navbar-dark' : 'navbar-light';
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const { navBarOptions, setNavBarOptions } = useMembers();
+  const { navBarOptions, setNavBarOptions, daysRemaining } = useMembers();
   const [openSettings, setOpenSettings] = useState(false);
   const [showNav, setShowNav] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const { showMessage } = useSnackbar();
 
   const logoutUser = async () => {
     try {
       let { error } = await supabase.auth.signOut();
       setNavBarOptions(false);
-      toast.success("Sesión cerrada satisfactoriamente", { duration: 5000 });
+      showMessage("Sesión cerrada satisfactoriamente", "success");
       setShowNav(false);
       if (error) throw error;
       navigate('/login');
@@ -96,13 +98,19 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     <>
       {showNav && (
         <div className={`navbar ${themeClass}`}>
-          <Toaster position="top-center" reverseOrder={false} />
 
           <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
             <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40 }} />
           </div>
 
-          {!isMobile && navBarOptions && !["/admin", "/login", "/general_info", "/bienvenido"].includes(location.pathname) && (
+          {
+            !isMobile && daysRemaining <= 3 &&
+            <span style={{ position: 'absolute', marginLeft: "4rem" }}>
+              Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
+            </span>
+          }
+
+          {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/general_info", "/bienvenido"].includes(location.pathname) && (
             <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around", marginLeft: "22rem" }}>
               <NavButton to="/panel" icon={<AssessmentIcon />} text="Panel" />
               <NavButton to="/clientes" icon={<GroupsIcon />} text="Clientes" />
@@ -113,27 +121,32 @@ export default function Navbar({ profile, mode, toggleTheme }) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {!isMobile && <span className='hide'>{`¡Hola ${profile.name || "Admin"}!`}</span>}
             <Box sx={{ flexGrow: 0 }}>
-              <Tooltip title="Detalles de la cuenta">
-                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <img src={profile?.avatar || "/avatar.svg"} alt="" style={{ width: 35, height: 35, borderRadius: "50%", background: "white" }} />
-                </IconButton>
-              </Tooltip>
-              <Menu
-                sx={{ mt: '45px' }}
-                anchorEl={anchorElUser}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                keepMounted
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                open={Boolean(anchorElUser)}
-                onClose={handleCloseUserMenu}
-              >
-                {settings.map((setting) => (
-                  <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                    <SettingsIcon />
-                    <Typography sx={{ ml: 1 }}>{setting}</Typography>
-                  </MenuItem>
-                ))}
-              </Menu>
+              {!["/admin", "/admin/panel"].includes(location.pathname) && (
+                <>
+                  <Tooltip title="Detalles de la cuenta">
+                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                      <img src={profile?.avatar || "/avatar.svg"} alt="" style={{ width: 35, height: 35, borderRadius: "50%", background: "white" }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Menu
+                    sx={{ mt: '45px' }}
+                    anchorEl={anchorElUser}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    keepMounted
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    open={Boolean(anchorElUser)}
+                    onClose={handleCloseUserMenu}
+                  >
+                    {settings.map((setting) => (
+                      <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                        <SettingsIcon />
+                        <Typography sx={{ ml: 1 }}>{setting}</Typography>
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </>
+              )
+              }
             </Box>
 
             <CustomSwitch onChange={toggleTheme} checked={mode} />
@@ -149,7 +162,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
         </div>
       )}
 
-      {isMobile && showNav && (
+      {isMobile && showNav && !["/admin", "/admin/panel"].includes(location.pathname) && (
         <MobileBottomNav
           profile={profile}
           mode={mode}

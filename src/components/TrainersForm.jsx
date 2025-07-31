@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button, Grid, TextField } from "@mui/material";
 import { Box } from '@mui/material';
-import { Toaster } from 'react-hot-toast';
 import { useMembers } from '../context/Context';
 import { useEffect } from 'react';
 import ImageUploader from './ImageUploader';
@@ -88,10 +87,6 @@ function TrainersForm({ trainer, onClose }) {
 
   return (
     <>
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-      />
       <Box
         component="form"
         sx={{

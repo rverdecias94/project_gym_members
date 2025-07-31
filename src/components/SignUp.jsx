@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { Toaster, toast } from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase/client';
 import { Button, Grid, TextField, Typography } from '@mui/material';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import { useSnackbar } from '../context/Snackbar';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordType, setPasswordType] = useState("password");
-
+  const { showMessage } = useSnackbar();
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
@@ -23,10 +23,10 @@ const Signup = () => {
 
       if (error) throw error;
       handlerClearStates();
-      toast.success("¡Registro exitoso!", { duration: 3000 });
+      showMessage("¡Registro exitoso!", "success");
       navigate('/login');
     } catch (error) {
-      toast.error("No hemos podido registrar el usuario", { duration: 5000 });
+      showMessage("No hemos podido registrar el usuario", "error");
       console.error(error);
     }
   };
@@ -38,10 +38,7 @@ const Signup = () => {
 
   return (
     <Grid container>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-      />
+
       <Typography variant="h5" textAlign='center' className="login_title">
         ¡Regístrate!
       </Typography>
