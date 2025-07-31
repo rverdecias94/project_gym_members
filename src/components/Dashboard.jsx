@@ -147,7 +147,7 @@ export default function Dashboard() {
           }
 
           <Grid container className='charts-container'>
-            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden", marginTop: "2rem" }}>
+            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden", marginTop: isMobile && daysRemaining <= 3 ? "2rem" : 0 }}>
               {membersActive.length > 0 ?
                 <div>
                   <BarChart
