@@ -25,7 +25,8 @@ export const ContextProvider = ({ children }) => {
   const [daysRemaining, setDaysRemaining] = useState(0);
   const navigate = useNavigate();
   const { showMessage } = useSnackbar();
-
+  const [productsList, setProductsList] = useState([]);
+  const [needsUpdateProducts, setNeedsUpdateProducts] = useState(true);
 
   const handlerNeedUpdateClients = async (value) => {
     setNeedsUpdateClients(value);
@@ -66,6 +67,24 @@ export const ContextProvider = ({ children }) => {
     }
     getGymInfo();
   }, []);
+
+
+  const getGymInfo = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log(user)
+
+    if (!user) {
+      throw new Error("Usuario no autenticado");
+    }
+
+    const { data } = await supabase
+      .from('info_general_gym')
+      .select()
+      .eq('owner_id', user.id)
+
+    return data[0]
+  }
+
 
   const getMembers = async (value) => {
     setTimeout(async () => {
@@ -369,6 +388,129 @@ export const ContextProvider = ({ children }) => {
     }
   };
 
+  const getProducts = async (forceUpdate = false) => {
+    if (needsUpdateProducts || forceUpdate) {
+      setBackdrop(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('gym_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setProductsList(data || []);
+        setNeedsUpdateProducts(false);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        showMessage("Error al cargar productos", "error");
+      } finally {
+        setBackdrop(false);
+      }
+    }
+  };
+
+  const createProduct = async (productData) => {
+    setBackdrop(true);
+    setAdding(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const result = await supabase.from("products").insert({
+        name: productData.name,
+        description: productData.description,
+        price: parseFloat(productData.price),
+        currency: productData.currency,
+        image_base64: productData.image_base64,
+        product_code: productData.product_code,
+        has_delivery: productData.has_delivery,
+        has_pickup: productData.has_pickup,
+        gym_id: user.id,
+      });
+
+      if (result.error) throw result.error;
+
+      showMessage("Producto creado exitosamente", "success");
+      setNeedsUpdateProducts(true);
+      await getProducts(true);
+      return { success: true };
+    } catch (error) {
+      console.error('Error creating product:', error);
+      if (error.code === '23505') {
+        showMessage("Ya existe un producto con ese código", "error");
+      } else {
+        showMessage("Error al crear el producto", "error");
+      }
+      return { success: false, error };
+    } finally {
+      setBackdrop(false);
+      setAdding(false);
+    }
+  };
+
+  const updateProduct = async (productId, productData) => {
+    setBackdrop(true);
+    setAdding(true);
+    try {
+      const result = await supabase
+        .from("products")
+        .update({
+          name: productData.name,
+          description: productData.description,
+          price: parseFloat(productData.price),
+          currency: productData.currency,
+          image_base64: productData.image_base64,
+          product_code: productData.product_code,
+          has_delivery: productData.has_delivery,
+          has_pickup: productData.has_pickup,
+        })
+        .eq("id", productId);
+
+      if (result.error) throw result.error;
+
+      showMessage("Producto actualizado exitosamente", "success");
+      setNeedsUpdateProducts(true);
+      await getProducts(true);
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating product:', error);
+      if (error.code === '23505') {
+        showMessage("Ya existe un producto con ese código", "error");
+      } else {
+        showMessage("Error al actualizar el producto", "error");
+      }
+      return { success: false, error };
+    } finally {
+      setBackdrop(false);
+      setAdding(false);
+    }
+  };
+
+  const deleteProduct = async (productId) => {
+    setBackdrop(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("gym_id", user.id)
+        .eq("id", productId);
+
+      if (error) throw error;
+
+      showMessage("Producto eliminado exitosamente", "success");
+      setNeedsUpdateProducts(true);
+      await getProducts(true);
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      showMessage("Error al eliminar el producto", "error");
+      return { success: false, error };
+    } finally {
+      setBackdrop(false);
+    }
+  };
+
   return <Context.Provider
     value={{
       membersList,
@@ -378,6 +520,7 @@ export const ContextProvider = ({ children }) => {
       backdrop,
       navBarOptions,
       daysRemaining,
+      productsList,
       getMembers,
       getDashboardData,
       getTrainers,
@@ -392,7 +535,12 @@ export const ContextProvider = ({ children }) => {
       setBackdrop,
       applyRuleToRows,
       importClients,
-      setNavBarOptions
+      setNavBarOptions,
+      getGymInfo,
+      getProducts,
+      createProduct,
+      updateProduct,
+      deleteProduct,
     }}>
     {children}
   </Context.Provider>

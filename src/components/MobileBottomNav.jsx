@@ -22,6 +22,7 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
+import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 
 export default function MobileBottomNav({ profile, mode, toggleTheme, logoutUser }) {
   const [value, setValue] = useState(0);
@@ -34,6 +35,7 @@ export default function MobileBottomNav({ profile, mode, toggleTheme, logoutUser
     { label: 'Panel', icon: <AssessmentIcon />, path: '/panel' },
     { label: 'Clientes', icon: <GroupsIcon />, path: '/clientes' },
     { label: 'Entrenadores', icon: <FitnessCenterIcon />, path: '/entrenadores' },
+    { label: 'Tienda', icon: <LocalGroceryStoreIcon />, path: '/tienda' },
   ];
 
   const handleNavChange = (event, newValue) => {

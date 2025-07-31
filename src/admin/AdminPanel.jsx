@@ -115,6 +115,22 @@ const AdminPanel = () => {
       console.error(error);
     }
   };
+  const updateStoreActivation = async (row) => {
+    const updatedRow = { ...row, store: !row.store };
+    try {
+      if (!row.owner_id) return;
+      const result = await supabase
+        .from("info_general_gym")
+        .update(updatedRow)
+        .eq("owner_id", row.owner_id);
+      if (result) {
+        showMessage("¡Tienda activa!", "success");
+        getAllGyms();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleSearch = (event) => {
     const value = event.target.value.toLowerCase();
@@ -170,6 +186,15 @@ const AdminPanel = () => {
         <CustomSwitch
           onChange={() => updateActiveStatus(row)}
           checked={row.active}
+        />
+      ),
+    },
+    {
+      field: 'store', headerName: 'Tienda Activa', sortable: false, width: 120,
+      renderCell: ({ row }) => (
+        <CustomSwitch
+          onChange={() => updateStoreActivation(row)}
+          checked={row.store}
         />
       ),
     },

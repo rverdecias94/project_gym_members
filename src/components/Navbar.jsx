@@ -24,6 +24,7 @@ import { useTheme, styled } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MobileBottomNav from './MobileBottomNav';
 import { useSnackbar } from '../context/Snackbar';
+import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 
 const settings = ['Perfil'];
 
@@ -68,6 +69,9 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   const location = useLocation();
   const { showMessage } = useSnackbar();
 
+
+
+
   const logoutUser = async () => {
     try {
       let { error } = await supabase.auth.signOut();
@@ -94,6 +98,8 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     setOpenSettings(false);
   };
 
+
+
   return (
     <>
       {showNav && (
@@ -110,11 +116,15 @@ export default function Navbar({ profile, mode, toggleTheme }) {
             </span>
           }
 
+
           {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/general_info", "/bienvenido"].includes(location.pathname) && (
             <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around", marginLeft: "22rem" }}>
               <NavButton to="/panel" icon={<AssessmentIcon />} text="Panel" />
               <NavButton to="/clientes" icon={<GroupsIcon />} text="Clientes" />
-              <NavButton to="/entrenadores" icon={<FitnessCenterIcon />} text="Entrenadores" />
+              <NavButton to="/entrenadores" icon={<FitnessCenterIcon />}
+                text="Entrenadores" />
+              <NavButton to="/tienda" icon={<LocalGroceryStoreIcon />} text="Tienda" />
+
             </div>
           )}
 

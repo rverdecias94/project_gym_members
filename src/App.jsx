@@ -18,6 +18,7 @@ import LoginAdmin from './admin/Login';
 import AdminPanel from './admin/AdminPanel';
 import Welcome from './components/Welcome';
 import TermsAndConditions from './components/TermsAndConditions';
+import StoreManagment from './components/StoreManagment';
 
 
 function App() {
@@ -108,6 +109,7 @@ function App() {
               <Route path='/admin' element={<LoginAdmin />} />
               <Route path='/admin/panel' element={<AdminPanel />} />
               <Route path='/terms-conditions' element={<TermsAndConditions />} />
+              <Route path='/tienda' element={<StoreManagment />} />
               <Route path='*' element={<NotFound />} />
             </Routes>
           </BackdropProvider>
