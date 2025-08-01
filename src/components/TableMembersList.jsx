@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { DataGrid } from '@mui/x-data-grid';
 import DeleteDialog from './DeleteDialog';
 import EditMember from './EditMember';
@@ -21,6 +22,12 @@ import {
   DialogTitle,
   useMediaQuery,
   useTheme,
+  ButtonGroup,
+  Card,
+  CardContent,
+  CardActions,
+  Pagination,
+  Box,
 } from '@mui/material';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
@@ -33,7 +40,9 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { supabase } from '../supabase/client';
 import CancelIcon from '@mui/icons-material/Cancel';
 import IconButton from '@mui/material/IconButton';
-
+import RuleIcon from '@mui/icons-material/Rule';
+import LinkIcon from '@mui/icons-material/Link';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
@@ -54,9 +63,13 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [id, setId] = useState('');
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState(null);
+
+  // Estados para paginación móvil
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -76,9 +89,9 @@ export const TableMembersList = ({ membersList = [] }) => {
     setMembersOriginal(membersList);
     setMembers(membersList);
     setSelectedRows([]);
+    setCurrentPage(1); // Reset pagination when data changes
 
     const updateClientsLength = async () => {
-
       const { data } = await supabase.auth.getUser();
       await supabase
         .from("info_general_gym")
@@ -87,7 +100,6 @@ export const TableMembersList = ({ membersList = [] }) => {
     }
 
     updateClientsLength();
-
   }, [membersList]);
 
   useEffect(() => {
@@ -100,6 +112,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       } else if (trainer_name === "Todos") {
         setMembers(members);
       }
+      setCurrentPage(1); // Reset pagination when filter changes
     }
   }, [trainer_name]);
 
@@ -108,7 +121,7 @@ export const TableMembersList = ({ membersList = [] }) => {
     setError(null);
 
     const { data, error } = await supabase
-      .from('members') // Reemplaza por el nombre de tu tabla
+      .from('members')
       .select('*')
       .eq('id', id);
 
@@ -135,6 +148,7 @@ export const TableMembersList = ({ membersList = [] }) => {
     setOpenEdit(true);
     setMemberInfo(member);
   };
+
   const handleOpenRule = () => {
     setOpenRule(true);
   };
@@ -159,6 +173,16 @@ export const TableMembersList = ({ membersList = [] }) => {
       setAmountDays(e);
   }
 
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+
+  // Calcular elementos para la página actual en vista móvil
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentMembers = members.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(members.length / itemsPerPage);
+
   const columns = [
     {
       field: 'actions',
@@ -166,7 +190,6 @@ export const TableMembersList = ({ membersList = [] }) => {
       sortable: false,
       width: 100,
       renderCell: (params) => (
-
         <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
           <FormControlLabel
             control={
@@ -174,7 +197,6 @@ export const TableMembersList = ({ membersList = [] }) => {
                 checked={selectedRows?.includes(params.row)}
                 onChange={(e) => handlerChangeStatus(e, params.row)}
                 name='active'
-
               />
             }
             style={{ marginRight: 0 }}
@@ -192,7 +214,6 @@ export const TableMembersList = ({ membersList = [] }) => {
             />
           </Tooltip>
         </div>
-
       ),
     },
     { field: 'first_name', headerName: 'Nombre', width: 130 },
@@ -227,9 +248,6 @@ export const TableMembersList = ({ membersList = [] }) => {
     },
   ];
 
-
-
-
   const downloadPDF = () => {
     const data = [...membersList];
     const doc = new jsPDF();
@@ -240,6 +258,7 @@ export const TableMembersList = ({ membersList = [] }) => {
 
     doc.save('Listado de clientes.pdf');
   }
+
   const handlerCheckBox = () => {
     let rowsInt = [...selectedRows]
     if (rowsInt.length === membersList.length) {
@@ -248,18 +267,78 @@ export const TableMembersList = ({ membersList = [] }) => {
       setSelectedRows(membersList);
     }
   }
+
   const handlerChange = (e) => {
     setTrainerName(e?.target?.value)
   }
+
+  // Componente para mostrar tarjetas en móvil
+  const MemberCard = ({ member }) => (
+    <Card sx={{ mb: 2, boxShadow: 2 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+            {member.first_name} {member.last_name}
+          </Typography>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={selectedRows?.includes(member)}
+                onChange={(e) => handlerChangeStatus(e, member)}
+                name='active'
+              />
+            }
+            label=""
+            sx={{ m: 0 }}
+          />
+        </Box>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <strong>Teléfono:</strong> {member.phone || '-'}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <strong>CI:</strong> {member.ci}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <strong>Dirección:</strong> {member.address}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <strong>Entrenador:</strong> {member.trainer_name || '-'}
+        </Typography>
+      </CardContent>
+
+      <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+        <Tooltip title="Editar">
+          <IconButton
+            color="primary"
+            onClick={() => handleOpenEdit(member)}
+            size="small"
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Eliminar">
+          <IconButton
+            sx={{ color: "#e7657e" }}
+            onClick={() => handleOpenDelete(member)}
+            size="small"
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </CardActions>
+    </Card>
+  );
+
   return (
     <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
       <Grid container className='container-options'>
         <Grid item xl={12} lg={12} md={12} sm={12} xs={12}>
-
-
-          {
-            membersList.length !== 0 &&
+          {membersList.length !== 0 && (
             <Grid sx={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: 15, width: isMobile ? "100%" : "20%" }}>
               <TextField
                 id="outlined-select-currency"
@@ -281,8 +360,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 ))}
               </TextField>
             </Grid>
-          }
-
+          )}
         </Grid>
 
         <Divider />
@@ -297,80 +375,155 @@ export const TableMembersList = ({ membersList = [] }) => {
             </Button>
           </Link>
 
-          <Grid container style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(1, 1fr)" : "repeat(4, 1fr)", gap: 15, width: isMobile ? "100%" : "50%" }}>
-            <Grid item>
-              <Button
-                variant="outlined"
-                size='small'
-                fullWidth
-                onClick={() => setOpen(true)}
-                sx={{ height: '100%' }}
-              >
-                Asociar Cliente
-              </Button>
+          {/* Botones para vista desktop */}
+          {!isMobile && (
+            <Grid container style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 15, width: "50%" }}>
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  size='small'
+                  fullWidth
+                  onClick={() => setOpen(true)}
+                  sx={{ height: '100%' }}
+                >
+                  Asociar Cliente
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button
+                  variant='outlined'
+                  disabled={selectedRows.length === 0}
+                  fullWidth
+                  size='small'
+                  onClick={handleOpenRule}
+                  sx={{ mr: 1.2, height: '100%' }}
+                >
+                  Aplicar regla
+                </Button>
+              </Grid>
+              <Grid>
+                <Button
+                  variant='outlined'
+                  className='btn-check'
+                  onClick={handlerCheckBox}
+                  disabled={membersList.length === 0}
+                  sx={{ flexGrow: .1, float: 'right', width: "fit-context" }}
+                >
+                  <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Sel. Todos" : "Desel. Todos"}
+                </Button>
+              </Grid>
+              <Grid>
+                <Button
+                  variant='outlined'
+                  onClick={downloadPDF}
+                  disabled={membersList.length === 0}
+                  fullWidth
+                  sx={{ flexGrow: .1, float: 'right', width: "fit-context" }}
+                >
+                  <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item >
-              <Button
-                variant='outlined'
-                disabled={selectedRows.length === 0}
-                fullWidth
-                size='small'
-                onClick={handleOpenRule}
-                sx={{
-                  mr: 1.2, height: '100%',
-                }}
-              >
-                Aplicar regla
-              </Button>
-            </Grid>
+          )}
 
-            <Grid >
-              <Button
-                variant='outlined'
-                className='btn-check'
-                onClick={handlerCheckBox}
-                disabled={membersList.length === 0}
-                sx={{
-                  flexGrow: .1,
-                  float: 'right',
-                  width: "fit-context",
-                }}
-              >
-                <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Sel. Todos" : "Desel. Todos"}
-              </Button>
-            </Grid>
+          {/* ButtonGroup para vista móvil */}
+          {isMobile && (
+            <ButtonGroup
+              variant="outlined"
+              size="large"
+              sx={{
+                '& .MuiButton-root': {
+                  minWidth: 'auto',
+                  padding: '6px 8px'
+                }
+              }}
+            >
+              <Tooltip title="Asociar Cliente">
+                <Button onClick={() => setOpen(true)}>
+                  <LinkIcon />
+                </Button>
+              </Tooltip>
 
-            <Grid >
-              <Button
-                variant='outlined'
-                onClick={downloadPDF}
-                disabled={membersList.length === 0}
-                fullWidth
-                sx={{
-                  flexGrow: .1,
-                  float: 'right',
-                  width: "fit-context",
-                }}
-              >
-                <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
-              </Button>
-            </Grid>
-          </Grid>
+              <Tooltip title="Aplicar Regla">
+                <Button
+                  disabled={selectedRows.length === 0}
+                  onClick={handleOpenRule}
+                >
+                  <RuleIcon />
+                </Button>
+              </Tooltip>
+
+              <Tooltip title={membersList.length !== selectedRows.length ? "Seleccionar Todos" : "Deseleccionar Todos"}>
+                <Button
+                  onClick={handlerCheckBox}
+                  disabled={membersList.length === 0}
+                >
+                  {membersList.length !== selectedRows.length ? <CheckBoxOutlineBlankIcon /> : <CheckBoxIcon />}
+                </Button>
+              </Tooltip>
+
+              <Tooltip title="Descargar PDF">
+                <Button
+                  onClick={downloadPDF}
+                  disabled={membersList.length === 0}
+                >
+                  <PictureAsPdfIcon />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+          )}
         </Grid>
       </Grid>
       <br />
+
       {adding && <span>Aplicando reglas a clientes seleccionados...</span>}
+
       <Grid container style={{ paddingBottom: '9rem' }}>
-        <DataGrid
-          rows={members}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 5 },
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-        />
+        {/* Vista desktop - DataGrid */}
+        {!isMobile && (
+          <DataGrid
+            rows={members}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 5 },
+              },
+            }}
+            pageSizeOptions={[5, 10]}
+          />
+        )}
+
+        {/* Vista móvil - Tarjetas */}
+        {isMobile && (
+          <Box sx={{ width: '100%' }}>
+            {currentMembers.length > 0 ? (
+              <>
+                {currentMembers.map((member) => (
+                  <MemberCard key={member.id} member={member} />
+                ))}
+
+                {/* Paginación para vista móvil */}
+                {totalPages > 1 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                    <Pagination
+                      count={totalPages}
+                      page={currentPage}
+                      onChange={handlePageChange}
+                      color="primary"
+                      size="small"
+                      showFirstButton
+                      showLastButton
+                    />
+                  </Box>
+                )}
+              </>
+            ) : (
+              <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }}>
+                No hay miembros para mostrar
+              </Typography>
+            )}
+          </Box>
+        )}
       </Grid>
 
       <DeleteDialog
@@ -379,6 +532,7 @@ export const TableMembersList = ({ membersList = [] }) => {
         open={openDelete}
         type={1}
       />
+
       <AddRuleDialog
         handlerChangeAmount={handlerChangeAmount}
         handleClose={handleClose}
@@ -418,7 +572,6 @@ export const TableMembersList = ({ membersList = [] }) => {
             onClick={buscarRegistro}
             fullWidth
             size='small'
-
           >
             Buscar
           </Button>
@@ -460,6 +613,7 @@ export const TableMembersList = ({ membersList = [] }) => {
           </List>
         </Grid>
       </Dialog>
+
       <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} />
     </Grid>
   );

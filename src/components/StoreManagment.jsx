@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
@@ -34,11 +35,10 @@ import {
   Tabs,
   Tab,
   Alert,
-  Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText
+  useMediaQuery,
+  useTheme,
+  CardActions,
+  Pagination,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -62,6 +62,10 @@ const StoreManagment = () => {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
+  // Estados para paginación móvil
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+
   // Estados para el formulario
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -77,6 +81,9 @@ const StoreManagment = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     const getData = async () => {
@@ -94,6 +101,10 @@ const StoreManagment = () => {
     };
     getData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset pagination when products change
+  }, [products]);
 
   const getProducts = async () => {
     setLoadingProducts(true);
@@ -256,6 +267,84 @@ const StoreManagment = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+
+  // Calcular elementos para la página actual en vista móvil
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = products.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+
+  // Componente para mostrar productos en tarjetas móviles
+  const ProductCard = ({ product }) => (
+    <Card sx={{ mb: 10, boxShadow: 2 }}>
+      <Box sx={{ position: 'relative' }}>
+        <CardMedia
+          component="img"
+          height="120"
+          image={product.image_base64}
+          alt={product.name}
+          sx={{ objectFit: 'cover' }}
+        />
+      </Box>
+      <CardContent sx={{ pb: 1 }}>
+        <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+          {product.name}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.8rem' }}>
+          <strong>Código:</strong> {product.product_code}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.8rem', lineHeight: 1.3 }}>
+          {product.description.length > 80 ? `${product.description.substring(0, 80)}...` : product.description}
+        </Typography>
+
+        <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>
+          {product.price} {product.currency}
+        </Typography>
+
+        <Box display="flex" gap={0.5} mb={1} flexWrap="wrap">
+          {product.has_delivery && (
+            <Chip
+              icon={<DeliveryIcon sx={{ fontSize: '0.7rem' }} />}
+              label="Envío"
+              size="small"
+              sx={{ fontSize: '0.65rem', height: 20 }}
+            />
+          )}
+          {product.has_pickup && (
+            <Chip
+              icon={<PickupIcon sx={{ fontSize: '0.7rem' }} />}
+              label="Recogida"
+              size="small"
+              sx={{ fontSize: '0.65rem', height: 20 }}
+            />
+          )}
+        </Box>
+      </CardContent>
+
+      <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 1 }}>
+        <IconButton
+          color="primary"
+          onClick={() => handleEdit(product)}
+          size="small"
+        >
+          <EditIcon sx={{ fontSize: '1.1rem' }} />
+        </IconButton>
+        <IconButton
+          color="error"
+          onClick={() => handleDelete(product.id)}
+          size="small"
+        >
+          <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+        </IconButton>
+      </CardActions>
+    </Card>
+  );
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -267,39 +356,39 @@ const StoreManagment = () => {
   if (!store) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
-        <Paper sx={{ p: 4 }}>
+        <Paper sx={{ p: isMobile ? 2 : 4 }}>
           <Grid container spacing={4} alignItems="center">
-            {/* Columna izquierda - Información principal */}
             <Grid item xs={12} md={5}>
               <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                <StoreIcon sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-                <Typography variant="h4" gutterBottom color="text.primary">
+                <StoreIcon sx={{ fontSize: isMobile ? 40 : 48, color: 'grey.400', mb: 2 }} />
+                <Typography variant={isMobile ? "h5" : "h4"} gutterBottom color="text.primary">
                   Tienda no habilitada
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: isMobile ? '0.9rem' : '1rem' }}>
                   Tu gimnasio no tiene habilitada la funcionalidad de tienda.
                 </Typography>
 
                 <Button
                   variant="contained"
-                  size="large"
-                  startIcon={<WhatsAppIcon />}
+                  size={isMobile ? "medium" : "large"}
+                  startIcon={<WhatsAppIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
                   onClick={handleWhatsAppRequest}
                   sx={{
                     backgroundColor: '#25d366',
                     '&:hover': {
                       backgroundColor: '#20b358',
                     },
-                    py: 1.5,
-                    px: 4,
-                    fontSize: '1.1rem',
+                    py: isMobile ? 1 : 1.5,
+                    px: isMobile ? 2 : 4,
+                    fontSize: isMobile ? '0.9rem' : '1.1rem',
                     mb: 2
                   }}
+                  fullWidth={isMobile}
                 >
                   Solicitar servicio por WhatsApp
                 </Button>
 
-                <Typography variant="caption" color="text.secondary" display="block">
+                <Typography variant="caption" color="text.secondary" display="block" fontSize={isMobile ? '0.7rem' : '0.75rem'}>
                   Te contactaremos para procesar tu solicitud y activar tu tienda
                 </Typography>
               </Box>
@@ -310,15 +399,15 @@ const StoreManagment = () => {
               <Paper
                 elevation={2}
                 sx={{
-                  p: 3,
+                  p: isMobile ? 2 : 3,
                   background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
                   border: '1px solid #9c27b0'
                 }}
               >
-                <Typography variant="h5" gutterBottom sx={{ color: '#7b1fa2', fontWeight: 'bold' }}>
+                <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: '#7b1fa2', fontWeight: 'bold' }}>
                   🛍️ Habilita tu tienda virtual
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#4a148c', mb: 3 }}>
+                <Typography variant="body1" sx={{ color: '#4a148c', mb: 3, fontSize: isMobile ? '0.85rem' : '1rem' }}>
                   Vende productos directamente desde tu plataforma de gimnasio con nuestra funcionalidad de tienda integrada.
                 </Typography>
 
@@ -326,10 +415,10 @@ const StoreManagment = () => {
                   {/* Precio */}
                   <Grid item xs={12} sm={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: 'white' }}>
-                      <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
+                      <Typography variant={isMobile ? "h5" : "h4"} color="success.main" sx={{ fontWeight: 'bold' }}>
                         $5
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
                         USD/mes
                       </Typography>
                     </Paper>
@@ -340,26 +429,26 @@ const StoreManagment = () => {
                     <Grid container spacing={1}>
                       <Grid item xs={6}>
                         <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: 20 }} />
-                          <Typography variant="body2">Catálogo ilimitado</Typography>
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Catálogo ilimitado</Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={6}>
                         <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: 20 }} />
-                          <Typography variant="body2">Gestión de inventario</Typography>
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Gestión de inventario</Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={6}>
                         <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: 20 }} />
-                          <Typography variant="body2">Entregas flexibles</Typography>
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Entregas flexibles</Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={6}>
                         <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: 20 }} />
-                          <Typography variant="body2">Múltiples monedas</Typography>
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Múltiples monedas</Typography>
                         </Box>
                       </Grid>
                     </Grid>
@@ -374,109 +463,165 @@ const StoreManagment = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
-      <Paper sx={{ p: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" component="h1">
+    <Container maxWidth="lg" sx={{ mt: 2, mb: 16 }}>
+      <Paper sx={{ p: isMobile ? 2 : 3 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 2 : 0}>
+          <Typography variant={isMobile ? "h5" : "h4"} component="h1">
             Gestión de Tienda
           </Typography>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            startIcon={<AddIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
             onClick={() => setOpenDialog(true)}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ fontSize: isMobile ? '0.85rem' : '1rem' }}
           >
             Nuevo Producto
           </Button>
         </Box>
 
-        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={(e, newValue) => setTabValue(newValue)}
+          sx={{
+            mb: 3,
+            '& .MuiTab-root': {
+              fontSize: isMobile ? '0.8rem' : '0.875rem',
+              minWidth: isMobile ? 'auto' : 160
+            }
+          }}
+          variant={isMobile ? "fullWidth" : "standard"}
+        >
           <Tab label="Lista de Productos" />
           <Tab label="Catálogo" />
         </Tabs>
 
         {tabValue === 0 && (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Imagen</TableCell>
-                  <TableCell>Nombre</TableCell>
-                  <TableCell>Código</TableCell>
-                  <TableCell>Precio</TableCell>
-                  <TableCell>Entrega</TableCell>
-                  <TableCell>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loadingProducts ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
-                ) : products.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      No hay productos registrados
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <Box sx={{ width: 50, height: 50 }}>
-                          <img
-                            src={product.image_base64}
-                            alt={product.name}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              borderRadius: 4
-                            }}
-                          />
-                        </Box>
-                      </TableCell>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.product_code}</TableCell>
-                      <TableCell>
-                        {product.price} {product.currency}
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" gap={1}>
-                          {product.has_delivery && (
-                            <Chip icon={<DeliveryIcon />} label="Envío" size="small" />
-                          )}
-                          {product.has_pickup && (
-                            <Chip icon={<PickupIcon />} label="Recogida" size="small" />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton onClick={() => handleEdit(product)} color="primary">
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleDelete(product.id)} color="error">
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
+          <>
+            {!isMobile && (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Imagen</TableCell>
+                      <TableCell>Nombre</TableCell>
+                      <TableCell>Código</TableCell>
+                      <TableCell>Precio</TableCell>
+                      <TableCell>Entrega</TableCell>
+                      <TableCell>Acciones</TableCell>
                     </TableRow>
-                  ))
+                  </TableHead>
+                  <TableBody>
+                    {loadingProducts ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">
+                          <CircularProgress size={24} />
+                        </TableCell>
+                      </TableRow>
+                    ) : products.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">
+                          No hay productos registrados
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      products.map((product) => (
+                        <TableRow key={product.id}>
+                          <TableCell>
+                            <Box sx={{ width: 50, height: 50 }}>
+                              <img
+                                src={product.image_base64}
+                                alt={product.name}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  borderRadius: 4
+                                }}
+                              />
+                            </Box>
+                          </TableCell>
+                          <TableCell>{product.name}</TableCell>
+                          <TableCell>{product.product_code}</TableCell>
+                          <TableCell>
+                            {product.price} {product.currency}
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" gap={1}>
+                              {product.has_delivery && (
+                                <Chip icon={<DeliveryIcon />} label="Envío" size="small" />
+                              )}
+                              {product.has_pickup && (
+                                <Chip icon={<PickupIcon />} label="Recogida" size="small" />
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <IconButton onClick={() => handleEdit(product)} color="primary">
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton onClick={() => handleDelete(product.id)} color="error">
+                              <DeleteIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
+            {/* Vista móvil - Tarjetas */}
+            {isMobile && (
+              <Box sx={{ width: '100%' }}>
+                {loadingProducts ? (
+                  <Box display="flex" justifyContent="center" py={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : products.length === 0 ? (
+                  <Typography variant="body1" sx={{ textAlign: 'center', py: 4, fontSize: '0.9rem' }}>
+                    No hay productos registrados
+                  </Typography>
+                ) : (
+                  <>
+                    {currentProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+
+                    {/* Paginación para vista móvil */}
+                    {totalPages > 1 && (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                        <Pagination
+                          count={totalPages}
+                          page={currentPage}
+                          onChange={handlePageChange}
+                          color="primary"
+                          size="small"
+                          showFirstButton
+                          showLastButton
+                        />
+                      </Box>
+                    )}
+                  </>
                 )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              </Box>
+            )}
+          </>
         )}
 
         {tabValue === 1 && (
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 3}>
             {loadingProducts ? (
               <Grid item xs={12} display="flex" justifyContent="center">
                 <CircularProgress />
               </Grid>
             ) : products.length === 0 ? (
               <Grid item xs={12}>
-                <Alert severity="info">No hay productos para mostrar</Alert>
+                <Alert severity="info" sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
+                  No hay productos para mostrar
+                </Alert>
               </Grid>
             ) : (
               products.map((product) => (
@@ -484,26 +629,37 @@ const StoreManagment = () => {
                   <Card>
                     <CardMedia
                       component="img"
-                      height="200"
+                      /* height={isMobile ? "150" : "200"} */
+                      sx={{ width: "100%", height: "100%", objectFit: "contain" }}
                       image={product.image_base64}
                       alt={product.name}
                     />
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
+                    <CardContent sx={{ pb: 1 }}>
+                      <Typography variant={isMobile ? "subtitle2" : "h6"} gutterBottom sx={{ fontSize: isMobile ? '0.9rem' : '1.25rem' }}>
                         {product.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                      <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
                         {product.description}
                       </Typography>
-                      <Typography variant="h6" color="primary">
+                      <Typography variant={isMobile ? "subtitle1" : "h6"} color="primary" sx={{ fontSize: isMobile ? '0.95rem' : '1.25rem' }}>
                         {product.price} {product.currency}
                       </Typography>
-                      <Box display="flex" gap={1} mt={1}>
+                      <Box display="flex" gap={1} mt={1} flexWrap="wrap">
                         {product.has_delivery && (
-                          <Chip icon={<DeliveryIcon />} label="Envío" size="small" />
+                          <Chip
+                            icon={<DeliveryIcon sx={{ fontSize: isMobile ? '0.7rem' : '1rem' }} />}
+                            label="Envío"
+                            size="small"
+                            sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}
+                          />
                         )}
                         {product.has_pickup && (
-                          <Chip icon={<PickupIcon />} label="Recogida" size="small" />
+                          <Chip
+                            icon={<PickupIcon sx={{ fontSize: isMobile ? '0.7rem' : '1rem' }} />}
+                            label="Recogida"
+                            size="small"
+                            sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}
+                          />
                         )}
                       </Box>
                     </CardContent>
@@ -516,8 +672,14 @@ const StoreManagment = () => {
       </Paper>
 
       {/* Dialog para crear/editar productos */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+        fullScreen={isMobile}
+      >
+        <DialogTitle sx={{ fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
           {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
         </DialogTitle>
         <DialogContent>
@@ -532,6 +694,7 @@ const StoreManagment = () => {
                   error={!!formErrors.name}
                   helperText={formErrors.name}
                   required
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -543,6 +706,7 @@ const StoreManagment = () => {
                   error={!!formErrors.product_code}
                   helperText={formErrors.product_code}
                   required
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -550,12 +714,13 @@ const StoreManagment = () => {
                   fullWidth
                   label="Descripción"
                   multiline
-                  rows={3}
+                  rows={isMobile ? 2 : 3}
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   error={!!formErrors.description}
                   helperText={formErrors.description}
                   required
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12} sm={8}>
@@ -569,10 +734,11 @@ const StoreManagment = () => {
                   helperText={formErrors.price}
                   required
                   inputProps={{ min: 0, step: 0.01 }}
+                  size={isMobile ? "small" : "medium"}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <FormControl fullWidth>
+                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
                   <InputLabel>Moneda</InputLabel>
                   <Select
                     value={formData.currency}
@@ -598,12 +764,14 @@ const StoreManagment = () => {
                       variant="outlined"
                       component="span"
                       startIcon={<ImageIcon />}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}
                     >
                       Subir Imagen
                     </Button>
                   </label>
                   {formErrors.image && (
-                    <Typography color="error" variant="caption" display="block">
+                    <Typography color="error" variant="caption" display="block" fontSize={isMobile ? '0.7rem' : '0.75rem'}>
                       {formErrors.image}
                     </Typography>
                   )}
@@ -612,14 +780,18 @@ const StoreManagment = () => {
                       <img
                         src={formData.image_base64}
                         alt="Preview"
-                        style={{ maxWidth: 200, maxHeight: 200, objectFit: 'contain' }}
+                        style={{
+                          maxWidth: isMobile ? 150 : 200,
+                          maxHeight: isMobile ? 150 : 200,
+                          objectFit: 'contain'
+                        }}
                       />
                     </Box>
                   )}
                 </Box>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontSize: isMobile ? '0.85rem' : '0.875rem' }}>
                   Opciones de entrega:
                 </Typography>
                 <FormControlLabel
@@ -627,21 +799,31 @@ const StoreManagment = () => {
                     <Checkbox
                       checked={formData.has_delivery}
                       onChange={(e) => setFormData(prev => ({ ...prev, has_delivery: e.target.checked }))}
+                      size={isMobile ? "small" : "medium"}
                     />
                   }
-                  label="Mensajería/Envío a domicilio"
+                  label={
+                    <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
+                      Mensajería/Envío a domicilio
+                    </Typography>
+                  }
                 />
                 <FormControlLabel
                   control={
                     <Checkbox
                       checked={formData.has_pickup}
                       onChange={(e) => setFormData(prev => ({ ...prev, has_pickup: e.target.checked }))}
+                      size={isMobile ? "small" : "medium"}
                     />
                   }
-                  label="Recogida en tienda"
+                  label={
+                    <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
+                      Recogida en tienda
+                    </Typography>
+                  }
                 />
                 {formErrors.delivery && (
-                  <Typography color="error" variant="caption" display="block">
+                  <Typography color="error" variant="caption" display="block" sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
                     {formErrors.delivery}
                   </Typography>
                 )}
@@ -649,14 +831,26 @@ const StoreManagment = () => {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancelar</Button>
+        <DialogActions sx={{ p: isMobile ? 2 : 1 }}>
+          <Button
+            onClick={handleCloseDialog}
+            size={isMobile ? "small" : "medium"}
+            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}
+          >
+            Cancelar
+          </Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={submitting}
+            size={isMobile ? "small" : "medium"}
+            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}
           >
-            {submitting ? <CircularProgress size={24} /> : (editingProduct ? 'Actualizar' : 'Crear')}
+            {submitting ? (
+              <CircularProgress size={isMobile ? 16 : 24} />
+            ) : (
+              editingProduct ? 'Actualizar' : 'Crear'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
