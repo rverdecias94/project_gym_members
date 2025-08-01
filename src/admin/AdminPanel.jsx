@@ -14,7 +14,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { useSnackbar } from "../context/Snackbar";
 
-const CustomSwitch = styled(Switch)(({ theme }) => ({
+const CustomSwitch = styled(Switch)(() => ({
   width: 62,
   height: 34,
   padding: 7,
