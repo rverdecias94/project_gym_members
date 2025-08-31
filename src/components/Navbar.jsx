@@ -63,7 +63,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const themeClass = theme.palette.mode === 'dark' ? 'navbar-dark' : 'navbar-light';
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const { navBarOptions, setNavBarOptions, daysRemaining } = useMembers();
+  const { navBarOptions, setNavBarOptions, daysRemaining, gymInfo } = useMembers();
   const [openSettings, setOpenSettings] = useState(false);
   const [showNav, setShowNav] = useState(true);
   const navigate = useNavigate();
@@ -73,10 +73,12 @@ export default function Navbar({ profile, mode, toggleTheme }) {
 
   useEffect(() => {
     if (!["/admin", "/admin/panel", "/login", "/general_info", "/bienvenido"].includes(location.pathname)) {
-      setNavBarOptions(true);
+      if (location.pathname === "/planes" && (gymInfo.name))
+        setNavBarOptions(true);
+      else
+        setNavBarOptions(false);
     } else {
       setNavBarOptions(false);
-
     }
   }, [location.pathname]);
 
