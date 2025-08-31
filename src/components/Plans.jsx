@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -60,7 +60,6 @@ const PlansPage = () => {
       features: [
         'El primer mes Gratis',
         'El segundo y tercer mes un 30% de descuento',
-        'Soporte técnico vía WhatsApp'
       ],
       includes: [
         { text: 'Agregar y gestionar miembros y entrenadores', icon: <Group /> },
@@ -82,7 +81,6 @@ const PlansPage = () => {
       features: [
         'El primer mes Gratis',
         'El segundo y tercer mes un 30% de descuento',
-        'Soporte técnico vía WhatsApp'
       ],
       includes: [
         { text: 'Visibilidad directa en la comunidad fitness', icon: <TrendingUp /> },
@@ -106,7 +104,6 @@ const PlansPage = () => {
       features: [
         'El primer mes Gratis',
         'El segundo y tercer mes un 30% de descuento',
-        'Soporte técnico vía WhatsApp'
       ],
       includes: [
         { text: 'Agregar y gestionar miembros y entrenadores', icon: <Group /> },
@@ -247,171 +244,161 @@ const PlansPage = () => {
           <Grid container spacing={3} sx={{ px: { xs: 1, sm: 2 }, mb: 6 }}>
             {plans.map((plan) => {
               const { label, isActive } = getButtonConfig(plan.id);
-              if (gymInfo.active && plan.id !== "market-fit")
-                return (
-                  (
-                    <Grid item xs={12} md={gymInfo.active ? 6 : 4} key={plan.id}>
-                      <Card
-                        sx={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          position: 'relative',
-                          background: theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, #1a2332 0%, #162131 100%)'
-                            : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                          border: plan.popular
-                            ? '2px solid #6164c7'
-                            : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                          borderRadius: 3,
-                          transition: 'all 0.3s ease',
-                          transform: selectedPlan === plan.id ? 'scale(1.02)' : 'scale(1)',
-                          boxShadow: plan.popular
-                            ? '0 8px 32px rgba(97, 100, 199, 0.3)'
-                            : '0 4px 20px rgba(0, 0, 0, 0.1)',
-                          '&:hover': {
-                            transform: 'translateY(-4px)',
-                            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.2)'
-                          }
-                        }}
-                      >
-                        {plan.popular && (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: -1,
-                              right: 16,
-                              background: 'linear-gradient(45deg, #6164c7, #56d1cb)',
-                              color: 'white',
-                              px: 2,
-                              py: 1,
-                              borderRadius: '0 0 12px 12px',
-                              fontSize: '0.875rem',
-                              fontWeight: 'bold',
-                              zIndex: 1
-                            }}
-                          >
-                            El más deseado
-                          </Box>
-                        )}
 
-                        <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                          <Typography
-                            variant="h5"
-                            sx={{
-                              fontWeight: 'bold',
-                              color: plan.color,
-                              mb: 1
-                            }}
-                          >
-                            {plan.name}
-                          </Typography>
+              const shouldRender =
+                gymInfo.active ? plan.id !== "market-fit" : true;
 
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: theme.palette.text.secondary,
-                              opacity: 0.8,
-                              mb: 3,
-                              lineHeight: 1.5
-                            }}
-                          >
-                            {plan.description}
-                          </Typography>
+              if (!shouldRender) return null;
+              return (
+                (
+                  <Grid item xs={12} md={gymInfo.active ? 6 : 4} key={plan.id}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative',
+                        background: theme.palette.mode === 'dark'
+                          ? 'linear-gradient(135deg, #1a2332 0%, #162131 100%)'
+                          : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                        border: plan.popular
+                          ? '2px solid #6164c7'
+                          : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                        borderRadius: 3,
+                        transition: 'all 0.3s ease',
+                        transform: selectedPlan === plan.id ? 'scale(1.02)' : 'scale(1)',
+                        boxShadow: plan.popular
+                          ? '0 8px 32px rgba(97, 100, 199, 0.3)'
+                          : '0 4px 20px rgba(0, 0, 0, 0.1)',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.2)'
+                        }
+                      }}
+                    >
+                      {plan.popular && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -1,
+                            right: 16,
+                            background: 'linear-gradient(45deg, #6164c7, #56d1cb)',
+                            color: 'white',
+                            px: 2,
+                            py: 1,
+                            borderRadius: '0 0 12px 12px',
+                            fontSize: '0.875rem',
+                            fontWeight: 'bold',
+                            zIndex: 1
+                          }}
+                        >
+                          El más deseado
+                        </Box>
+                      )}
 
-                          {/* Pricing */}
-                          <Box sx={{ mb: 3 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  textDecoration: 'line-through',
-                                  color: theme.palette.text.secondary,
-                                  opacity: 0.6
-                                }}
-                              >
-                                ${plan.originalPrice} USD
-                              </Typography>
-                              <Chip
-                                label={`Ahorras ${plan.discount}%`}
-                                size="small"
-                                sx={{
-                                  background: 'linear-gradient(45deg, #6164c7, #56d1cb)',
-                                  color: 'white',
-                                  fontWeight: 'bold',
-                                  fontSize: '0.75rem'
-                                }}
-                              />
-                            </Box>
+                      <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            fontWeight: 'bold',
+                            color: plan.color,
+                            mb: 1
+                          }}
+                        >
+                          {plan.name}
+                        </Typography>
 
-                            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                              <Typography
-                                variant="h3"
-                                sx={{
-                                  fontWeight: 'bold',
-                                  color: plan.color
-                                }}
-                              >
-                                {plan.currentPrice}
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  color: theme.palette.text.secondary,
-                                  opacity: 0.8
-                                }}
-                              >
-                                USD/mes
-                              </Typography>
-                            </Box>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: theme.palette.text.secondary,
+                            opacity: 0.8,
+                            mb: 3,
+                            lineHeight: 1.5
+                          }}
+                        >
+                          {plan.description}
+                        </Typography>
 
+                        {/* Pricing */}
+                        <Box sx={{ mb: 3 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                             <Typography
-                              variant="caption"
+                              variant="body2"
                               sx={{
-                                display: 'block',
+                                textDecoration: 'line-through',
                                 color: theme.palette.text.secondary,
-                                opacity: 0.7,
-                                mt: 1
+                                opacity: 0.6
                               }}
                             >
-                              Se renueva a {plan.renewalPrice} USD/mes a partir del {plan.renewalMonth}to mes
+                              ${plan.originalPrice} USD
+                            </Typography>
+                            <Chip
+                              label={`Ahorras ${plan.discount}%`}
+                              size="small"
+                              sx={{
+                                background: 'linear-gradient(45deg, #6164c7, #56d1cb)',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                fontSize: '0.75rem'
+                              }}
+                            />
+                          </Box>
+
+                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                            <Typography
+                              variant="h3"
+                              sx={{
+                                fontWeight: 'bold',
+                                color: plan.color
+                              }}
+                            >
+                              {plan.currentPrice}
+                            </Typography>
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                color: theme.palette.text.secondary,
+                                opacity: 0.8
+                              }}
+                            >
+                              USD/mes
                             </Typography>
                           </Box>
 
-                          {/* Features */}
                           <Typography
-                            variant="subtitle2"
+                            variant="caption"
                             sx={{
-                              fontWeight: 'bold',
-                              mb: 2,
-                              color: theme.palette.text.primary
+                              display: 'block',
+                              color: theme.palette.text.secondary,
+                              opacity: 0.7,
+                              mt: 1
                             }}
                           >
-                            Todo lo que ganas al registrarte
+                            Se renueva a {plan.renewalPrice} USD/mes a partir del {plan.renewalMonth}to mes
                           </Typography>
+                        </Box>
 
-                          <List dense sx={{ mb: 3 }}>
-                            {plan.features.map((feature, index) => (
-                              <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
-                                <ListItemIcon sx={{ minWidth: 32 }}>
-                                  <CheckCircle sx={{ color: '#4caf50', fontSize: 18 }} />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={feature}
-                                  primaryTypographyProps={{
-                                    variant: 'body2',
-                                    color: theme.palette.text.secondary,
-                                    sx: { opacity: 0.9, fontSize: '0.875rem' }
-                                  }}
-                                />
-                              </ListItem>
-                            ))}
-                            <ListItem sx={{ px: 0, py: 0.5 }}>
+                        {/* Features */}
+                        <Typography
+                          variant="subtitle2"
+                          sx={{
+                            fontWeight: 'bold',
+                            mb: 2,
+                            color: theme.palette.text.primary
+                          }}
+                        >
+                          Todo lo que ganas al registrarte
+                        </Typography>
+
+                        <List dense sx={{ mb: 3 }}>
+                          {plan.features.map((feature, index) => (
+                            <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
                               <ListItemIcon sx={{ minWidth: 32 }}>
-                                <WhatsApp sx={{ color: '#25d366', fontSize: 18 }} />
+                                <CheckCircle sx={{ color: '#4caf50', fontSize: 18 }} />
                               </ListItemIcon>
                               <ListItemText
-                                primary="Soporte técnico vía WhatsApp"
+                                primary={feature}
                                 primaryTypographyProps={{
                                   variant: 'body2',
                                   color: theme.palette.text.secondary,
@@ -419,86 +406,105 @@ const PlansPage = () => {
                                 }}
                               />
                             </ListItem>
-                          </List>
+                          ))}
+                          <ListItem sx={{ px: 0, py: 0.5 }}>
+                            <ListItemIcon sx={{ minWidth: 32 }}>
+                              <WhatsApp sx={{ color: '#25d366', fontSize: 18 }} />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary="Soporte técnico vía WhatsApp"
+                              primaryTypographyProps={{
+                                variant: 'body2',
+                                color: theme.palette.text.secondary,
+                                sx: { opacity: 0.9, fontSize: '0.875rem' }
+                              }}
+                            />
+                          </ListItem>
+                        </List>
 
-                          {/* Includes */}
-                          <Typography
-                            variant="subtitle2"
-                            sx={{
-                              fontWeight: 'bold',
-                              mb: 2,
-                              color: theme.palette.text.primary
-                            }}
-                          >
-                            {plan.fullFeatures || 'Incluye:'}
-                          </Typography>
+                        {/* Includes */}
+                        <Typography
+                          variant="subtitle2"
+                          sx={{
+                            fontWeight: 'bold',
+                            mb: 2,
+                            color: theme.palette.text.primary
+                          }}
+                        >
+                          {plan.fullFeatures || 'Incluye:'}
+                        </Typography>
 
-                          <List dense>
-                            {plan.includes.map((item, index) => (
-                              <ListItem key={index} sx={{ px: 0, py: 0.25 }}>
-                                <ListItemIcon sx={{ minWidth: 28 }}>
-                                  <CheckCircle sx={{ color: '#4caf50', fontSize: 16 }} />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={item.text}
-                                  primaryTypographyProps={{
-                                    variant: 'caption',
-                                    color: theme.palette.text.secondary,
-                                    sx: { opacity: 0.8, fontSize: '0.8rem' }
-                                  }}
-                                />
-                              </ListItem>
-                            ))}
-                          </List>
-                        </CardContent>
+                        <List dense>
+                          {plan.includes.map((item, index) => (
+                            <ListItem key={index} sx={{ px: 0, py: 0.25 }}>
+                              <ListItemIcon sx={{ minWidth: 28 }}>
+                                {React.cloneElement(item.icon, { sx: { color: '#4caf50', fontSize: 16 } })}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={item.text}
+                                primaryTypographyProps={{
+                                  variant: 'caption',
+                                  color: theme.palette.text.secondary,
+                                  sx: { opacity: 0.8, fontSize: '0.8rem' }
+                                }}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </CardContent>
 
-                        <Box sx={{ p: 3, pt: 0 }}>
+                      <Box sx={{ p: 3, pt: 0 }}>
 
-                          <Button
-                            fullWidth
-                            variant={plan.popular ? "contained" : "outlined"}
-                            size="large"
-                            disabled={isActive}   // 🔹 se deshabilita si es el plan activo
-                            onClick={() => !isActive && (gymInfo.active ? handlePlanChange(plan.id) : handlePlanSelect(plan.id))}
-                            sx={{
-                              py: 2,
+                        <Button
+                          fullWidth
+                          variant={plan.popular ? "contained" : "outlined"}
+                          size="large"
+                          disabled={isActive}
+                          onClick={() =>
+                            !isActive &&
+                            (gymInfo.active
+                              ? handlePlanChange(plan.id)
+                              : handlePlanSelect(plan.id))
+                          }
+                          sx={{
+                            py: 2,
+                            background: plan.popular
+                              ? `linear-gradient(45deg, ${plan.color}, #56d1cb)`
+                              : 'transparent',
+                            border: `2px solid ${plan.color}`,
+                            color: plan.popular ? 'white' : plan.color,
+                            fontWeight: 'bold',
+                            borderRadius: 2,
+                            fontSize: '1rem',
+                            textTransform: 'none',
+                            opacity: isActive ? 0.6 : 1,
+                            cursor: isActive ? 'not-allowed' : 'pointer',
+                            '&:hover': !isActive && {
                               background: plan.popular
-                                ? `linear-gradient(45deg, ${plan.color}, #56d1cb)`
-                                : 'transparent',
-                              border: `2px solid ${plan.color}`,
-                              color: plan.popular ? 'white' : plan.color,
-                              fontWeight: 'bold',
-                              borderRadius: 2,
-                              fontSize: '1rem',
-                              textTransform: 'none',
-                              opacity: isActive ? 0.6 : 1, // 🔹 visual feedback cuando está deshabilitado
-                              cursor: isActive ? 'not-allowed' : 'pointer',
-                              '&:hover': !isActive && {
-                                background: plan.popular
-                                  ? `linear-gradient(45deg, ${plan.color}dd, #56d1cbdd)`
-                                  : `${plan.color}10`,
-                                transform: 'translateY(-1px)',
-                                border: `2px solid ${plan.color}`
-                              }
-                            }}
-                          >
-                            {label}
-                          </Button>
+                                ? `linear-gradient(45deg, ${plan.color}dd, #56d1cbdd)`
+                                : `${plan.color}10`,
+                              transform: 'translateY(-1px)',
+                              border: `2px solid ${plan.color}`
+                            }
+                          }}
+                        >
+                          {label}
+                        </Button>
 
-                        </Box>
-                      </Card>
-                    </Grid>
-                  ))
+                      </Box>
+                    </Card>
+                  </Grid>
+                ))
             })}
-            <DialogMessage
-              handleClose={handleCloseMessage}
-              info={null}
-              title="Cambiar Plan"
-              fn={handlerSendMessage}
-              open={openMessage}
-              msg={`¿Estás seguro que deseas cambiar de plan? El cambio se aplicará en tu próximo ciclo de facturación que comienza el día ` + (gymInfo.next_payment_date ? new Date(gymInfo.next_payment_date).toLocaleDateString() : '') + '.'}
-            />
           </Grid>
+          <DialogMessage
+            handleClose={handleCloseMessage}
+            info={null}
+            title="Cambiar Plan"
+            fn={handlerSendMessage}
+            open={openMessage}
+            msg={`¿Estás seguro que deseas cambiar de plan? El cambio se aplicará en tu próximo ciclo de facturación que comienza el día ` + (gymInfo.next_payment_date ? new Date(gymInfo.next_payment_date).toLocaleDateString() : '') + '.'}
+          />
         </Container>
       </Box>
     </ThemeProvider>
