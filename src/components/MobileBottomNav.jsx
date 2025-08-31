@@ -23,6 +23,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
 export default function MobileBottomNav({ profile, mode, toggleTheme, logoutUser }) {
   const [value, setValue] = useState(0);
@@ -36,6 +37,7 @@ export default function MobileBottomNav({ profile, mode, toggleTheme, logoutUser
     { label: 'Clientes', icon: <GroupsIcon />, path: '/clientes' },
     { label: 'Entrenadores', icon: <FitnessCenterIcon />, path: '/entrenadores' },
     { label: 'Tienda', icon: <LocalGroceryStoreIcon />, path: '/tienda' },
+    { label: 'Planes', icon: <TrendingUpIcon />, path: '/planes' },
   ];
 
   const handleNavChange = (event, newValue) => {

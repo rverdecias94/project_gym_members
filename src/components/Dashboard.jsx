@@ -1,20 +1,16 @@
 
-import { Button, Divider, Grid, useTheme, Select, MenuItem, Skeleton, useMediaQuery } from '@mui/material';
+import { Divider, Grid, useTheme, Select, MenuItem, Skeleton, useMediaQuery } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Link, useLocation } from 'react-router-dom';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { supabase } from '../supabase/client';
 
 const pieParams = { height: 250, margin: { right: 5 } };
 
 export default function Dashboard() {
   const theme = useTheme();
-  const location = useLocation();
-
   const { getDashboardData, membersList, trainersList, setNavBarOptions, daysRemaining } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
   const [elemntsByTrainer, setElemntsByTrainer] = useState([]);
@@ -385,17 +381,6 @@ export default function Dashboard() {
           <Divider />
           <div style={{ marginTop: 20, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
             <span>Listado de clientes</span>
-            <Link to="/new_member"
-              state={{ from: location.pathname }}
-              style={{ color: "white", textDecoration: "none" }}>
-              <Button
-                variant="contained"
-                className={theme.palette.mode === 'dark' ? "client-btn-dark" : "client-btn-light"}
-                style={{ display: "flex", justifyContent: "space-evenly" }}
-              >
-                <PersonAddIcon sx={{ mr: 1.2 }} /> Cliente
-              </Button>
-            </Link>
           </div>
           <br />
           <DataGrid

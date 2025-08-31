@@ -19,6 +19,8 @@ import AdminPanel from './admin/AdminPanel';
 import Welcome from './components/Welcome';
 import TermsAndConditions from './components/TermsAndConditions';
 import StoreManagment from './components/StoreManagment';
+import PlansPage from './components/Plans';
+import Redirect from './components/Redirect';
 
 
 function App() {
@@ -73,7 +75,8 @@ function App() {
         } else if (session && event === "INITIAL_SESSION") {
           const userUUID = session?.user?.id;
           setUserId(userUUID);
-          navigate('/general_info')
+          /* navigate('/general_info') */
+          navigate('/redirect')
 
           if (session?.user?.user_metadata) {
             let { avatar_url, name, phone } = session.user.user_metadata;
@@ -110,6 +113,8 @@ function App() {
               <Route path='/admin/panel' element={<AdminPanel />} />
               <Route path='/terms-conditions' element={<TermsAndConditions />} />
               <Route path='/tienda' element={<StoreManagment />} />
+              <Route path='/planes' element={<PlansPage />} />
+              <Route path='/redirect' element={<Redirect />} />
               <Route path='*' element={<NotFound />} />
             </Routes>
           </BackdropProvider>

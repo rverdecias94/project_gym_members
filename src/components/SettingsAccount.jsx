@@ -87,6 +87,7 @@ export default function SettingsAccount({
     gym_name: "",
     owner_name: "",
     owner_phone: "",
+    public_phone: "",
     address: "",
     state: "",
     city: "",
@@ -102,7 +103,10 @@ export default function SettingsAccount({
     },
     monthly_payment: 0,
     daily_payment: 0,
-    trainers_cost: 0
+    trainers_cost: 0,
+    monthly_currency: "CUP",
+    daily_currency: "CUP",
+    trainer_currency: "CUP"
   });
 
   const [daysRemaining, setDaysRemaining] = useState(0);
@@ -136,6 +140,7 @@ export default function SettingsAccount({
           gym_name,
           owner_name,
           owner_phone,
+          public_phone,
           address,
           state,
           city,
@@ -143,13 +148,18 @@ export default function SettingsAccount({
           schedules,
           monthly_payment,
           daily_payment,
-          trainers_cost } = data[0];
+          trainers_cost,
+          monthly_currency,
+          daily_currency,
+          trainer_currency
+        } = data[0];
 
         let obj = {
           owner_id,
           gym_name,
           owner_name,
           owner_phone,
+          public_phone,
           address,
           state,
           city,
@@ -157,7 +167,10 @@ export default function SettingsAccount({
           schedules,
           monthly_payment,
           daily_payment,
-          trainers_cost
+          trainers_cost,
+          monthly_currency,
+          daily_currency,
+          trainer_currency
         }
         setGymInfo(obj)
       }
@@ -354,7 +367,7 @@ export default function SettingsAccount({
               />
               <TextField
                 id="outlined-read-only-input"
-                label="Teléfono"
+                label="Teléfono operacional"
                 defaultValue="-"
                 sx={{ mb: 3, width: "98%" }}
                 name='owner_phone'
@@ -412,9 +425,20 @@ export default function SettingsAccount({
                   ))}
                 </Select>
               </FormControl>
+
+              <TextField
+                id="outlined-read-only-input"
+                label="Teléfono de contacto"
+                defaultValue="-"
+                sx={{ mb: 3, width: "98%" }}
+                name='public_phone'
+                required
+                value={gymInfo?.public_phone}
+                onChange={handlerChange}
+              />
             </Grid>
-            <Grid container sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-              <Grid item xs={12}>
+            <Grid container sx={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 2 }}>
+              <Grid item style={{ display: "flex", gap: 15 }}>
                 <TextField
                   label="Costo mensual"
                   name="monthly_payment"
@@ -424,8 +448,22 @@ export default function SettingsAccount({
                   fullWidth
                   required
                 />
+                <FormControl required fullWidth id="mun-required">
+                  <InputLabel>Moneda</InputLabel>
+                  <Select
+                    value={gymInfo.monthly_currency}
+                    onChange={handlerChange}
+                    name="monthly_currency"
+                  >
+                    {(["USD", "CUP"]).map((mun) => (
+                      <MenuItem key={mun} value={mun}>
+                        {mun}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item style={{ display: "flex", gap: 15 }}>
                 <TextField
                   label="Costo diario"
                   name="daily_payment"
@@ -435,8 +473,22 @@ export default function SettingsAccount({
                   fullWidth
                   required
                 />
+                <FormControl required fullWidth id="mun-required">
+                  <InputLabel>Moneda</InputLabel>
+                  <Select
+                    value={gymInfo.daily_currency}
+                    onChange={handlerChange}
+                    name="daily_currency"
+                  >
+                    {(["USD", "CUP"]).map((mun) => (
+                      <MenuItem key={mun} value={mun}>
+                        {mun}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item style={{ display: "flex", gap: 15 }}>
                 <TextField
                   label="Costo por entrenador"
                   name="trainers_cost"
@@ -445,6 +497,21 @@ export default function SettingsAccount({
                   onChange={handlerChange}
                   fullWidth
                 />
+                <FormControl required fullWidth id="mun-required">
+                  <InputLabel>Moneda</InputLabel>
+                  <Select
+                    value={gymInfo.trainer_currency}
+                    onChange={handlerChange}
+                    style={{ width: "100%", }}
+                    name="trainer_currency"
+                  >
+                    {(["USD", "CUP"]).map((mun) => (
+                      <MenuItem key={mun} value={mun}>
+                        {mun}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
             </Grid>
             <Grid item xs={12} sx={{ mt: 3 }}>

@@ -11,9 +11,8 @@ import { useMembers } from '../context/Context';
 
 
 
-export default function DeleteDialog({ handleClose, info, open, type }) {
+export default function DialogMessage({ handleClose, info, open, type, fn, msg, title }) {
   const { deleteMember, deleteTrainer } = useMembers();
-
 
   const handleDelete = async () => {
     await type === 1 ? deleteMember(info?.id) : deleteTrainer(info?.id);
@@ -30,16 +29,16 @@ export default function DeleteDialog({ handleClose, info, open, type }) {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"Eliminar"}
+          {title}
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            ¿Estás seguro que deseas eliminar la información de {type === 1 ? info?.first_name : info?.name}?
+            {msg}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleDelete} autoFocus>
+          <Button onClick={fn ? fn : handleDelete} autoFocus>
             Aceptar
           </Button>
         </DialogActions>

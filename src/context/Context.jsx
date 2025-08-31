@@ -14,6 +14,7 @@ export const useMembers = () => {
 
 // eslint-disable-next-line react/prop-types
 export const ContextProvider = ({ children }) => {
+  const [gymInfo, setGymInfo] = useState({});
   const [membersList, setMembersList] = useState([]);
   const [loadingMembersList, setLoadingMembersList] = useState(false);
   const [trainersList, setTrainersList] = useState([]);
@@ -61,6 +62,8 @@ export const ContextProvider = ({ children }) => {
 
           setDaysRemaining(daysDifference);
         };
+
+        setGymInfo(data[0]);
 
         calculateDays();
       }
@@ -513,6 +516,7 @@ export const ContextProvider = ({ children }) => {
 
   return <Context.Provider
     value={{
+      gymInfo,
       membersList,
       loadingMembersList,
       trainersList,

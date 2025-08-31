@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { DataGrid } from '@mui/x-data-grid';
-import DeleteDialog from './DeleteDialog';
+import DialogMessage from './DialogMessage';
 import EditMember from './EditMember';
 import { useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
@@ -35,7 +35,6 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import jsPDF from 'jspdf';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { supabase } from '../supabase/client';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -43,10 +42,11 @@ import IconButton from '@mui/material/IconButton';
 import RuleIcon from '@mui/icons-material/Rule';
 import LinkIcon from '@mui/icons-material/Link';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import MembersForm from './MembersForm';
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
-  const { adding, trainersList } = useMembers();
+  const { adding, trainersList, setBackdrop } = useMembers();
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openRule, setOpenRule] = useState(false);
@@ -67,6 +67,16 @@ export const TableMembersList = ({ membersList = [] }) => {
   // Estados para paginación móvil
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
+
+  const [openMemberForm, setOpenMemberForm] = useState(false);
+
+  const handleOpenMember = () => {
+    setOpenMemberForm(true);
+  };
+
+  const handleCloseMemberForm = () => {
+    setOpenMemberForm(false);
+  };
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -117,16 +127,19 @@ export const TableMembersList = ({ membersList = [] }) => {
   }, [trainer_name]);
 
   const buscarRegistro = async () => {
-    console.log(id)
+    setBackdrop(true);
     setError(null);
-
     const { data, error } = await supabase
       .from('members')
       .select('*')
       .eq('id', id);
 
+    setBackdrop(false);
     if (error) {
       setError('Error al buscar el registro');
+      setResultados([]);
+    } else if (!data || data.length === 0) {
+      setError('No se encontró ningún cliente con ese ID');
       setResultados([]);
     } else {
       setResultados(data);
@@ -366,14 +379,19 @@ export const TableMembersList = ({ membersList = [] }) => {
         <Divider />
 
         <Grid className='container-options-sec_2' sx={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: 2, position: "relative" }}>
-          <Link to="/new_member" style={{ height: '100%', color: "white", textDecoration: "none", width: "fit-content" }} className={isMobile ? 'btn-add-client-mobile' : ""}>
-            <Button variant="contained" className='btn-add-client' style={{ color: "white", background: "#e49c10" }}>
-              <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
-              <span className='text-add-client' style={{ marginLeft: 5 }}>
-                Cliente
-              </span>
-            </Button>
-          </Link>
+
+          <Button
+            variant="contained"
+            className='btn-add-client'
+            style={{ color: "white", background: "#e49c10" }}
+            onClick={handleOpenMember} // Aquí manejamos la apertura del formulario
+          >
+            <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
+            <span className='text-add-client' style={{ marginLeft: 5 }}>
+              Cliente
+            </span>
+          </Button>
+
 
           {/* Botones para vista desktop */}
           {!isMobile && (
@@ -526,10 +544,12 @@ export const TableMembersList = ({ membersList = [] }) => {
         )}
       </Grid>
 
-      <DeleteDialog
+      <DialogMessage
         handleClose={handleClose}
+        title="Eliminar Cliente"
         info={memberInfo}
         open={openDelete}
+        msg={`¿Estás seguro que deseas eliminar la información de ${memberInfo.first_name} ${memberInfo.last_name}?`}
         type={1}
       />
 
@@ -545,7 +565,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        maxWidth="md"
+        maxWidth="xs"
         fullWidth
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
@@ -556,7 +576,7 @@ export const TableMembersList = ({ membersList = [] }) => {
             <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
           </IconButton>
         </DialogTitle>
-        <Grid container style={{ display: "grid", gridTemplateColumns: "1fr ", gap: 15, padding: "5rem" }}>
+        <Grid container style={{ display: "grid", gridTemplateColumns: "1fr ", gap: 15, padding: "2rem" }}>
           <TextField
             label="Escribe el ID"
             variant="outlined"
@@ -602,7 +622,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 </Typography>
                 <Button
                   variant="outlined"
-                  color="secondary"
+                  color="primary"
                   sx={{ mt: 1 }}
                   onClick={() => handleOpenEdit(registro)}
                 >
@@ -614,6 +634,10 @@ export const TableMembersList = ({ membersList = [] }) => {
         </Grid>
       </Dialog>
 
+      <MembersForm
+        open={openMemberForm}
+        handleClose={handleCloseMemberForm}
+      />
       <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} />
     </Grid>
   );

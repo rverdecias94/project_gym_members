@@ -10,9 +10,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import dayjs from 'dayjs';
 import ImageUploader from './ImageUploader';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import IconButton from '@mui/material/IconButton';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
@@ -20,7 +19,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 
-function MembersForm({ member, onClose }) {
+function MembersForm({ member = {}, open, handleClose }) {
   const { createNewMember, adding, updateClient, trainersList } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
@@ -42,7 +41,6 @@ function MembersForm({ member, onClose }) {
   const [editing, setEditing] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
   const [trainers, setTrainers] = useState([]);
-  const [open, setOpen] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,9 +52,7 @@ function MembersForm({ member, onClose }) {
       setImageBase64(member?.image_profile ?? null)
       setEditing(true);
     }
-    else
-      setOpen(true);
-  }, [])
+  }, [member]);
 
 
   useEffect(() => {
@@ -87,9 +83,15 @@ function MembersForm({ member, onClose }) {
       trainer_name: null,
     })
     setImageBase64(null)
+
     if (editing) {
-      onClose();
+      setEditing(false);
+    } else {
+      setEditing(false);
+      setMemberData({});
     }
+    navigate(from, { replace: true });
+
   }
 
   const handlerChange = (e) => {
@@ -175,21 +177,16 @@ function MembersForm({ member, onClose }) {
     }))
   };
 
-  const handlerClose = () => {
-    setOpen(false);
-    navigate(from);
-  }
-
   return (
     <>
       <Dialog
         open={open}
-        onClose={() => handlerClose()}
+        onClose={handleClose}
         maxWidth={"xl"}
       >
         <DialogTitle id="alert-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {"Nuevo Cliente"}
-          <IconButton aria-label="cancel" size="large" onClick={() => handlerClose()}>
+          {editing ? "Editar Cliente" : "Nuevo Cliente"}
+          <IconButton aria-label="cancel" size="large" onClick={() => handleClose()}>
             <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
           </IconButton>
         </DialogTitle>
@@ -210,13 +207,7 @@ function MembersForm({ member, onClose }) {
             noValidate
             autoComplete="off"
           >
-            {!editing &&
-              <IconButton aria-label="back" size="small">
-                <Link to='/clientes'>
-                  <ArrowBackIcon />
-                </Link>
-              </IconButton>
-            }
+
             <form style={{ width: "100%", paddingRight: "1rem" }}>
               <Grid container>
                 <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
@@ -248,6 +239,7 @@ function MembersForm({ member, onClose }) {
                         required
                         id="outlined-required"
                         label="Nombre"
+                        size='small'
                         name="first_name"
                         value={memberData?.first_name}
                         placeholder='Ej: Jhon'
@@ -259,6 +251,7 @@ function MembersForm({ member, onClose }) {
                         required
                         id="outlined-required"
                         label="Apellidos"
+                        size='small'
                         name="last_name"
                         value={memberData?.last_name}
                         placeholder='Ej: Doe Smitt'
@@ -274,6 +267,7 @@ function MembersForm({ member, onClose }) {
                         id="outlined-required"
                         label="CI"
                         name="ci"
+                        size='small'
                         value={memberData?.ci}
                         placeholder='CI: 35123145685'
                         onChange={handlerChange}
@@ -284,6 +278,7 @@ function MembersForm({ member, onClose }) {
                         required
                         id="outlined-required"
                         label="Direccion"
+                        size='small'
                         name="address"
                         value={memberData?.address}
                         placeholder='S.T Village nº 9827'
@@ -299,6 +294,7 @@ function MembersForm({ member, onClose }) {
                         <FormControlLabel
                           value={memberData?.has_trainer}
                           onChange={handlerChange}
+                          size='small'
                           control={
                             <Checkbox
                               name='has_trainer'
@@ -344,6 +340,7 @@ function MembersForm({ member, onClose }) {
                           disabled={!memberData?.has_trainer}
                           label="Entrenador"
                           defaultValue=""
+                          size='small'
                           placeholder="Selecciona entrenador"
                           name="trainer_name"
                           onChange={handlerChange}
@@ -363,6 +360,7 @@ function MembersForm({ member, onClose }) {
                         id="outlined-required"
                         label="Tel. Cliente"
                         name="phone"
+                        size='small'
                         value={memberData?.phone}
                         placeholder='55565758'
                         onChange={handlerChange}
@@ -375,6 +373,7 @@ function MembersForm({ member, onClose }) {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <MobileDatePicker
                         label="Fecha de pago *"
+                        size='small'
                         defaultValue={dayjs(memberData?.pay_date)}
                         onChange={handlerDatePaymentChange}
                       />
@@ -383,20 +382,21 @@ function MembersForm({ member, onClose }) {
                 </Grid>
               </Grid>
             </form>
-            <Button
-              onClick={handlerSubmit}
-              variant="contained"
-              disabled={!isFormValid()}
-              sx={{
-                margin: "5px 12px 100px", color: "white", backgroundColor: "#e49c10"
-              }}
-            >
-              {adding ? "Guardando..." : "Guardar"}
-            </Button>
+            <Grid style={{ position: "relative", top: -30 }}>
+              <Button
+                onClick={handlerSubmit}
+                variant="contained"
+                disabled={!isFormValid()}
+                sx={{
+                  color: "white", backgroundColor: "#e49c10"
+                }}
+              >
+                {adding ? "Guardando..." : "Guardar"}
+              </Button>
+            </Grid>
           </Box >
         </DialogContent>
       </Dialog>
-
     </>
   )
 }

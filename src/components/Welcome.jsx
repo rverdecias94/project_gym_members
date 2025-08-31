@@ -1,14 +1,27 @@
 import { Button, Grid, useTheme } from '@mui/material'
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { Link } from 'react-router-dom'
+import { useState } from 'react';
+import MembersForm from './MembersForm';
 const Welcome = () => {
+
+  const [open, setOpen] = useState(false)
+
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   const theme = useTheme();
   return (
 
     <Grid item xl={12} lg={12} md={12} sm={12} xs={12} className='dashboard-container'
       style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, height: "80%" }}>
       <h1>
-        🎉 ¡Bienvenido a tu Sistema de Gestión de Gimnasios!
+        🎉 ¡Bienvenido al sistema de TRONOSS!
       </h1>
 
       <p>
@@ -22,17 +35,20 @@ const Welcome = () => {
       <h2>
         ¡Vamos a hacerlo juntos!
       </h2>
-      <Link to="/new_member"
-        state={{ from: location.pathname }}
-        style={{ color: "white", textDecoration: "none" }}>
-        <Button
-          variant="contained"
-          className={theme.palette.mode === 'dark' ? "client-btn-dark" : "client-btn-light"}
-          style={{ display: "flex", justifyContent: "space-evenly" }}
-        >
-          <PersonAddIcon sx={{ mr: 1.2 }} /> Cliente
-        </Button>
-      </Link>
+
+      <Button
+        variant="contained"
+        className={theme.palette.mode === 'dark' ? "client-btn-dark" : "client-btn-light"}
+        style={{ display: "flex", justifyContent: "space-evenly" }}
+        onClick={handleOpen}
+      >
+        <PersonAddIcon sx={{ mr: 1.2 }} /> Cliente
+      </Button>
+
+      <MembersForm
+        open={open}
+        handleClose={handleClose}
+      />
     </Grid>
   )
 }

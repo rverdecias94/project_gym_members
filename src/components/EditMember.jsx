@@ -12,21 +12,7 @@ export default function EditMember({ handleClose, memberInfo, open }) {
 
   return (
     <React.Fragment>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth={"lg"}
-      >
-        <DialogTitle id="alert-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {"Editar"}
-          <IconButton aria-label="cancel" size="large" onClick={handleClose}>
-            <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <MembersForm member={memberInfo} onClose={handleClose} />
-        </DialogContent>
-      </Dialog>
+      <MembersForm member={memberInfo} open={open} handleClose={handleClose} />
     </React.Fragment>
   );
 }

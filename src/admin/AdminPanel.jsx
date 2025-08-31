@@ -85,13 +85,16 @@ const AdminPanel = () => {
       ...row,
       next_payment_date: newDate ? dayjs(newDate).format("YYYY-MM-DD") : null,
     };
+
     try {
       if (!row.owner_id) return;
       const { error } = await supabase
         .from("info_general_gym")
         .update(updatedRow)
         .eq("owner_id", row.owner_id);
+
       if (error) throw error;
+
       showMessage("¡Fecha de pago actualizada con éxito!", "success");
       getAllGyms();
     } catch (error) {
@@ -181,6 +184,12 @@ const AdminPanel = () => {
     },
     { field: 'clients', headerName: 'Clientes', width: 80 },
     {
+      field: 'monthly_payment', headerName: 'Pago Mensual', width: 100,
+      renderCell: ({ row }) => (
+        <Typography>{row.store ? calculateDebt(row.created_at, row.next_payment_date, 28) : calculateDebt(row.created_at, row.next_payment_date, 15)} USD</Typography>
+      ),
+    },
+    {
       field: 'actions', headerName: 'Activar', sortable: false, width: 100,
       renderCell: ({ row }) => (
         <CustomSwitch
@@ -199,6 +208,32 @@ const AdminPanel = () => {
       ),
     },
   ];
+
+  function calculateDebt(created_at, next_payment_date, paymentAmount) {
+    const created = new Date(created_at);
+    const now = new Date(next_payment_date); // puede ser fecha actual si se pasa así
+
+    let fullMonths =
+      (now.getFullYear() - created.getFullYear()) * 12 +
+      (now.getMonth() - created.getMonth());
+
+    if (now.getDate() < created.getDate()) {
+      fullMonths -= 1;
+    }
+
+    if (fullMonths <= 0) {
+      // aún en primer mes gratuito
+      return 0;
+    } else if (fullMonths === 1 || fullMonths === 2) {
+      // segundo o tercer mes con 30% de descuento
+      return paymentAmount * 0.7;
+    } else {
+      // cuarto mes en adelante → pago completo
+      return paymentAmount;
+    }
+  }
+
+
 
   return (
     <>

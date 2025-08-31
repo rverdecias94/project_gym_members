@@ -218,7 +218,7 @@ const TermsAndConditions = () => {
             8. Protección de datos
           </Typography>
           <Box component="ul" sx={{ pl: 3, color: theme.palette.text.primary }}>
-            <li>Tronoss recopila y almacena información personal de los usuarios con el único fin de facilitar la administración por parte de gimnasios y tiendas en caso se necesitarlos.</li>
+            <li>Tronoss recopila y almacena información personal de los usuarios con el único fin de facilitar la administración por parte de gimnasios y tiendas en caso de necesitarlos.</li>
             <li>No compartimos esta información con terceros.</li>
             <li>Los datos son gestionados cumpliendo con principios de confidencialidad y seguridad razonables.</li>
           </Box>

@@ -1,7 +1,7 @@
 import { Button, Grid, TextField, Typography } from "@mui/material"
 import { useEffect, useState } from "react"
 import { supabase } from "../supabase/client"
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import TimerButton from "./TimerButton";
 import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { provincias } from "./Provincias";
@@ -9,6 +9,7 @@ import { useTheme } from '@mui/material/styles';
 import { LocalizationProvider, MobileTimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { useSnackbar } from "../context/Snackbar";
 
 
 const nextPaymentDate = new Date();
@@ -20,6 +21,7 @@ const GYM_DEFAULT = {
   address: "DEFAULT_ADDRESS",
   owner_name: "DEFAULT_OWNER_NAME",
   owner_phone: "DEFAULT_OWNER_PHONE",
+  public_phone: "DEFAULT_PUBLIC_PHONE",
   next_payment_date: nextPaymentDate,
   last_payment_date: new Date(),
   active: null,
@@ -35,26 +37,33 @@ const GYM_DEFAULT = {
     saturday: [],
     sunday: []
   },
+  store: null,
   monthly_payment: 0,
   daily_payment: 0,
-  trainers_cost: 0
+  trainers_cost: 0,
+  monthly_currency: "CUP",
+  daily_currency: "CUP"
 }
 
 
 // eslint-disable-next-line react/prop-types
 const GeneralInfo = ({ id }) => {
-  console.log(id)
+  const location = useLocation();
+  const { planId } = location.state || {};
   const theme = useTheme();
   const navigate = useNavigate();
+  const { showMessage } = useSnackbar();
   const [userInactive, setUserInactive] = useState(null);
   const [reload, setReload] = useState(false);
   const [createProfile, setCreateProfile] = useState(null);
   const [withOutAccount, setWithOutAccount] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [gymInfo, setGymInfo] = useState({
     gym_name: "",
     address: "",
     owner_name: "",
     owner_phone: "",
+    public_phone: "",
     state: "",
     city: "",
     clients: null,
@@ -69,7 +78,10 @@ const GeneralInfo = ({ id }) => {
     },
     monthly_payment: 0,
     daily_payment: 0,
-    trainers_cost: 0
+    trainers_cost: 0,
+    monthly_currency: "CUP",
+    daily_currency: "CUP",
+    trainer_currency: "CUP"
   })
   const [state, setProvincia] = useState('');
   const [city, setMunicipio] = useState('');
@@ -78,10 +90,12 @@ const GeneralInfo = ({ id }) => {
 
   const [monthly, setMonthly] = useState(false);
   const [daily, setDaily] = useState(false);
+  const [trainer, setTrainer] = useState(false);
 
 
   useEffect(() => {
     const existsUser = () => {
+      setLoading(true);
       setTimeout(async () => {
         const { data: members } = await supabase
           .from("members")
@@ -132,12 +146,14 @@ const GeneralInfo = ({ id }) => {
           saveUser();
           setWithOutAccount(true);
         }
+        setLoading(false);
       }, 0);
     }
 
     const saveUser = () => {
       setTimeout(async () => {
         GYM_DEFAULT.owner_id = id;
+        GYM_DEFAULT.store = planId === "premium" ? true : false;
         const { data } = await supabase
           .from('info_general_gym')
           .insert(GYM_DEFAULT);
@@ -147,7 +163,7 @@ const GeneralInfo = ({ id }) => {
     };
 
     existsUser();
-  }, [id, reload])
+  }, [id, reload, planId]);
 
 
 
@@ -174,21 +190,25 @@ const GeneralInfo = ({ id }) => {
   const saveGymInfo = () => {
     let infoToSave = {
       ...gymInfo,
-
       monthly_payment: monthly ? gymInfo.monthly_payment : null,
       daily_payment: daily ? gymInfo.daily_payment : null,
     }
     setTimeout(async () => {
+      console.log(id)
+      console.log(infoToSave)
       try {
         if (!id) return;
         const result = await supabase
           .from("info_general_gym")
           .update(infoToSave)
           .eq("owner_id", id);
+
+        console.log(result)
         if (result) {
           navigate('/bienvenido');
         }
       } catch (error) {
+        showMessage("Error al guardar la información. Intente nuevamente o contacte al administrador", "error");
         console.error(error)
       }
     }, 1000);
@@ -215,7 +235,13 @@ const GeneralInfo = ({ id }) => {
     }
 
     if (name === "owner_phone") {
-      if (!/^[5]\d{7}$/.test(value)) {
+      if (!/\d{8}$/.test(value)) {
+        error = "Teléfono inválido";
+      }
+    }
+
+    if (name === "public_phone") {
+      if (!/\d{8}$/.test(value)) {
         error = "Teléfono inválido";
       }
     }
@@ -232,6 +258,12 @@ const GeneralInfo = ({ id }) => {
       }
     }
 
+    if (name === "trainers_cost" && value !== "") {
+      if (isNaN(value) || Number(value) <= 0) {
+        error = "Pago de entrenador inválido";
+      }
+    }
+
     setErrors(prevErrors => ({
       ...prevErrors,
       [name]: error
@@ -239,16 +271,18 @@ const GeneralInfo = ({ id }) => {
   };
 
   const checkFormValidity = () => {
-    const { gym_name, address, owner_name, owner_phone, state, city } = gymInfo;
+    const { gym_name, address, owner_name, owner_phone, public_phone, state, city, daily_payment, monthly_payment, } = gymInfo;
     const noErrors = !Object.values(errors).some(error => error);
     const allFieldsValid =
       gym_name.trim().length >= 3 &&
       address.trim().length >= 3 &&
       owner_name.trim().length >= 3 &&
       !/\d/.test(owner_name) &&
-      /^[5]\d{7}$/.test(owner_phone) &&
+      /\d{8}$/.test(owner_phone) &&
+      /\d{8}$/.test(public_phone) &&
       state !== "" &&
-      city !== "";
+      city !== "" &&
+      (monthly_payment || daily_payment);
 
     const paymentsValid = (monthly && !isNaN(gymInfo.monthly_payment) && Number(gymInfo.monthly_payment) > 0) ||
       (daily && !isNaN(gymInfo.daily_payment) && Number(gymInfo.daily_payment) > 0);
@@ -327,7 +361,13 @@ const GeneralInfo = ({ id }) => {
     });
   };
 
-
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div className="loader"></div>
+      </div>
+    );
+  }
 
   return (
     <Grid container
@@ -433,12 +473,24 @@ const GeneralInfo = ({ id }) => {
           <TextField
             required
             id="outlined-required"
-            label={errors.owner_phone ? errors.owner_phone : "Teléfono"}
+            label={errors.owner_phone ? errors.owner_phone : "Teléfono operacional"}
             name="owner_phone"
             value={gymInfo.owner_phone}
             onChange={handlerChange}
             style={{ width: "100%", marginTop: 20 }}
           />
+          <p style={{ marginTop: 10, color: "#999" }}>Nota: Usaremos este número para mantener la comunicación de operaciones entre tu gimnasio y Tronoss.</p>
+
+          <TextField
+            required
+            id="outlined-required"
+            label={errors.public_phone ? errors.public_phone : "Teléfono de contacto (opcional)"}
+            name="public_phone"
+            value={gymInfo.public_phone}
+            onChange={handlerChange}
+            style={{ width: "100%", marginTop: 20 }}
+          />
+          <p style={{ marginTop: 10, color: "#999" }}>Nota: Este teléfono se mostrará al público para que puedan comunicarse con ustedes y recibir apoyo o aclarar dudas.</p>
 
           <FormControl fullWidth margin="normal">
             <Typography variant="h6" style={{ marginTop: 20 }}>
@@ -451,29 +503,101 @@ const GeneralInfo = ({ id }) => {
               <label>
                 <input type="checkbox" checked={daily} onChange={() => setDaily(!daily)} /> Diario
               </label>
+              <label>
+                <input type="checkbox" checked={trainer} onChange={() => setTrainer(!trainer)} /> Entrenador
+              </label>
             </div>
           </FormControl>
 
           {monthly && (
-            <TextField
-              required
-              label={errors.monthly_payment ? errors.monthly_payment : "Pago mensual"}
-              name="monthly_payment"
-              value={gymInfo.monthly_payment || ""}
-              onChange={handlerChange}
-              style={{ width: "100%", marginTop: 20 }}
-            />
+            <Grid style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "space-between" }}>
+              <TextField
+                required
+                label={errors.monthly_payment ? errors.monthly_payment : "Pago mensual"}
+                name="monthly_payment"
+                value={gymInfo.monthly_payment || ""}
+                onChange={handlerChange}
+                style={{ width: "100%", marginTop: 20 }}
+              />
+
+              <FormControl required fullWidth margin="normal" id="mun-required">
+                <InputLabel>Moneda</InputLabel>
+                <Select
+                  value={gymInfo.monthly_currency}
+                  onChange={handlerChange}
+                  style={{ width: "100%", marginTop: 10 }}
+                  name="monthly_currency"
+                >
+                  {(["USD", "CUP"]).map((mun) => (
+                    <MenuItem key={mun} value={mun}>
+                      {mun}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+            </Grid>
           )}
 
           {daily && (
-            <TextField
-              required
-              label={errors.daily_payment ? errors.daily_payment : "Pago diario"}
-              name="daily_payment"
-              value={gymInfo.daily_payment || ""}
-              onChange={handlerChange}
-              style={{ width: "100%", marginTop: 20 }}
-            />
+
+            <Grid style={{ display: "flex", width: "100%", gap: 20, alignItems: "center", justifyContent: "space-between" }}>
+              <TextField
+                required
+                label={errors.daily_payment ? errors.daily_payment : "Pago diario"}
+                name="daily_payment"
+                value={gymInfo.daily_payment || ""}
+                onChange={handlerChange}
+                style={{ width: "100%", marginTop: 20 }}
+              />
+
+              <FormControl required fullWidth margin="normal" id="mun-required">
+                <InputLabel>Moneda</InputLabel>
+                <Select
+                  value={gymInfo.daily_currency}
+                  onChange={handlerChange}
+                  style={{ width: "100%", marginTop: 10 }}
+                  name="daily_currency"
+                >
+                  {(["USD", "CUP"]).map((mun) => (
+                    <MenuItem key={mun} value={mun}>
+                      {mun}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+
+
+          {trainer && (
+
+            <Grid style={{ display: "flex", width: "100%", gap: 20, alignItems: "center", justifyContent: "space-between" }}>
+              <TextField
+                required
+                label={errors.trainers_cost ? errors.trainers_cost : "Costo por entrenador"}
+                name="trainers_cost"
+                value={gymInfo.trainers_cost || ""}
+                onChange={handlerChange}
+                style={{ width: "100%", marginTop: 20 }}
+              />
+
+              <FormControl required fullWidth margin="normal" id="mun-required">
+                <InputLabel>Moneda</InputLabel>
+                <Select
+                  value={gymInfo.trainer_currency}
+                  onChange={handlerChange}
+                  style={{ width: "100%", marginTop: 10 }}
+                  name="trainer_currency"
+                >
+                  {(["USD", "CUP"]).map((mun) => (
+                    <MenuItem key={mun} value={mun}>
+                      {mun}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           )}
 
           <Typography variant="h6" style={{ marginTop: 30 }}>
@@ -562,6 +686,8 @@ const GeneralInfo = ({ id }) => {
       }
     </Grid>
   )
+
+
 }
 
 export default GeneralInfo

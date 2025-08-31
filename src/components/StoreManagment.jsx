@@ -1,4 +1,5 @@
 /* eslint-disable react/prop-types */
+
 import { useEffect, useState } from "react";
 import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
@@ -347,9 +348,9 @@ const StoreManagment = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div className="loader"></div>
+      </div>
     );
   }
 
@@ -394,7 +395,7 @@ const StoreManagment = () => {
               </Box>
             </Grid>
 
-            {/* Columna derecha - Información del servicio */}
+
             <Grid item xs={12} md={7}>
               <Paper
                 elevation={2}
@@ -412,7 +413,7 @@ const StoreManagment = () => {
                 </Typography>
 
                 <Grid container spacing={3}>
-                  {/* Precio */}
+
                   <Grid item xs={12} sm={4}>
                     <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: 'white' }}>
                       <Typography variant={isMobile ? "h5" : "h4"} color="success.main" sx={{ fontWeight: 'bold' }}>
@@ -424,7 +425,7 @@ const StoreManagment = () => {
                     </Paper>
                   </Grid>
 
-                  {/* Beneficios en grid horizontal */}
+
                   <Grid item xs={12} sm={8}>
                     <Grid container spacing={1}>
                       <Grid item xs={6}>
@@ -573,7 +574,7 @@ const StoreManagment = () => {
               </TableContainer>
             )}
 
-            {/* Vista móvil - Tarjetas */}
+
             {isMobile && (
               <Box sx={{ width: '100%' }}>
                 {loadingProducts ? (
@@ -590,7 +591,7 @@ const StoreManagment = () => {
                       <ProductCard key={product.id} product={product} />
                     ))}
 
-                    {/* Paginación para vista móvil */}
+
                     {totalPages > 1 && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                         <Pagination
@@ -629,7 +630,7 @@ const StoreManagment = () => {
                   <Card>
                     <CardMedia
                       component="img"
-                      /* height={isMobile ? "150" : "200"} */
+
                       sx={{ width: "100%", height: "100%", objectFit: "contain" }}
                       image={product.image_base64}
                       alt={product.name}
@@ -671,7 +672,7 @@ const StoreManagment = () => {
         )}
       </Paper>
 
-      {/* Dialog para crear/editar productos */}
+
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
@@ -859,3 +860,6 @@ const StoreManagment = () => {
 };
 
 export default StoreManagment;
+
+
+

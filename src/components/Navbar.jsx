@@ -18,13 +18,14 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { NavButton } from './NavButton';
 import { useMembers } from '../context/Context';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SettingsAccount from './SettingsAccount';
 import { useTheme, styled } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MobileBottomNav from './MobileBottomNav';
 import { useSnackbar } from '../context/Snackbar';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
 const settings = ['Perfil'];
 
@@ -70,7 +71,14 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   const { showMessage } = useSnackbar();
 
 
+  useEffect(() => {
+    if (!["/admin", "/admin/panel", "/login", "/general_info", "/bienvenido"].includes(location.pathname)) {
+      setNavBarOptions(true);
+    } else {
+      setNavBarOptions(false);
 
+    }
+  }, [location.pathname]);
 
   const logoutUser = async () => {
     try {
@@ -110,7 +118,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
           </div>
 
           {
-            !isMobile && daysRemaining <= 3 &&
+            !isMobile && daysRemaining <= 3 && daysRemaining > 0 &&
             <span style={{ position: 'absolute', marginLeft: "4rem" }}>
               Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
             </span>
@@ -124,6 +132,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
               <NavButton to="/entrenadores" icon={<FitnessCenterIcon />}
                 text="Entrenadores" />
               <NavButton to="/tienda" icon={<LocalGroceryStoreIcon />} text="Tienda" />
+              <NavButton to="/planes" icon={<TrendingUpIcon />} text="Planes" />
 
             </div>
           )}

@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid';
-import DeleteDialog from './DeleteDialog';
+import DialogMessage from './DialogMessage';
 import { useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -76,7 +76,13 @@ export const TableTrainersList = ({ trainersList }) => {
           pageSizeOptions={[5, 10]}
         />
       </Grid>
-      <DeleteDialog handleClose={handleClose} info={trainerInfo} open={openDelete} type={2} />
+      <DialogMessage
+        handleClose={handleClose}
+        info={trainerInfo}
+        title="Eliminar Entrenador"
+        open={openDelete}
+        msg={`¿Esta seguro que desea eliminar la informacion de ${trainerInfo.name} ${trainerInfo.last_name}?`}
+        type={2} />
       <EditTrainer handleClose={handleClose} trainerInfo={trainerInfo} open={openEdit} />
     </div>
   );
