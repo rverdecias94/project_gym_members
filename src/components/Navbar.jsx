@@ -185,7 +185,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
         </div>
       )}
 
-      {isMobile && showNav && !["/admin", "/login", "/admin/panel", "/general_info", "/bienvenido"].includes(location.pathname) && (
+      {isMobile && showNav && navBarOptions && !["/admin", "/login", "/admin/panel", "/general_info", "/bienvenido"].includes(location.pathname) && (
         <MobileBottomNav
           profile={profile}
           mode={mode}
