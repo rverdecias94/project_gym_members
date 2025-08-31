@@ -75,8 +75,10 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     if (!["/admin", "/admin/panel", "/login", "/general_info", "/bienvenido"].includes(location.pathname)) {
       if (location.pathname === "/planes" && (gymInfo.name))
         setNavBarOptions(true);
-      else
+      else if (location.pathname === "/planes" && (!gymInfo.name))
         setNavBarOptions(false);
+      else
+        setNavBarOptions(true);
     } else {
       setNavBarOptions(false);
     }

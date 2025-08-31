@@ -19,13 +19,12 @@ const Welcome = () => {
   return (
 
     <Grid item xl={12} lg={12} md={12} sm={12} xs={12} className='dashboard-container'
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, height: "80%" }}>
-      <h1>
+      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, height: "80%", textAlign: "center", padding: 20 }}>
+      <h2>
         🎉 ¡Bienvenido al sistema de TRONOSS!
-      </h1>
+      </h2>
 
       <p>
-
         Hola 👋, nos alegra tenerte con nosotros.
         Desde aquí podrás gestionar tu gimnasio de forma fácil y rápida: registra a tus miembros y entrenadores.
       </p>

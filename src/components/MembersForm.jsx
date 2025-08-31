@@ -202,7 +202,6 @@ function MembersForm({ member = {}, open, handleClose }) {
               '& .MuiRadioGroup-root': { display: 'flex' },
               '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
               padding: editing ? null : 2,
-              //width: editing ? null : "100vw"
             }}
             noValidate
             autoComplete="off"
@@ -382,7 +381,7 @@ function MembersForm({ member = {}, open, handleClose }) {
                 </Grid>
               </Grid>
             </form>
-            <Grid style={{ position: "relative", top: -30 }}>
+            <Grid style={{ position: "relative", top: -5, padding: "20px 12px" }}>
               <Button
                 onClick={handlerSubmit}
                 variant="contained"

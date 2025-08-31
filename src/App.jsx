@@ -13,7 +13,7 @@ import Dashboard from './components/Dashboard';
 import MembersList from './components/MembersList';
 import Trainers from './components/TrainersList';
 import { BackdropProvider } from './components/BackdropProvider';
-import GeneralInfo from './components/GeneralInfo';
+/* import GeneralInfo from './components/GeneralInfo'; */
 import LoginAdmin from './admin/Login';
 import AdminPanel from './admin/AdminPanel';
 import Welcome from './components/Welcome';
@@ -21,6 +21,7 @@ import TermsAndConditions from './components/TermsAndConditions';
 import StoreManagment from './components/StoreManagment';
 import PlansPage from './components/Plans';
 import Redirect from './components/Redirect';
+import GymStepper from './components/GymStepper';
 
 
 function App() {
@@ -106,7 +107,7 @@ function App() {
               <Route path='/clientes' element={<MembersList />} />
               <Route path='/bienvenido' element={<Welcome />} />
               <Route path='/entrenadores' element={<Trainers />} />
-              <Route path='/general_info' element={<GeneralInfo id={userId} />} />
+              <Route path='/general_info' element={<GymStepper id={userId} />} />
               <Route path='/new_member' element={<MembersForm />} />
               <Route path='/new_trainer' element={<TrainersForm />} />
               <Route path='/admin' element={<LoginAdmin />} />
