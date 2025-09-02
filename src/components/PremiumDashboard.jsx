@@ -141,7 +141,7 @@ export default function PremiumDashboard({
       <Divider />
       <h2 style={{ margin: "1rem" }}>📊 Estadísticas Premium</h2>
 
-      <Grid style={{ display: "grid", gridTemplateColumns: 'repeat(2, 1fr)', padding: "1rem", gap: 15 }} >
+      <Grid style={{ display: "grid", gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }, padding: "1rem", gap: 15 }} >
 
         <Grid item xs={12} md={6} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
           <BarChart
