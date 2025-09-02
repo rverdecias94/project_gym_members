@@ -83,7 +83,7 @@ function MembersForm({ member = {}, open, handleClose }) {
       trainer_name: null,
     })
     setImageBase64(null)
-
+    handleClose();
     if (editing) {
       setEditing(false);
     } else {
