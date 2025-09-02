@@ -62,9 +62,10 @@ const PlansPage = () => {
         'El segundo y tercer mes un 30% de descuento',
       ],
       includes: [
-        { text: 'Agregar y gestionar miembros y entrenadores', icon: <Group /> },
+        { text: 'Registro de hasta 100 clientes', icon: <Group /> },
+        { text: 'Agregar y gestionar clientes y entrenadores', icon: <Group /> },
         { text: 'Función de Checking en el gym (único en Cuba)', icon: <FitnessCenter /> },
-        { text: 'Estadísticas del gimnasio, miembros y fechas de pago', icon: <BarChart /> },
+        { text: 'Estadísticas generales (clientes, entrenadores, relaciones de agrupación)', icon: <BarChart /> },
       ],
       color: '#6164c7',
       popular: false
@@ -106,9 +107,11 @@ const PlansPage = () => {
         'El segundo y tercer mes un 30% de descuento',
       ],
       includes: [
-        { text: 'Agregar y gestionar miembros y entrenadores', icon: <Group /> },
+        { text: 'Registro ilimitado de clientes', icon: <Group /> },
+        { text: 'Agregar y gestionar clientes y entrenadores', icon: <Group /> },
         { text: 'Función de Checking en el gym (único en Cuba)', icon: <FitnessCenter /> },
-        { text: 'Estadísticas del gimnasio, miembros y fechas de pago', icon: <BarChart /> },
+        { text: 'Estadísticas generales (clientes, entrenadores, relaciones de agrupación)', icon: <BarChart /> },
+        { text: 'Estadísticas de negocio y estratégicas (retención, ingresos proyectados, rango de edad, pagos y tendencias.)', icon: <BarChart /> },
         { text: 'Visibilidad y posicionamiento en la comunidad fitness', icon: <Star /> },
         { text: 'Agregar productos en Tronoss', icon: <Inventory /> },
         { text: 'Catálogo de productos', icon: <Business /> },
@@ -116,7 +119,7 @@ const PlansPage = () => {
       ],
       color: '#6164c7',
       popular: true,
-      fullFeatures: 'Incluye todo de los Gym Master y Market Fit'
+      fullFeatures: 'Incluye todas las funciones de los planes Estándar, Tienda Fitness y más.'
     }
   ];
 

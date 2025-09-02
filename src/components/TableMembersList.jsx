@@ -43,10 +43,12 @@ import RuleIcon from '@mui/icons-material/Rule';
 import LinkIcon from '@mui/icons-material/Link';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import MembersForm from './MembersForm';
+import { useSnackbar } from '../context/Snackbar';
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
-  const { adding, trainersList, setBackdrop } = useMembers();
+  const { adding, trainersList, setBackdrop, gymInfo } = useMembers();
+  const { showMessage } = useSnackbar();
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openRule, setOpenRule] = useState(false);
@@ -71,7 +73,16 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [openMemberForm, setOpenMemberForm] = useState(false);
 
   const handleOpenMember = () => {
-    setOpenMemberForm(true);
+    if (!gymInfo?.store) {
+      if (members.length < 100) {
+        console.log(members)
+        setOpenMemberForm(true);
+      } else {
+        showMessage("Has alcanzado el límite de clientes para tu plan actual. Por favor, actualiza tu plan para agregar más clientes.", "error");
+        return;
+      }
+    } else
+      setOpenMemberForm(true);
   };
 
   const handleCloseMemberForm = () => {

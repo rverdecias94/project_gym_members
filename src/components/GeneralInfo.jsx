@@ -118,11 +118,22 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
 
 
           if (data && data.length > 0) {
-            const nextPaymentDate = new Date(data[0].next_payment_date);
             const today = new Date();
-            if (nextPaymentDate < today) {
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            const nextPaymentStr = data[0].next_payment_date;
+
+            console.log(todayStr, nextPaymentStr);
+            console.log(nextPaymentStr <= todayStr);
+
+            if (nextPaymentStr <= todayStr) {
               setUserInactive(true);
             }
+
+
             else if (data[0].active === true) {
               const containsDefault = Object.values(data[0]).some(value =>
                 typeof value === 'string' && value.includes("DEFAULT_")

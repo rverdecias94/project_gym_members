@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Stepper,
   Step,
@@ -16,9 +16,29 @@ const steps = ["Datos Generales", "Tipo de pago", "Horarios de funcionamiento"];
 export default function GymStepper({ id }) {
   const [activeStep, setActiveStep] = useState(0);
   const { gymInfo } = useMembers();
-  // estado global para habilitar el botón final
   const [isSaveButtonEnabled, setIsSaveButtonEnabled] = useState(false);
   const [clickOnSave, setClickOnSave] = useState(false);
+  const [userActive, setUserActive] = useState(false);
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const nextPaymentStr = gymInfo.next_payment_date;
+
+
+
+  useEffect(() => {
+    if (gymInfo && gymInfo.next_payment_date) {
+      if (nextPaymentStr >= todayStr) {
+        setUserActive(true);
+      } else {
+        setUserActive(false);
+      }
+    }
+  }, [gymInfo]);
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
@@ -35,7 +55,7 @@ export default function GymStepper({ id }) {
   return (
     <Grid container justifyContent="center" sx={{ p: 4 }}>
       <Grid item xs={12} md={10} lg={8}>
-        {gymInfo.active &&
+        {gymInfo.active && userActive &&
           <Stepper activeStep={activeStep} alternativeLabel>
             {steps.map((label) => (
               <Step key={label}>
@@ -55,7 +75,7 @@ export default function GymStepper({ id }) {
           />
         </Box>
 
-        {gymInfo.active &&
+        {gymInfo.active && userActive &&
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
             <Button
               disabled={activeStep === 0}

@@ -6,12 +6,13 @@ import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { supabase } from '../supabase/client';
+import PremiumDashboard from './PremiumDashboard';
 
 const pieParams = { height: 250, margin: { right: 5 } };
 
 export default function Dashboard() {
   const theme = useTheme();
-  const { getDashboardData, membersList, trainersList, setNavBarOptions, daysRemaining } = useMembers();
+  const { getDashboardData, membersList, trainersList, setNavBarOptions, daysRemaining, gymInfo } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
   const [elemntsByTrainer, setElemntsByTrainer] = useState([]);
   const [trainersName, setTrainerName] = useState([]);
@@ -375,6 +376,13 @@ export default function Dashboard() {
             </Grid>
           </Grid>
         </div >
+
+        {gymInfo?.active && gymInfo?.store && (
+          <PremiumDashboard
+            membersList={membersList}
+            gymInfo={gymInfo}
+          />
+        )}
 
         <br />
         <div style={{ padding: "1rem 1rem 5rem 1rem" }}>
