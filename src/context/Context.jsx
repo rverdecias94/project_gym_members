@@ -42,8 +42,6 @@ export const ContextProvider = ({ children }) => {
 
     const getGymInfo = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log(user)
-
       if (!user) {
         throw new Error("Usuario no autenticado");
       }
@@ -74,8 +72,6 @@ export const ContextProvider = ({ children }) => {
 
   const getGymInfo = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    console.log(user)
-
     if (!user) {
       throw new Error("Usuario no autenticado");
     }

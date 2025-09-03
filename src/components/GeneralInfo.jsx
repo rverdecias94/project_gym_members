@@ -126,9 +126,6 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
             const todayStr = `${yyyy}-${mm}-${dd}`;
             const nextPaymentStr = data[0].next_payment_date;
 
-            console.log(todayStr, nextPaymentStr);
-            console.log(nextPaymentStr <= todayStr);
-
             if (nextPaymentStr <= todayStr) {
               setUserInactive(true);
             }
@@ -210,8 +207,6 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
       daily_payment: daily ? gymInfo.daily_payment : null,
     }
     setTimeout(async () => {
-      console.log(id)
-      console.log(infoToSave)
       try {
         if (!id) return;
         const result = await supabase
@@ -219,7 +214,6 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
           .update(infoToSave)
           .eq("owner_id", id);
 
-        console.log(result)
         if (result) {
           navigate('/bienvenido');
         }

@@ -29,8 +29,10 @@
     "papaparse": "^5.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-qr-scanner": "^1.0.0-alpha.11",
     "react-router-dom": "^6.22.3",
     "react-webcam": "^7.2.0",
+    "react-zxing": "^2.1.0",
     "rollup": "^4.12.1",
     "vite-plugin-pwa": "^0.20.0",
     "xlsx": "^0.18.5"

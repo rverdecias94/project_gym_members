@@ -107,7 +107,6 @@ export default function Dashboard() {
   const handleYearChange = (event) => {
     const year = parseInt(event.target.value, 10);
     setSelectedYear(year);
-    console.log(membersByYear)
     setMembersByMonth(membersByYear[year] || Array(12).fill(0));
   };
 
