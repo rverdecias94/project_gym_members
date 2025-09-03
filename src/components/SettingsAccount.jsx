@@ -331,7 +331,7 @@ export default function SettingsAccount({
         </DialogTitle>
         <DialogContent>
           <Grid container sx={{ mt: 3 }}>
-            <Grid item xl={6} lg={6} md={4} sm={4} xs={12}>
+            <Grid item xl={6} lg={6} md={6} sm={6} xs={12}>
 
               <TextField
                 id="outlined-read-only-input"
@@ -376,7 +376,7 @@ export default function SettingsAccount({
                 onChange={handlerChange}
               />
             </Grid>
-            <Grid item xl={6} lg={6} md={4} sm={4} xs={12}>
+            <Grid item xl={6} lg={6} md={6} sm={6} xs={12}>
               <TextField
                 id="outlined-read-only-input"
                 label="Cuenta inactiva en"
