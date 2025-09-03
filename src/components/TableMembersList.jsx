@@ -75,7 +75,6 @@ export const TableMembersList = ({ membersList = [] }) => {
   const handleOpenMember = () => {
     if (!gymInfo?.store) {
       if (members.length < 100) {
-        console.log(members)
         setOpenMemberForm(true);
       } else {
         showMessage("Has alcanzado el límite de clientes para tu plan actual. Por favor, actualiza tu plan para agregar más clientes.", "error");
@@ -391,17 +390,22 @@ export const TableMembersList = ({ membersList = [] }) => {
 
         <Grid className='container-options-sec_2' sx={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: 2, position: "relative" }}>
 
-          <Button
-            variant="contained"
-            className='btn-add-client'
-            style={{ color: "white", background: "#e49c10" }}
-            onClick={handleOpenMember} // Aquí manejamos la apertura del formulario
-          >
-            <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
-            <span className='text-add-client' style={{ marginLeft: 5 }}>
-              Cliente
-            </span>
-          </Button>
+          <div>
+            <Button
+              variant="contained"
+              className='btn-add-client'
+              style={{ color: "white", background: "#e49c10" }}
+              onClick={handleOpenMember} // Aquí manejamos la apertura del formulario
+            >
+              <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
+              <span className='text-add-client' style={{ marginLeft: 5 }}>
+                Cliente
+              </span>
+            </Button>
+            {members.length >= 95 && members.length <= 100 && <p style={{ fontSize: 16, marginTop: 16 }}>
+              Recuerda que puedes agregar hasta 100 clientes para tu plan.
+            </p>}
+          </div>
 
 
           {/* Botones para vista desktop */}
