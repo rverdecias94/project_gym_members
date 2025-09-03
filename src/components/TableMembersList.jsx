@@ -402,7 +402,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 Cliente
               </span>
             </Button>
-            {members.length >= 95 && members.length <= 100 && <p style={{ fontSize: 16, marginTop: 16 }}>
+            {!gymInfo?.store && members.length >= 95 && members.length <= 100 && <p style={{ fontSize: 16, marginTop: 16 }}>
               Recuerda que puedes agregar hasta 100 clientes para tu plan.
             </p>}
           </div>
