@@ -34,8 +34,8 @@ const SignIn = () => {
 
 
   return (
-    <Grid container style={{ minHeight: '100vh', justifyContent: 'center', alignItems: 'center', background: "url(/login-bg.jpg) no-repeat center fixed", padding: '20px', backgroundSize: 'cover' }}>
-      <Grid item lg={3} md={4} sm={6} xs={12} style={{ textAlign: "center", background: "#282b824a", boxShadow: '#4f52b2 0px 0px 5px 1px', height: "65vh", borderRadius: "3%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 10, backdropFilter: 'blur(15px)' }}>
+    <Grid container style={{ minHeight: '100vh', justifyContent: 'center', alignItems: 'center', background: "url(/login-bg.jpg) no-repeat center fixed", padding: 20, backgroundSize: 'cover' }}>
+      <Grid item lg={3} md={4} sm={6} xs={12} style={{ textAlign: "center", background: "#282b824a", boxShadow: '#4f52b2 0px 0px 5px 1px', height: "auto", borderRadius: "3%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 10, backdropFilter: 'blur(15px)' }}>
 
 
         <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -58,7 +58,7 @@ const SignIn = () => {
             />
           )}
 
-          <Typography variant="body2" sx={{ color: 'white', fontSize: '14px', }}>
+          <Typography variant="body2" sx={{ color: 'white', fontSize: '14px', marginBottom: "2rem" }}>
             {!acceptedTerms ? "Acepto los " : "Aceptaste los "}
             <Link
               component="button"
