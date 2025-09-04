@@ -715,6 +715,7 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openRule, setOpenRule] = useState(false);
+  const [verifiedAcount, setVerifiedAcount] = useState(false);
   const [memberInfo, setMemberInfo] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [amountDays, setAmountDays] = useState("");
@@ -800,23 +801,29 @@ export const TableMembersList = ({ membersList = [] }) => {
     }
   }, [trainer_name]);
 
-  const buscarRegistro = async () => {
+  const buscarRegistro = async (value) => {
+
+    let scannedId = value ? value : id;
+
     setBackdrop(true);
     setError(null);
     const { data, error } = await supabase
       .from('members')
       .select('*')
-      .eq('member_id', id);
+      .eq('member_id', scannedId);
 
     setBackdrop(false);
     if (error) {
       setError('Error al buscar el registro');
       setResultados([]);
+      setVerifiedAcount(false);
     } else if (!data || data.length === 0) {
       setError('No se encontró ningún cliente con ese ID');
       setResultados([]);
+      setVerifiedAcount(false);
     } else {
       setResultados(data);
+      setVerifiedAcount(true);
     }
   };
 
@@ -870,7 +877,7 @@ export const TableMembersList = ({ membersList = [] }) => {
     setId(scannedId);
     setShowQrScanner(false);
     setResultados([]);
-    buscarRegistro();
+    buscarRegistro(scannedId);
   };
 
   // Calcular elementos para la página actual en vista móvil
@@ -1358,7 +1365,7 @@ export const TableMembersList = ({ membersList = [] }) => {
         open={openMemberForm}
         handleClose={handleCloseMemberForm}
       />
-      <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} />
+      <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} virifiedAcount={verifiedAcount} />
     </Grid>
   );
 }

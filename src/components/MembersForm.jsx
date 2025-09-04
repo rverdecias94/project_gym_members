@@ -19,7 +19,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import CancelIcon from '@mui/icons-material/Cancel';
 
 
-function MembersForm({ member = {}, open, handleClose }) {
+function MembersForm({ member = {}, open, handleClose, virifiedAcount = false }) {
   const { createNewMember, adding, updateClient, trainersList } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
@@ -71,7 +71,11 @@ function MembersForm({ member = {}, open, handleClose }) {
 
     member.image_profile = imageBase64;
 
-    editing ? await updateClient(member) : await createNewMember(member);
+    if (virifiedAcount) {
+      member.active = true;
+    }
+
+    editing ? await updateClient(member, virifiedAcount) : await createNewMember(member);
     setMemberData({
       first_name: '',
       last_name: '',
@@ -220,7 +224,7 @@ function MembersForm({ member = {}, open, handleClose }) {
                           control={
                             <Checkbox
                               name='active'
-                              checked={memberData?.active}
+                              checked={memberData?.active === true ? true : virifiedAcount}
                             />}
                           label="Cliente Activo"
                         />

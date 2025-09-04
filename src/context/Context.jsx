@@ -263,28 +263,43 @@ export const ContextProvider = ({ children }) => {
     } else throw new Error(error);
   };
 
-  const updateClient = async (member) => {
+  const updateClient = async (member, virifiedAcount) => {
     setBackdrop(true);
     setAdding(true);
     const { data } = await supabase.auth.getUser();
     let memberToSave = { ...member };
-    memberToSave.gym_id = data?.user?.id,
-      setTimeout(async () => {
-        try {
-          await handlerNeedUpdateClients(true);
-          const result = await supabase.from("members").update(memberToSave).eq("id", member?.id);
-          setBackdrop(false);
-          navigate('/clientes');
-          if (result) {
-            await getMembers(true);
-            showMessage("Registro actualizado satisfactoriamente", "success");
-          }
-        } catch (error) {
-          console.error(error)
-        } finally {
-          setAdding(false);
+    if (virifiedAcount) {
+      const fechaActual = new Date();
+      fechaActual.setMonth(fechaActual.getMonth() + 1);
+      if (fechaActual.getMonth() === 0) {
+        fechaActual.setFullYear(fechaActual.getFullYear() + 1);
+      }
+
+      const dia = fechaActual.getDate();
+      const mes = fechaActual.getMonth() + 1;
+      const año = fechaActual.getFullYear();
+
+      memberToSave.initial_gym_date = `${año}-${mes}-${dia}`;
+      memberToSave.verified_account = data?.user?.id;
+    } else {
+      memberToSave.gym_id = data?.user?.id;
+    }
+    setTimeout(async () => {
+      try {
+        await handlerNeedUpdateClients(true);
+        const result = await supabase.from("members").update(memberToSave).eq("id", member?.id);
+        setBackdrop(false);
+        navigate('/clientes');
+        if (result) {
+          await getMembers(true);
+          showMessage("Registro actualizado satisfactoriamente", "success");
         }
-      }, 2000);
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setAdding(false);
+      }
+    }, 2000);
   };
 
   const updateTrainer = async (trainer) => {

@@ -8,11 +8,11 @@ import MembersForm from './MembersForm';
 import CancelIcon from '@mui/icons-material/Cancel';
 import IconButton from '@mui/material/IconButton';
 
-export default function EditMember({ handleClose, memberInfo, open }) {
+export default function EditMember({ handleClose, memberInfo, open, virifiedAcount = false }) {
 
   return (
     <React.Fragment>
-      <MembersForm member={memberInfo} open={open} handleClose={handleClose} />
+      <MembersForm member={memberInfo} open={open} handleClose={handleClose} virifiedAcount={virifiedAcount} />
     </React.Fragment>
   );
 }
