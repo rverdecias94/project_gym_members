@@ -61,6 +61,7 @@ const StoreManagment = () => {
 
   // Estados para productos
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
   // Estados para paginación móvil
@@ -78,7 +79,11 @@ const StoreManagment = () => {
     image_base64: '',
     product_code: '',
     has_delivery: false,
-    has_pickup: false
+    has_pickup: false,
+    free_delivery: false,
+    category: '',
+    city: 'El cerro',
+    state: 'La Habana',
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -101,6 +106,8 @@ const StoreManagment = () => {
       }
     };
     getData();
+    let result = supabase.from('categories').select('*');
+    setCategories(result.data || []);
   }, []);
 
   useEffect(() => {
@@ -155,9 +162,8 @@ const StoreManagment = () => {
     if (!formData.name.trim()) errors.name = 'El nombre es requerido';
     if (!formData.description.trim()) errors.description = 'La descripción es requerida';
     if (!formData.price || parseFloat(formData.price) <= 0) errors.price = 'El precio debe ser mayor a 0';
-    if (!formData.product_code.trim()) errors.product_code = 'El código de producto es requerido';
     if (!formData.image_base64) errors.image = 'La imagen es requerida';
-    if (!formData.has_delivery && !formData.has_pickup) {
+    if (!formData.has_delivery || !formData.has_pickup || !formData.free_delivery) {
       errors.delivery = 'Debe seleccionar al menos una opción de entrega';
     }
 
@@ -220,7 +226,8 @@ const StoreManagment = () => {
       image_base64: product.image_base64,
       product_code: product.product_code,
       has_delivery: product.has_delivery,
-      has_pickup: product.has_pickup
+      has_pickup: product.has_pickup,
+      free_delivery: product.free_delivery
     });
     setOpenDialog(true);
   };
@@ -254,7 +261,8 @@ const StoreManagment = () => {
       image_base64: '',
       product_code: '',
       has_delivery: false,
-      has_pickup: false
+      has_pickup: false,
+      free_delivery: false
     });
     setFormErrors({});
   };
@@ -686,7 +694,7 @@ const StoreManagment = () => {
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   label="Nombre del producto"
@@ -698,17 +706,32 @@ const StoreManagment = () => {
                   size={isMobile ? "small" : "medium"}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
-                  label="Código de producto"
+                  label="Código de producto (Opcional)"
                   value={formData.product_code}
                   onChange={(e) => setFormData(prev => ({ ...prev, product_code: e.target.value }))}
                   error={!!formErrors.product_code}
                   helperText={formErrors.product_code}
-                  required
                   size={isMobile ? "small" : "medium"}
                 />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                  <InputLabel>Categoría</InputLabel>
+                  <Select
+                    value={formData.category}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    label="Moneda"
+                  >
+                    {
+                      categories.map((category) => (
+                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                      ))
+                    }
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12}>
                 <TextField
@@ -751,6 +774,7 @@ const StoreManagment = () => {
                   </Select>
                 </FormControl>
               </Grid>
+
               <Grid item xs={12}>
                 <Box sx={{ border: '1px dashed #ccc', p: 2, textAlign: 'center' }}>
                   <input
@@ -823,6 +847,20 @@ const StoreManagment = () => {
                     </Typography>
                   }
                 />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.free_delivery}
+                      onChange={(e) => setFormData(prev => ({ ...prev, free_delivery: e.target.checked }))}
+                      size={isMobile ? "small" : "medium"}
+                    />
+                  }
+                  label={
+                    <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
+                      Entrega gratis
+                    </Typography>
+                  }
+                />
                 {formErrors.delivery && (
                   <Typography color="error" variant="caption" display="block" sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
                     {formErrors.delivery}
@@ -832,7 +870,7 @@ const StoreManagment = () => {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: isMobile ? 2 : 1 }}>
+        <DialogActions style={{ padding: isMobile ? 2 : 1 }}>
           <Button
             onClick={handleCloseDialog}
             size={isMobile ? "small" : "medium"}

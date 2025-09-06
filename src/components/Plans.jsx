@@ -239,7 +239,7 @@ const PlansPage = () => {
                 mb: 3
               }}
             >
-              Estamos haciendo historia en Cuba. No pierdas la oportunidad de unirte desde el principio.
+              {!gymInfo.active ? "No pierdas la oportunidad de unirte desde el principio" : "¡Felicidades! Ya formas parte de la historia que estamos construyendo en Cuba."}
             </Typography>
           </Box>
 

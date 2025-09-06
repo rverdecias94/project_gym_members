@@ -681,17 +681,6 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
                   </div>
                 ))
               }
-
-              {/* <Button
-                onClick={saveGymInfo}
-                color="primary"
-                disabled={
-                  !isSaveButtonEnabled
-                }
-                variant={"contained"}
-                style={{ width: "100%", marginTop: 20 }}>
-                Continuar
-              </Button> */}
             </Grid>
           }
 
