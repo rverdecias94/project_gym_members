@@ -101,23 +101,25 @@ function App() {
         <ContextProvider>
           <BackdropProvider>
             {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
-            <Routes>
-              <Route path='/panel' element={<Dashboard />} />
-              <Route path='/login' element={<Login id={userId} />} />
-              <Route path='/clientes' element={<MembersList />} />
-              <Route path='/bienvenido' element={<Welcome />} />
-              <Route path='/entrenadores' element={<Trainers />} />
-              <Route path='/general_info' element={<GymStepper id={userId} />} />
-              <Route path='/new_member' element={<MembersForm />} />
-              <Route path='/new_trainer' element={<TrainersForm />} />
-              <Route path='/admin' element={<LoginAdmin />} />
-              <Route path='/admin/panel' element={<AdminPanel />} />
-              <Route path='/terms-conditions' element={<TermsAndConditions />} />
-              <Route path='/tienda' element={<StoreManagment />} />
-              <Route path='/planes' element={<PlansPage />} />
-              <Route path='/redirect' element={<Redirect />} />
-              <Route path='*' element={<NotFound />} />
-            </Routes>
+            <div className='main-content'>
+              <Routes>
+                <Route path='/panel' element={<Dashboard />} />
+                <Route path='/login' element={<Login id={userId} />} />
+                <Route path='/clientes' element={<MembersList />} />
+                <Route path='/bienvenido' element={<Welcome />} />
+                <Route path='/entrenadores' element={<Trainers />} />
+                <Route path='/general_info' element={<GymStepper id={userId} />} />
+                <Route path='/new_member' element={<MembersForm />} />
+                <Route path='/new_trainer' element={<TrainersForm />} />
+                <Route path='/admin' element={<LoginAdmin />} />
+                <Route path='/admin/panel' element={<AdminPanel />} />
+                <Route path='/terms-conditions' element={<TermsAndConditions />} />
+                <Route path='/tienda' element={<StoreManagment />} />
+                <Route path='/planes' element={<PlansPage />} />
+                <Route path='/redirect' element={<Redirect />} />
+                <Route path='*' element={<NotFound />} />
+              </Routes>
+            </div>
           </BackdropProvider>
         </ContextProvider>
       </div>

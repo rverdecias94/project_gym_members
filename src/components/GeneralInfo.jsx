@@ -47,7 +47,7 @@ const GYM_DEFAULT = {
 
 
 // eslint-disable-next-line react/prop-types
-const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
+const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading }) => {
   const location = useLocation();
   const { planId } = location.state || {};
   const theme = useTheme();
@@ -96,6 +96,7 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
   useEffect(() => {
     const existsUser = () => {
       setLoading(true);
+      if (setIsLoading) setIsLoading(true);
       setTimeout(async () => {
         const { data: members } = await supabase
           .from("members")
@@ -155,6 +156,7 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave }) => {
           setWithOutAccount(true);
         }
         setLoading(false);
+        if (setIsLoading) setIsLoading(false);
       }, 0);
     }
 

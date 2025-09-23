@@ -38,18 +38,26 @@
   z-index: 999;
 }
 
+.main-content {
+  margin-top: 6rem;
+}
+
 .navbar-light {
   background-color: #4f52b2d0;
   backdrop-filter: blur(10px);
-  position: sticky;
+  position: fixed;
   top: 0;
+  width: 100%;
+  z-index: 1000;
 }
 
 .navbar-dark {
   background-color: #0a1628c8;
   backdrop-filter: blur(10px);
-  position: sticky;
+  position: fixed;
   top: 0;
+  width: 100%;
+  z-index: 1000;
 }
 
 .btn_logout {

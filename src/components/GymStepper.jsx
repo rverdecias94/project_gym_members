@@ -19,6 +19,7 @@ export default function GymStepper({ id }) {
   const [isSaveButtonEnabled, setIsSaveButtonEnabled] = useState(false);
   const [clickOnSave, setClickOnSave] = useState(false);
   const [userActive, setUserActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const today = new Date();
   const yyyy = today.getFullYear();
@@ -55,7 +56,7 @@ export default function GymStepper({ id }) {
   return (
     <Grid container justifyContent="center" sx={{ p: 4 }}>
       <Grid item xs={12} md={10} lg={8}>
-        {gymInfo.active && userActive &&
+        {gymInfo.active && userActive && !isLoading &&
           <Stepper activeStep={activeStep} alternativeLabel>
             {steps.map((label) => (
               <Step key={label}>
@@ -72,10 +73,11 @@ export default function GymStepper({ id }) {
             step={activeStep}
             setIsSaveButtonEnabled={setIsSaveButtonEnabled}
             clickOnSave={clickOnSave}
+            setIsLoading={setIsLoading}
           />
         </Box>
 
-        {gymInfo.active && userActive &&
+        {gymInfo.active && userActive && !isLoading &&
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
             <Button
               disabled={activeStep === 0}

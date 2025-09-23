@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { Grid, Divider, useTheme } from "@mui/material";
+import { Divider, useTheme } from "@mui/material";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -137,52 +137,56 @@ export default function PremiumDashboard({
   }, [membersList, gymInfo]);
 
   return (
-    <div style={{ marginTop: "3rem" }}>
+    <div style={{ marginTop: "3rem", padding: "1rem" }}>
       <Divider />
       <h2 style={{ margin: "1rem" }}>📊 Estadísticas Premium</h2>
 
-      <Grid style={{ display: "grid", gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }, padding: "1rem", gap: 15 }} >
-
-        <Grid item xs={12} md={6} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+      <div
+        className="stats-grid"
+      >
+        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
           <BarChart
             sx={{
-              '& .MuiBarElement-root:nth-of-type(odd)': {
-                fill: theme.palette.mode === 'dark' ? theme.palette.primary.main : theme.palette.primary.main,
+              "& .MuiBarElement-root:nth-of-type(odd)": {
+                fill:
+                  theme.palette.mode === "dark"
+                    ? theme.palette.primary.main
+                    : theme.palette.primary.main,
               },
-              '& .MuiBarElement-root:nth-of-type(even)': {
-                fill: theme.palette.mode === 'dark' ? theme.palette.secondary.main : theme.palette.primary.accent,
+              "& .MuiBarElement-root:nth-of-type(even)": {
+                fill:
+                  theme.palette.mode === "dark"
+                    ? theme.palette.secondary.main
+                    : theme.palette.primary.accent,
               },
             }}
-            xAxis={[{
-              scaleType: 'band',
-              data: dayLabels,
-              categoryGapRatio: 0.5,
-              barGapRatio: 1,
-            }]}
-            series={[{
-              data: last7DaysData
-            }]}
+            xAxis={[
+              {
+                scaleType: "band",
+                data: dayLabels,
+                categoryGapRatio: 0.5,
+                barGapRatio: 1,
+              },
+            ]}
+            series={[{ data: last7DaysData }]}
             height={250}
             slotProps={{
-              bar: {
-                clipPath: `inset(0px round 3px 3px 0px 0px)`,
-              },
+              bar: { clipPath: `inset(0px round 3px 3px 0px 0px)` },
             }}
           />
           <span>Nuevos Clientes - Últimos 7 Días</span>
-        </Grid>
+        </div>
 
-        <Grid item xs={12} md={6} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
           <BarChart
             xAxis={[{ scaleType: "band", data: Object.keys(ageRanges) }]}
             series={[{ data: Object.values(ageRanges) }]}
             height={250}
           />
           <span>Distribución de clientes por rango de edad</span>
-        </Grid>
+        </div>
 
-        {/* Permanencia promedio */}
-        <Grid item xs={12} md={6} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
           <PieChart
             series={[
               {
@@ -197,30 +201,24 @@ export default function PremiumDashboard({
             height={250}
           />
           <span>Permanencia promedio de clientes</span>
-        </Grid>
+        </div>
 
-        {/* Ingresos proyectados vs anterior */}
-        <Grid item xs={12} md={6} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
           <BarChart
             xAxis={[{ scaleType: "band", data: ["Mes anterior", "Mes actual"] }]}
             series={[{ data: [lastMonthIncome, monthlyIncome] }]}
             height={250}
           />
           <span>Ingresos proyectados ({gymInfo?.monthly_currency || "CUP"})</span>
-        </Grid>
+        </div>
 
-        {/* Clientes que pagan esta semana */}
-        <Grid item xs={12} md={6} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
           <PieChart
             series={[
               {
                 data: [
                   { id: 0, value: weeklyPayers, label: "Con pago" },
-                  {
-                    id: 1,
-                    value: membersList.length - weeklyPayers,
-                    label: "Sin pago",
-                  },
+                  { id: 1, value: membersList.length - weeklyPayers, label: "Sin pago" },
                 ],
                 innerRadius: 30,
                 outerRadius: 90,
@@ -229,10 +227,9 @@ export default function PremiumDashboard({
             height={250}
           />
           <span>Clientes con pago en la semana actual</span>
-        </Grid>
+        </div>
 
-        {/* Línea: pagos mensuales */}
-        <Grid item xs={12} md={12} className={theme.palette.mode === 'dark' ? 'chart-box-dark' : 'chart-box-light'}>
+        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
           <LineChart
             xAxis={[
               {
@@ -247,8 +244,32 @@ export default function PremiumDashboard({
             height={300}
           />
           <span>Tendencia de pagos mensuales</span>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
+
+      <style>
+        {`
+      .stats-grid{
+      display: grid;
+      grid-template-columns: 1fr; /* por defecto: 1 columna (móvil) */
+      gap: 1rem;
+    }
+
+    @media (min-width: 600px){ /* en pantallas >= 600px ponemos 2 columnas */
+      .stats-grid{
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* estilos de las cajas para separarlas mejor */
+    .chart-box-light, .chart-box-dark {
+      padding: 0.8rem;
+      border-radius: 8px;
+      min-height: 120px;
+    }
+    `}
+      </style>
     </div>
+
   );
 }
