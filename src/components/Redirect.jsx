@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase/client";
+import { identifyAccountType } from "../services/accountType";
 
 const Redirect = () => {
 
@@ -9,22 +10,27 @@ const Redirect = () => {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        throw new Error("Usuario no autenticado");
-      }
-      if (user) {
-        const { data } = await supabase
-          .from('info_general_gym')
-          .select('store')
-          .eq('owner_id', user.id)
-          .single();
-
-        if (data === null) {
-          navigate('/planes');
-        } else {
-          navigate('/general_info');
-        }
-      } else {
         navigate('/login');
+        return;
+      }
+
+      // Identificar el tipo de cuenta
+      const { type } = await identifyAccountType(user.id);
+      console.log(type)
+      switch (type) {
+        case 'gym':
+          navigate('/general_info');
+          break;
+
+        case 'shop':
+          navigate('/shop-stepper');
+          break;
+
+        case 'none':
+        default:
+          // Si no tiene cuenta, mostrar planes
+          navigate('/planes');
+          break;
       }
     }
 

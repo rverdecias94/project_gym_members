@@ -11,7 +11,13 @@ const GoogleSignIn = ({ acceptedTerms = false }) => {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    const { error } = await supabase.auth.signInWithOAuth({ 
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/redirect'
+      }
+    });
+    
     if (error) {
       console.error('Error al iniciar sesión con Google:', error.message);
     }

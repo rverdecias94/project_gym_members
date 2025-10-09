@@ -15,6 +15,7 @@ export const useMembers = () => {
 // eslint-disable-next-line react/prop-types
 export const ContextProvider = ({ children }) => {
   const [gymInfo, setGymInfo] = useState({});
+  const [shopInfo, setShopInfo] = useState({});
   const [membersList, setMembersList] = useState([]);
   const [loadingMembersList, setLoadingMembersList] = useState(false);
   const [trainersList, setTrainersList] = useState([]);
@@ -70,6 +71,21 @@ export const ContextProvider = ({ children }) => {
   }, []);
 
 
+
+
+  const getShopInfo = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("Usuario no autenticado");
+    }
+
+    const { data } = await supabase
+      .from('info_shops')
+      .select()
+      .eq('owner_id', user.id)
+
+    return data[0]
+  }
   const getGymInfo = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -528,6 +544,7 @@ export const ContextProvider = ({ children }) => {
   return <Context.Provider
     value={{
       gymInfo,
+      shopInfo,
       membersList,
       loadingMembersList,
       trainersList,
@@ -556,6 +573,8 @@ export const ContextProvider = ({ children }) => {
       createProduct,
       updateProduct,
       deleteProduct,
+      setShopInfo,
+      getShopInfo
     }}>
     {children}
   </Context.Provider>

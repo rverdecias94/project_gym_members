@@ -69,10 +69,11 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { showMessage } = useSnackbar();
+  const accountType = localStorage.getItem("accountType")
 
 
   useEffect(() => {
-    if (!["/admin", "/admin/panel", "/login", "/general_info", "/bienvenido"].includes(location.pathname)) {
+    if (!["/admin", "/admin/panel", "/login", "/redirect", "/general_info", "/shop-stepper", "/bienvenido"].includes(location.pathname)) {
       if (location.pathname === "/planes" && (gymInfo.name))
         setNavBarOptions(true);
       else if (location.pathname === "/planes" && (!gymInfo.name))
@@ -116,7 +117,6 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     <>
       {showNav && (
         <div className={`navbar ${themeClass}`}>
-
           <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
             <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40 }} />
           </div>
@@ -129,17 +129,22 @@ export default function Navbar({ profile, mode, toggleTheme }) {
           }
 
 
-          {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/general_info", "/bienvenido"].includes(location.pathname) && (
-            <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around", marginLeft: "22rem" }}>
-              <NavButton to="/panel" icon={<AssessmentIcon />} text="Panel" />
-              <NavButton to="/clientes" icon={<GroupsIcon />} text="Clientes" />
-              <NavButton to="/entrenadores" icon={<FitnessCenterIcon />}
-                text="Entrenadores" />
-              <NavButton to="/tienda" icon={<LocalGroceryStoreIcon />} text="Tienda" />
-              <NavButton to="/planes" icon={<TrendingUpIcon />} text="Planes" />
-
-            </div>
-          )}
+          {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/redirect", "/general_info",
+            "/shop-stepper", "/bienvenido"].includes(location.pathname) && (
+              <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around", marginLeft: "22rem" }}>
+                {accountType === "gym" && <NavButton to="/panel" icon={<AssessmentIcon />} text="Panel" />}
+                {accountType === "gym" && <NavButton to="/clientes" icon={<GroupsIcon />} text="Clientes" />}
+                {accountType === "gym" && <NavButton to="/entrenadores" icon={<FitnessCenterIcon />}
+                  text="Entrenadores" />}
+                {
+                  accountType === "gym" ?
+                    <NavButton to="/tienda-gym" icon={<LocalGroceryStoreIcon />} text="Tienda" />
+                    :
+                    <NavButton to="/tienda" icon={<LocalGroceryStoreIcon />} text="Tienda" />
+                }
+                {accountType === "gym" && <NavButton to="/planes" icon={<TrendingUpIcon />} text="Planes" />}
+              </div>
+            )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {!isMobile && <span className='hide'>{`¡Hola ${profile.name || "Admin"}!`}</span>}
@@ -185,7 +190,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
         </div>
       )}
 
-      {isMobile && showNav && navBarOptions && !["/admin", "/login", "/admin/panel", "/general_info", "/bienvenido"].includes(location.pathname) && (
+      {isMobile && showNav && navBarOptions && accountType === "gym" && !["/admin", "/login", "/admin/panel", "/redirect", "/shop-stepper", "/general_info", "/bienvenido"].includes(location.pathname) && (
         <MobileBottomNav
           profile={profile}
           mode={mode}

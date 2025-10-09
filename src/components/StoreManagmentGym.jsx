@@ -48,10 +48,14 @@ import {
   Image as ImageIcon,
   LocalShipping as DeliveryIcon,
   Store as PickupIcon,
+  WhatsApp as WhatsAppIcon,
+  CheckCircle as CheckIcon,
+  StorefrontOutlined as StoreIcon
 } from "@mui/icons-material";
 
-const StoreManagment = () => {
-  const { getShopInfo } = useMembers();
+const StoreManagmentGym = () => {
+  const { getGymInfo } = useMembers();
+  const [store, setStore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
 
@@ -90,15 +94,15 @@ const StoreManagment = () => {
   useEffect(() => {
     const getData = async () => {
       try {
-        let data = await getShopInfo();
-        if (data) {
+        let data = await getGymInfo();
+        if (data && data.store && data.store !== undefined) {
+          setStore(data && data.store);
           await getProducts();
         }
       } catch (error) {
-        console.error('Error getting shop info:', error);
+        console.error('Error getting gym info:', error);
       } finally {
         let result = await supabase.from('categories').select('*');
-        console.log(result)
         setCategories(result.data || []);
         setLoading(false);
       }
@@ -124,6 +128,7 @@ const StoreManagment = () => {
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
+      alert('Error al cargar productos');
     } finally {
       setLoadingProducts(false);
     }
@@ -158,9 +163,6 @@ const StoreManagment = () => {
     if (!formData.description.trim()) errors.description = 'La descripción es requerida';
     if (!formData.price || parseFloat(formData.price) <= 0) errors.price = 'El precio debe ser mayor a 0';
     if (!formData.image_base64) errors.image = 'La imagen es requerida';
-    console.log(formData.has_delivery)
-    console.log(formData.has_pickup)
-    console.log(formData.free_delivery)
     if (!formData.has_delivery && !formData.has_pickup && !formData.free_delivery) {
       errors.delivery = 'Debe seleccionar al menos una opción de entrega';
     }
@@ -182,9 +184,7 @@ const StoreManagment = () => {
         price: parseFloat(formData.price),
         user_store_id: user.id
       };
-      if (productData.id && !editingProduct) {
-        delete productData.id;
-      }
+
       if (editingProduct) {
         const { error } = await supabase
           .from('products')
@@ -194,7 +194,6 @@ const StoreManagment = () => {
         if (error) throw error;
         alert('Producto actualizado exitosamente');
       } else {
-        console.log("creando")
         const { error } = await supabase
           .from('products')
           .insert([productData]);
@@ -206,7 +205,6 @@ const StoreManagment = () => {
       handleCloseDialog();
       await getProducts();
     } catch (error) {
-      console.error('Error saving product:', error);
       if (error.code === '23505') {
         alert('Ya existe un producto con ese código');
       } else {
@@ -266,6 +264,15 @@ const StoreManagment = () => {
       free_delivery: false
     });
     setFormErrors({});
+  };
+
+  const handleWhatsAppRequest = () => {
+    const phoneNumber = "56577410";
+    const message = encodeURIComponent(
+      "¡Hola! Me interesa habilitar la funcionalidad de tienda para mi gimnasio. Quisiera solicitar información sobre el servicio adicional de $5 USD. ¡Gracias!"
+    );
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handlePageChange = (event, value) => {
@@ -351,6 +358,115 @@ const StoreManagment = () => {
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <div className="loader"></div>
       </div>
+    );
+  }
+
+  if (!store) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
+        <Paper sx={{ p: isMobile ? 2 : 4 }}>
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={5}>
+              <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+                <StoreIcon sx={{ fontSize: isMobile ? 40 : 48, color: 'grey.400', mb: 2 }} />
+                <Typography variant={isMobile ? "h5" : "h4"} gutterBottom color="text.primary">
+                  Tienda no habilitada
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                  Tu gimnasio no tiene habilitada la funcionalidad de tienda.
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  size={isMobile ? "medium" : "large"}
+                  startIcon={<WhatsAppIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
+                  onClick={handleWhatsAppRequest}
+                  sx={{
+                    backgroundColor: '#25d366',
+                    '&:hover': {
+                      backgroundColor: '#20b358',
+                    },
+                    py: isMobile ? 1 : 1.5,
+                    px: isMobile ? 2 : 4,
+                    fontSize: isMobile ? '0.9rem' : '1.1rem',
+                    mb: 2
+                  }}
+                  fullWidth={isMobile}
+                >
+                  Solicitar servicio por WhatsApp
+                </Button>
+
+                <Typography variant="caption" color="text.secondary" display="block" fontSize={isMobile ? '0.7rem' : '0.75rem'}>
+                  Te contactaremos para procesar tu solicitud y activar tu tienda
+                </Typography>
+              </Box>
+            </Grid>
+
+
+            <Grid item xs={12} md={7}>
+              <Paper
+                elevation={2}
+                sx={{
+                  p: isMobile ? 2 : 3,
+                  background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
+                  border: '1px solid #9c27b0'
+                }}
+              >
+                <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: '#7b1fa2', fontWeight: 'bold' }}>
+                  🛍️ Habilita tu tienda virtual
+                </Typography>
+                <Typography variant="body1" sx={{ color: '#4a148c', mb: 3, fontSize: isMobile ? '0.85rem' : '1rem' }}>
+                  Vende productos directamente desde tu plataforma de gimnasio con nuestra funcionalidad de tienda integrada.
+                </Typography>
+
+                <Grid container spacing={3}>
+
+                  <Grid item xs={12} sm={4}>
+                    <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: 'white' }}>
+                      <Typography variant={isMobile ? "h5" : "h4"} color="success.main" sx={{ fontWeight: 'bold' }}>
+                        $5
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
+                        USD/mes
+                      </Typography>
+                    </Paper>
+                  </Grid>
+
+
+                  <Grid item xs={12} sm={8}>
+                    <Grid container spacing={1}>
+                      <Grid item xs={6}>
+                        <Box display="flex" alignItems="center">
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Catálogo ilimitado</Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Box display="flex" alignItems="center">
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Gestión de inventario</Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Box display="flex" alignItems="center">
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Entregas flexibles</Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Box display="flex" alignItems="center">
+                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
+                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Múltiples monedas</Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Container>
     );
   }
 
@@ -609,8 +725,8 @@ const StoreManagment = () => {
                     label="Moneda"
                   >
                     {
-                      categories.map((category) => (
-                        <MenuItem key={category.id} value={category.category}>{category.category}</MenuItem>
+                      categories.map(({ id, category }) => (
+                        <MenuItem key={id} value={category}>{category}</MenuItem>
                       ))
                     }
                   </Select>
@@ -780,7 +896,7 @@ const StoreManagment = () => {
   );
 };
 
-export default StoreManagment;
+export default StoreManagmentGym;
 
 
 

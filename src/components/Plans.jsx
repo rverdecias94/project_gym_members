@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -15,7 +15,8 @@ import {
   useMediaQuery,
   IconButton,
   useTheme,
-  ThemeProvider
+  ThemeProvider,
+  Alert
 } from '@mui/material';
 
 import {
@@ -34,19 +35,37 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase/client';
 import { useSnackbar } from '../context/Snackbar';
-import { useMembers } from '../context/Context';
+/* import { useMembers } from '../context/Context'; */
 import DialogMessage from './DialogMessage';
+import { identifyAccountType } from '../services/accountType';
 
 
 
 const PlansPage = () => {
   const theme = useTheme();
-  const { gymInfo } = useMembers();
+  /* const { gymInfo } = useMembers(); */
   const [selectedPlan, setSelectedPlan] = useState(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [openMessage, setOpenMessage] = useState(false);
   const navigate = useNavigate();
   const { showMessage } = useSnackbar();
+  const [accountType, setAccountType] = useState('none');
+  const [accountData, setAccountData] = useState({});
+  /* const [isLoading, setIsLoading] = useState(true); */
+
+  useEffect(() => {
+    const checkAccountType = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { type, data } = await identifyAccountType(user.id);
+        setAccountType(type);
+        setAccountData(data);
+      }
+    };
+
+    checkAccountType();
+  }, []);
+
   const plans = [
     {
       id: 'estandar',
@@ -124,22 +143,39 @@ const PlansPage = () => {
   ];
 
   const handlePlanSelect = async (planId) => {
+    console.log(planId)
     setSelectedPlan(planId);
-    if (planId === 'estandar' || planId === 'premium') {
-      navigate('/general_info', { state: { planId } });
-    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("Usuario no autenticado");
     }
-    if (user) {
-      const { data } = await supabase
-        .from("info_general_gym")
-        .update({ store: planId === "premium" ? true : false })
-        .eq("owner_id", user.id);
-      if (data) {
-        showMessage("Plan actualizado correctamente", "success");
-        navigate('/redirect');
+
+    // Verificar el tipo de cuenta
+    console.log(user.id)
+    const { type } = await identifyAccountType(user.id);
+    console.log(type)
+    if (type === 'shop') {
+      // Para tiendas
+      if (planId === 'market-fit') {
+        navigate('/shop-stepper', { state: { planId } });
+      }
+    } else {
+      console.log("asssasasasdasdasdasd")
+      if (planId === 'estandar' || planId === 'premium') {
+        navigate('/general_info', { state: { planId } });
+      } else {
+        navigate('/shop-stepper', { state: { planId } });
+      }
+
+      if (user) {
+        const { data } = await supabase
+          .from("info_general_gym")
+          .update({ store: planId === "premium" ? true : false })
+          .eq("owner_id", user.id);
+        if (data) {
+          showMessage("Plan actualizado correctamente", "success");
+          navigate('/redirect');
+        }
       }
     }
   };
@@ -150,7 +186,7 @@ const PlansPage = () => {
 
   const handlerSendMessage = () => {
     const phoneNumber = '+5356408532';
-    const message = encodeURIComponent(`Me gustaría cambiar al plan ${(selectedPlan === 'estandar' ? 'Estandar' : selectedPlan === 'market-fit' ? 'Tienda Fitness' : 'Premium')}. Nombre de mi gimnasio: ${gymInfo.gym_name}.`);
+    const message = encodeURIComponent(`Me gustaría cambiar al plan ${(selectedPlan === 'estandar' ? 'Estandar' : selectedPlan === 'market-fit' ? 'Tienda Fitness' : 'Premium')}. Nombre de mi gimnasio: ${accountData?.gym_name}.`);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -168,14 +204,13 @@ const PlansPage = () => {
   }
 
   const getButtonConfig = (planId) => {
-    if (!gymInfo.active) return { label: "Seleccionar", isActive: false };
+    if (!accountData?.active) return { label: "Seleccionar", isActive: false };
 
-    if (gymInfo.store) {
+    if (accountData?.store && accountType === 'gym') {
       // Tiene activa la tienda
       if (planId === "premium") return { label: "Plan activo", isActive: true };
       if (planId === "estandar") return { label: "Cambiar plan", isActive: false };
-    } else {
-      // No tiene tienda activa
+    } else if (accountType === 'gym') {
       if (planId === "estandar") return { label: "Plan activo", isActive: true };
       if (planId === "premium") return { label: "Cambiar plan", isActive: false };
     }
@@ -196,6 +231,24 @@ const PlansPage = () => {
         py: 2
       }}>
         <Container maxWidth="lg">
+          {accountType === 'shop' && (
+            <Alert
+              severity="info"
+              sx={{
+                mb: 3,
+                backgroundColor: theme.palette.mode === 'dark' ? '#1a2332' : '#e8f4fd',
+                border: '1px solid #32aaf4',
+                borderRadius: '8px'
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="bold">
+                Próximamente habrá un plan premium para tiendas
+              </Typography>
+              <Typography variant="body2">
+                Actualmente estás usando el plan básico. Estamos trabajando en nuevas funcionalidades premium.
+              </Typography>
+            </Alert>
+          )}
           <Box sx={{
             display: 'flex',
             alignItems: 'center',
@@ -239,7 +292,7 @@ const PlansPage = () => {
                 mb: 3
               }}
             >
-              {!gymInfo.active ? "No pierdas la oportunidad de unirte desde el principio" : "¡Felicidades! Ya formas parte de la historia que estamos construyendo en Cuba."}
+              {!accountData?.active ? "No pierdas la oportunidad de unirte desde el principio" : "¡Felicidades! Ya formas parte de la historia que estamos construyendo en Cuba."}
             </Typography>
           </Box>
 
@@ -249,12 +302,12 @@ const PlansPage = () => {
               const { label, isActive } = getButtonConfig(plan.id);
 
               const shouldRender =
-                gymInfo.active ? plan.id !== "market-fit" : true;
+                accountData?.active ? plan.id !== "market-fit" : true;
 
               if (!shouldRender) return null;
               return (
                 (
-                  <Grid item xs={12} md={gymInfo.active ? 6 : 4} key={plan.id}>
+                  <Grid item xs={12} md={accountData?.active ? 6 : 4} key={plan.id}>
                     <Card
                       sx={{
                         height: '100%',
@@ -465,7 +518,7 @@ const PlansPage = () => {
                           disabled={isActive}
                           onClick={() =>
                             !isActive &&
-                            (gymInfo.active
+                            (accountData?.active
                               ? handlePlanChange(plan.id)
                               : handlePlanSelect(plan.id))
                           }
@@ -506,7 +559,7 @@ const PlansPage = () => {
             title="Cambiar Plan"
             fn={handlerSendMessage}
             open={openMessage}
-            msg={`¿Estás seguro que deseas cambiar de plan? El cambio se aplicará en tu próximo ciclo de facturación que comienza el día ` + (gymInfo.next_payment_date ? new Date(gymInfo.next_payment_date).toLocaleDateString() : '') + '.'}
+            msg={`¿Estás seguro que deseas cambiar de plan? El cambio se aplicará en tu próximo ciclo de facturación que comienza el día ` + (accountData?.next_payment_date ? new Date(accountData?.next_payment_date).toLocaleDateString() : '') + '.'}
           />
         </Container>
       </Box>

@@ -22,6 +22,7 @@ import StoreManagment from './components/StoreManagment';
 import PlansPage from './components/Plans';
 import Redirect from './components/Redirect';
 import GymStepper from './components/GymStepper';
+import ShopStepper from './components/ShopStepper';
 
 
 function App() {
@@ -117,6 +118,7 @@ function App() {
                 <Route path='/tienda' element={<StoreManagment />} />
                 <Route path='/planes' element={<PlansPage />} />
                 <Route path='/redirect' element={<Redirect />} />
+                <Route path='/shop-stepper' element={<ShopStepper id={userId} />} />
                 <Route path='*' element={<NotFound />} />
               </Routes>
             </div>

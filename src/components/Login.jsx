@@ -34,7 +34,7 @@ const SignIn = () => {
 
 
   return (
-    <Grid container style={{ minHeight: '100vh', justifyContent: 'center', alignItems: 'center', background: "url(/login-bg.jpg) no-repeat center fixed", padding: 20, backgroundSize: 'cover' }}>
+    <Grid container style={{ marginTop: "-6rem", minHeight: '100vh', justifyContent: 'center', alignItems: 'center', background: "url(/login-bg.jpg) no-repeat center fixed", padding: 20, backgroundSize: 'cover' }}>
       <Grid item lg={3} md={4} sm={6} xs={12} style={{ textAlign: "center", background: "#282b824a", boxShadow: '#4f52b2 0px 0px 5px 1px', height: "auto", borderRadius: "3%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 10, backdropFilter: 'blur(15px)' }}>
 
 
