@@ -216,11 +216,17 @@ export default function AddRuleDialog({
             />
           }
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
+        <DialogActions style={{ padding: "1.75rem" }}>
+          <Button
+            onClick={handleClose}
+            color='error'
+            size='small'
+            variant='contained'>
+            Cancelar
+          </Button>
           <Button
             variant='contained'
-            color='secondary'
+            size='small'
             sx={{ color: "white" }}
             disabled={!addMonth && !inactivateUsers && (!addDays || amountDays === "") && !new_trainer}
             onClick={handleApplyRule}

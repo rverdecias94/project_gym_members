@@ -19,13 +19,14 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { NavButton } from './NavButton';
 import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
-import SettingsAccount from './SettingsAccount';
 import { useTheme, styled } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MobileBottomNav from './MobileBottomNav';
 import { useSnackbar } from '../context/Snackbar';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import SettingsAccountGym from './SettingsAccountGym';
+import SettingsAccountShop from './SettingsAccountShop';
 
 const settings = ['Perfil'];
 
@@ -186,7 +187,10 @@ export default function Navbar({ profile, mode, toggleTheme }) {
             </Tooltip>
           </div>
 
-          <SettingsAccount open={openSettings} handleClose={handleClose} profile={profile} />
+          {accountType === "gym" && <SettingsAccountGym open={openSettings} handleClose={handleClose} profile={profile} />
+          }
+          {accountType === "shop" && <SettingsAccountShop open={openSettings} handleClose={handleClose} profile={profile} />
+          }
         </div>
       )}
 

@@ -36,9 +36,16 @@ export default function DialogMessage({ handleClose, info, open, type, fn, msg, 
             {msg}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={fn ? fn : handleDelete} autoFocus>
+        <DialogActions style={{ padding: "1.25rem" }}>
+          <Button
+            onClick={handleClose}
+            color='error'
+            variant='contained'
+            size='small'
+          >
+            Cancelar
+          </Button>
+          <Button onClick={fn ? fn : handleDelete} autoFocus size='small' variant='contained'>
             Aceptar
           </Button>
         </DialogActions>

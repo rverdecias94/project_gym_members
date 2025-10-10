@@ -753,9 +753,11 @@ const StoreManagment = () => {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions style={{ padding: isMobile ? 2 : 1 }}>
+        <DialogActions style={{ padding: "1.25rem" }}>
           <Button
             onClick={handleCloseDialog}
+            color='error'
+            variant='contained'
             size={isMobile ? "small" : "medium"}
             sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}
           >

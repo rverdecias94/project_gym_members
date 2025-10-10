@@ -77,14 +77,14 @@ const CustomSwitch = styled(Switch)(({ theme }) => ({
   },
 }));
 
-export default function SettingsAccount({
+export default function SettingsAccountShop({
   handleClose, open, profile }) {
 
   const { showMessage } = useSnackbar();
   const [modeDark, setModeDark] = useState(null)
-  const [gymInfo, setGymInfo] = useState({
+  const [shopInfo, setShopInfo] = useState({
     owner_id: "",
-    gym_name: "",
+    shop_name: "",
     owner_name: "",
     owner_phone: "",
     public_phone: "",
@@ -101,21 +101,15 @@ export default function SettingsAccount({
       saturday: [],
       sunday: []
     },
-    monthly_payment: 0,
-    daily_payment: 0,
-    trainers_cost: 0,
-    monthly_currency: "CUP",
-    daily_currency: "CUP",
-    trainer_currency: "CUP"
   });
 
   const [daysRemaining, setDaysRemaining] = useState(0);
 
   useEffect(() => {
-    if (gymInfo && gymInfo.next_payment_date !== "") {
+    if (shopInfo && shopInfo.next_payment_date !== "") {
       const calculateDays = () => {
         const today = new Date();
-        const futureDate = new Date(gymInfo.next_payment_date);
+        const futureDate = new Date(shopInfo.next_payment_date);
         const timeDifference = futureDate - today;
         const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
@@ -124,20 +118,20 @@ export default function SettingsAccount({
 
       calculateDays();
     }
-  }, [gymInfo]);
+  }, [shopInfo]);
 
   useEffect(() => {
     const existsUser = async () => {
       if (!profile.id) return;
       const { data } = await supabase
-        .from('info_general_gym')
+        .from('info_shops')
         .select()
         .eq('owner_id', profile.id)
 
       if (data?.length > 0) {
         let {
           owner_id,
-          gym_name,
+          shop_name,
           owner_name,
           owner_phone,
           public_phone,
@@ -146,17 +140,11 @@ export default function SettingsAccount({
           city,
           next_payment_date,
           schedules,
-          monthly_payment,
-          daily_payment,
-          trainers_cost,
-          monthly_currency,
-          daily_currency,
-          trainer_currency
         } = data[0];
 
         let obj = {
           owner_id,
-          gym_name,
+          shop_name,
           owner_name,
           owner_phone,
           public_phone,
@@ -165,14 +153,8 @@ export default function SettingsAccount({
           city,
           next_payment_date,
           schedules,
-          monthly_payment,
-          daily_payment,
-          trainers_cost,
-          monthly_currency,
-          daily_currency,
-          trainer_currency
         }
-        setGymInfo(obj)
+        setShopInfo(obj)
       }
 
     }
@@ -186,7 +168,7 @@ export default function SettingsAccount({
   }
   const handleProvinciaChange = (event) => {
     let { value } = event.target;
-    setGymInfo(prev => ({
+    setShopInfo(prev => ({
       ...prev,
       state: value,
       city: ""
@@ -195,7 +177,7 @@ export default function SettingsAccount({
 
   const handleMunicipioChange = (event) => {
     let { value } = event.target;
-    setGymInfo(prev => ({
+    setShopInfo(prev => ({
       ...prev,
       city: value
     }));
@@ -205,12 +187,12 @@ export default function SettingsAccount({
 
     if (!validateForm()) return;
 
-    const { owner_id, ...infoToSave } = gymInfo;
+    const { owner_id, ...infoToSave } = shopInfo;
 
     setTimeout(async () => {
       try {
         const result = await supabase
-          .from("info_general_gym")
+          .from("info_shops")
           .update(infoToSave)
           .eq("owner_id", owner_id);
 
@@ -226,7 +208,7 @@ export default function SettingsAccount({
 
   const handlerChange = (e) => {
     let { name, value } = e.target
-    setGymInfo(prev => ({
+    setShopInfo(prev => ({
       ...prev,
       [name]: value
     }));
@@ -244,7 +226,7 @@ export default function SettingsAccount({
 
 
   const handleScheduleChange = (day, index, field, value) => {
-    setGymInfo(prev => {
+    setShopInfo(prev => {
       const updatedDay = [...prev.schedules[day]];
       updatedDay[index] = { ...updatedDay[index], [field]: value };
       return { ...prev, schedules: { ...prev.schedules, [day]: updatedDay } };
@@ -252,7 +234,7 @@ export default function SettingsAccount({
   };
 
   const addTimeSlot = (day) => {
-    setGymInfo(prev => ({
+    setShopInfo(prev => ({
       ...prev,
       schedules: {
         ...prev.schedules,
@@ -262,7 +244,7 @@ export default function SettingsAccount({
   };
 
   const removeTimeSlot = (day, index) => {
-    setGymInfo(prev => {
+    setShopInfo(prev => {
       const updatedDay = [...prev.schedules[day]];
       updatedDay.splice(index, 1);
       return {
@@ -274,20 +256,18 @@ export default function SettingsAccount({
 
   const validateForm = () => {
     const {
-      gym_name,
+      shop_name,
       owner_name,
       owner_phone,
       address,
       state,
       city,
-      monthly_payment,
-      daily_payment,
       schedules
-    } = gymInfo;
+    } = shopInfo;
 
     // Validación de campos vacíos
     if (
-      !gym_name.trim() ||
+      !shop_name.trim() ||
       !owner_name.trim() ||
       !owner_phone.trim() ||
       !address.trim() ||
@@ -295,16 +275,6 @@ export default function SettingsAccount({
       !city
     ) {
       showMessage("Por favor complete todos los campos obligatorios.", "error");
-      return false;
-    }
-
-    // Validación de pagos
-    const hasValidPayment =
-      (!isNaN(monthly_payment) && Number(monthly_payment) > 0) ||
-      (!isNaN(daily_payment) && Number(daily_payment) > 0);
-
-    if (!hasValidPayment) {
-      showMessage("Debe ingresar al menos un costo válido (mensual o diario).", "error");
       return false;
     }
 
@@ -335,12 +305,12 @@ export default function SettingsAccount({
 
               <TextField
                 id="outlined-read-only-input"
-                label="Nombre de gimnasio"
+                label="Nombre de la tienda"
                 defaultValue="-"
-                name='gym_name'
+                name='shop_name'
                 required
                 sx={{ mb: 3, width: "98%" }}
-                value={gymInfo?.gym_name}
+                value={shopInfo?.shop_name}
                 onChange={handlerChange}
               />
 
@@ -351,7 +321,7 @@ export default function SettingsAccount({
                 sx={{ mb: 3, width: "98%" }}
                 required
                 name='owner_name'
-                value={gymInfo?.owner_name}
+                value={shopInfo?.owner_name}
                 onChange={handlerChange}
               />
 
@@ -362,7 +332,7 @@ export default function SettingsAccount({
                 required
                 sx={{ mb: 3, width: "98%" }}
                 name='address'
-                value={gymInfo?.address}
+                value={shopInfo?.address}
                 onChange={handlerChange}
               />
               <TextField
@@ -372,7 +342,7 @@ export default function SettingsAccount({
                 sx={{ mb: 3, width: "98%" }}
                 name='owner_phone'
                 required
-                value={gymInfo?.owner_phone}
+                value={shopInfo?.owner_phone}
                 onChange={handlerChange}
               />
             </Grid>
@@ -394,7 +364,7 @@ export default function SettingsAccount({
               >
                 <InputLabel>Provincia</InputLabel>
                 <Select
-                  value={gymInfo?.state}
+                  value={shopInfo?.state}
                   onChange={handleProvinciaChange}
                 >
                   {Object.keys(provincias).map((prov) => (
@@ -409,16 +379,16 @@ export default function SettingsAccount({
                 required
                 fullWidth
                 margin="normal"
-                disabled={!gymInfo?.state}
+                disabled={!shopInfo?.state}
                 id="mun-required"
                 sx={{ mb: 3, width: "98%" }}
               >
                 <InputLabel>Municipio</InputLabel>
                 <Select
-                  value={gymInfo?.city}
+                  value={shopInfo?.city}
                   onChange={handleMunicipioChange}
                 >
-                  {(provincias[gymInfo.state] || []).map((mun) => (
+                  {(provincias[shopInfo.state] || []).map((mun) => (
                     <MenuItem key={mun} value={mun}>
                       {mun}
                     </MenuItem>
@@ -433,92 +403,15 @@ export default function SettingsAccount({
                 sx={{ mb: 3, width: "98%" }}
                 name='public_phone'
                 required
-                value={gymInfo?.public_phone}
+                value={shopInfo?.public_phone}
                 onChange={handlerChange}
               />
-            </Grid>
-            <Grid container sx={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 2 }}>
-              <Grid item style={{ display: "flex", gap: 15 }}>
-                <TextField
-                  label="Costo mensual"
-                  name="monthly_payment"
-                  type="number"
-                  value={gymInfo.monthly_payment}
-                  onChange={handlerChange}
-                  fullWidth
-                  required
-                />
-                <FormControl required fullWidth id="mun-required">
-                  <InputLabel>Moneda</InputLabel>
-                  <Select
-                    value={gymInfo.monthly_currency}
-                    onChange={handlerChange}
-                    name="monthly_currency"
-                  >
-                    {(["USD", "CUP"]).map((mun) => (
-                      <MenuItem key={mun} value={mun}>
-                        {mun}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item style={{ display: "flex", gap: 15 }}>
-                <TextField
-                  label="Costo diario"
-                  name="daily_payment"
-                  type="number"
-                  value={gymInfo.daily_payment}
-                  onChange={handlerChange}
-                  fullWidth
-                  required
-                />
-                <FormControl required fullWidth id="mun-required">
-                  <InputLabel>Moneda</InputLabel>
-                  <Select
-                    value={gymInfo.daily_currency}
-                    onChange={handlerChange}
-                    name="daily_currency"
-                  >
-                    {(["USD", "CUP"]).map((mun) => (
-                      <MenuItem key={mun} value={mun}>
-                        {mun}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item style={{ display: "flex", gap: 15 }}>
-                <TextField
-                  label="Costo por entrenador"
-                  name="trainers_cost"
-                  type="number"
-                  value={gymInfo.trainers_cost}
-                  onChange={handlerChange}
-                  fullWidth
-                />
-                <FormControl required fullWidth id="mun-required">
-                  <InputLabel>Moneda</InputLabel>
-                  <Select
-                    value={gymInfo.trainer_currency}
-                    onChange={handlerChange}
-                    style={{ width: "100%", }}
-                    name="trainer_currency"
-                  >
-                    {(["USD", "CUP"]).map((mun) => (
-                      <MenuItem key={mun} value={mun}>
-                        {mun}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
             </Grid>
             <Grid item xs={12} sx={{ mt: 3 }}>
 
               <Grid item xs={12} sx={{ mt: 3 }}>
                 <h4>Horarios del gimnasio</h4>
-                {gymInfo?.schedules &&
+                {shopInfo?.schedules &&
                   [
                     { key: "monday", label: "Lunes" },
                     { key: "tuesday", label: "Martes" },
@@ -530,8 +423,8 @@ export default function SettingsAccount({
                   ].map(({ key, label }) => (
                     <div key={key} style={{ marginBottom: 15, marginTop: 20, display: 'grid', flexDirection: 'column' }}>
                       <strong>{label}</strong>
-                      {Array.isArray(gymInfo.schedules[key]) &&
-                        gymInfo.schedules[key].map((slot, idx) => (
+                      {Array.isArray(shopInfo.schedules[key]) &&
+                        shopInfo.schedules[key].map((slot, idx) => (
                           <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                               <MobileTimePicker
