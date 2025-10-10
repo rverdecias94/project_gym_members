@@ -23,6 +23,8 @@ import PlansPage from './components/Plans';
 import Redirect from './components/Redirect';
 import GymStepper from './components/GymStepper';
 import ShopStepper from './components/ShopStepper';
+import SessionManager from './components/SessionManager';
+import StoreManagmentGym from './components/StoreManagmentGym';
 
 
 function App() {
@@ -102,6 +104,7 @@ function App() {
         <ContextProvider>
           <BackdropProvider>
             {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+            {userId && <SessionManager />}
             <div className='main-content'>
               <Routes>
                 <Route path='/panel' element={<Dashboard />} />
@@ -115,6 +118,7 @@ function App() {
                 <Route path='/admin' element={<LoginAdmin />} />
                 <Route path='/admin/panel' element={<AdminPanel />} />
                 <Route path='/terms-conditions' element={<TermsAndConditions />} />
+                <Route path='/tienda-gym' element={<StoreManagmentGym />} />
                 <Route path='/tienda' element={<StoreManagment />} />
                 <Route path='/planes' element={<PlansPage />} />
                 <Route path='/redirect' element={<Redirect />} />

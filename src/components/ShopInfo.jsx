@@ -95,7 +95,7 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
           if (data && data.length > 0) {
             setShopInfo(data[0]);
             setShopInfoState(data[0]);
-            
+
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -114,7 +114,7 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
               if (containsDefault) {
                 setCreateProfile(true);
               } else {
-                navigate("/panel");
+                navigate("/tienda");
               }
             } else if (data[0].active === false) {
               setUserInactive(true);
