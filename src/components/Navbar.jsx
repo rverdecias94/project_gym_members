@@ -119,7 +119,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
       {showNav && (
         <div className={`navbar ${themeClass}`}>
           <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-            <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40 }} />
+            <img src="/logo_platform.png" alt="Logo" style={{ width: 150, height: 30 }} />
           </div>
 
           {
