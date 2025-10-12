@@ -143,7 +143,6 @@ const PlansPage = () => {
   ];
 
   const handlePlanSelect = async (planId) => {
-    console.log(planId)
     setSelectedPlan(planId);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -151,16 +150,13 @@ const PlansPage = () => {
     }
 
     // Verificar el tipo de cuenta
-    console.log(user.id)
     const { type } = await identifyAccountType(user.id);
-    console.log(type)
     if (type === 'shop') {
       // Para tiendas
       if (planId === 'market-fit') {
         navigate('/shop-stepper', { state: { planId } });
       }
     } else {
-      console.log("asssasasasdasdasdasd")
       if (planId === 'estandar' || planId === 'premium') {
         navigate('/general_info', { state: { planId } });
       } else {
@@ -249,7 +245,7 @@ const PlansPage = () => {
               </Typography>
             </Alert>
           )}
-          <Box sx={{
+          {/* <Box sx={{
             display: 'flex',
             alignItems: 'center',
             mb: 3,
@@ -267,7 +263,7 @@ const PlansPage = () => {
             >
               <ArrowBack />
             </IconButton>
-          </Box>
+          </Box> */}
 
           {/* Hero Section */}
           <Box sx={{ textAlign: 'center', mb: 4, px: { xs: 1, sm: 2 } }}>

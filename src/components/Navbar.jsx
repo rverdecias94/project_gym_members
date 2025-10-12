@@ -75,9 +75,9 @@ export default function Navbar({ profile, mode, toggleTheme }) {
 
   useEffect(() => {
     if (!["/admin", "/admin/panel", "/login", "/redirect", "/general_info", "/shop-stepper", "/bienvenido"].includes(location.pathname)) {
-      if (location.pathname === "/planes" && (gymInfo.name))
+      if (location.pathname === "/planes" && (gymInfo.active))
         setNavBarOptions(true);
-      else if (location.pathname === "/planes" && (!gymInfo.name))
+      else if (location.pathname === "/planes" && (!gymInfo.active))
         setNavBarOptions(false);
       else
         setNavBarOptions(true);
@@ -112,12 +112,17 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     setOpenSettings(false);
   };
 
-
+  const getName = (name) => {
+    if (name && name.length > 0) {
+      let splitedName = name.split(" ");
+      return splitedName[0]
+    }
+  }
 
   return (
     <>
       {showNav && (
-        <div className={`navbar ${themeClass}`}>
+        <div className={`${navBarOptions ? "navbar" : "navbar-links-out"} ${themeClass}`}>
           <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
             <img src="/logo_platform.png" alt="Logo" style={{ width: 150, height: 30 }} />
           </div>
@@ -132,7 +137,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
 
           {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/redirect", "/general_info",
             "/shop-stepper", "/bienvenido"].includes(location.pathname) && (
-              <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around", marginLeft: "22rem" }}>
+              <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around" }}>
                 {accountType === "gym" && <NavButton to="/panel" icon={<AssessmentIcon />} text="Panel" />}
                 {accountType === "gym" && <NavButton to="/clientes" icon={<GroupsIcon />} text="Clientes" />}
                 {accountType === "gym" && <NavButton to="/entrenadores" icon={<FitnessCenterIcon />}
@@ -147,8 +152,8 @@ export default function Navbar({ profile, mode, toggleTheme }) {
               </div>
             )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {!isMobile && <span className='hide'>{`¡Hola ${profile.name || "Admin"}!`}</span>}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+            {!isMobile && <span className='hide'>{`¡Hola ${getName(profile.name) || "Admin"}!`}</span>}
             <Box sx={{ flexGrow: 0 }}>
               {!["/admin", "/admin/panel"].includes(location.pathname) && (
                 <>
