@@ -10,7 +10,6 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-  Switch
 } from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -19,7 +18,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { NavButton } from './NavButton';
 import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
-import { useTheme, styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MobileBottomNav from './MobileBottomNav';
 import { useSnackbar } from '../context/Snackbar';
@@ -27,10 +26,12 @@ import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import SettingsAccountGym from './SettingsAccountGym';
 import SettingsAccountShop from './SettingsAccountShop';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 const settings = ['Perfil'];
 
-const CustomSwitch = styled(Switch)(() => ({
+/* const CustomSwitch = styled(Switch)(() => ({
   width: 62,
   height: 34,
   padding: 7,
@@ -57,7 +58,7 @@ const CustomSwitch = styled(Switch)(() => ({
     backgroundColor: '#aab4be',
     borderRadius: 20 / 2,
   },
-}));
+})); */
 
 export default function Navbar({ profile, mode, toggleTheme }) {
   const theme = useTheme();
@@ -109,6 +110,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   };
 
   const handleClose = () => {
+    setAnchorElUser(null);
     setOpenSettings(false);
   };
 
@@ -122,9 +124,9 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   return (
     <>
       {showNav && (
-        <div className={`${navBarOptions ? "navbar" : "navbar-links-out"} ${themeClass}`}>
+        <div className={`${navBarOptions ? isMobile ? "navbar-mobile" : "navbar" : "navbar-links-out"} ${themeClass}`}>
           <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-            <img src="/logo_platform.png" alt="Logo" style={{ width: 150, height: 30 }} />
+            <img src="/logo_platform.png" alt="Logo" style={{ width: 120, height: 30 }} />
           </div>
 
           {
@@ -159,7 +161,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
                 <>
                   <Tooltip title="Detalles de la cuenta">
                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                      <img src={profile?.avatar || "/avatar.svg"} alt="" style={{ width: 35, height: 35, borderRadius: "50%", background: "white" }} />
+                      <span style={{ width: 35, height: 35, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "white", color: theme.palette.mode !== 'dark' ? "#4f52b2d0" : "#0a1628c8" }}>{profile?.name?.charAt(0).toUpperCase()}</span>
                     </IconButton>
                   </Tooltip>
                   <Menu
@@ -169,7 +171,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
                     keepMounted
                     transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                     open={Boolean(anchorElUser)}
-                    onClose={handleCloseUserMenu}
+                    onClose={handleClose}
                   >
                     {settings.map((setting) => (
                       <MenuItem key={setting} onClick={handleCloseUserMenu}>
@@ -183,7 +185,11 @@ export default function Navbar({ profile, mode, toggleTheme }) {
               }
             </Box>
 
-            <CustomSwitch onChange={toggleTheme} checked={mode} />
+            <Tooltip title={!mode ? "Modo Claro" : "Modo Oscuro"}>
+              <IconButton onClick={toggleTheme} sx={{ p: 0, color: "inherit" }}>
+                {!mode ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+            </Tooltip>
 
             <Tooltip title="Cerrar Sesión">
               <IconButton onClick={logoutUser}>

@@ -35,7 +35,7 @@ const SHOP_DEFAULT = {
     saturday: [],
     sunday: []
   },
-  theme: "light",
+  theme: true,
   image_profile: null
 }
 

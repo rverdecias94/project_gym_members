@@ -53,6 +53,7 @@ import {
   Store as PickupIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "../context/Snackbar";
+import moment from "moment";
 
 const StoreManagment = () => {
   const { getShopInfo } = useMembers();
@@ -223,8 +224,7 @@ const StoreManagment = () => {
     }
     if (name === 'free_delivery' && checked) {
       newFormData.has_delivery = false;
-      newFormData.has_pickup = false;
-    } else if ((name === 'has_delivery' || name === 'has_pickup') && checked) {
+    } else if ((name === 'has_delivery') && checked) {
       newFormData.free_delivery = false;
     }
 
@@ -451,8 +451,9 @@ const StoreManagment = () => {
                       <TableRow>
                         <TableCell>Imagen</TableCell>
                         <TableCell>Nombre</TableCell>
-                        <TableCell>Código</TableCell>
                         <TableCell>Precio</TableCell>
+                        <TableCell>F. Descuento</TableCell>
+                        <TableCell>Vistas</TableCell>
                         <TableCell>Entrega</TableCell>
                         <TableCell>Acciones</TableCell>
                       </TableRow>
@@ -468,8 +469,30 @@ const StoreManagment = () => {
                           <TableRow key={product.id}>
                             <TableCell><Box sx={{ width: 50, height: 50 }}><img src={product.image_base64} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} /></Box></TableCell>
                             <TableCell>{product.name}</TableCell>
-                            <TableCell>{product.product_code}</TableCell>
-                            <TableCell>{product.price} {product.currency}</TableCell>
+                            <TableCell>
+                              <Box display="flex" gap={1}>
+                                <span style={{ textDecoration: product.discount !== null ? "line-through" : "none", color: product.discount !== null ? "#ff9a9a" : "inherit" }}>
+                                  {product.price} {product.currency} {" "}
+                                </span>
+                                {
+                                  product.discount !== null && (
+                                    <span style={{ fontWeight: 600, color: "green" }}>
+                                      / {product.discount} {product.currency}
+                                    </span>
+                                  )
+                                }
+                              </Box>
+                            </TableCell>
+                            {
+                              product.discount !== null ?
+                                <TableCell>{moment(product.discount_start_date).format("DD-MM-YYYY")} / {moment(product.discount_end_date).format("DD-MM-YYYY")}</TableCell>
+                                :
+                                <TableCell>-</TableCell>
+                            }
+                            <TableCell>
+                              {product.views}
+                            </TableCell>
+
                             <TableCell>
                               <Box display="flex" gap={1} flexWrap="wrap">
                                 {product.has_delivery && (
@@ -547,7 +570,18 @@ const StoreManagment = () => {
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}><TextField fullWidth label="Nombre del producto" name="name" value={formData.name} onChange={handleInputChange} error={!!formErrors.name} helperText={formErrors.name} required size={isMobile ? "small" : "medium"} /></Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Nombre del producto"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  error={!!formErrors.name}
+                  helperText={formErrors.name}
+                  required
+                  size={isMobile ? "small" : "medium"} />
+              </Grid>
               <Grid item xs={12} sm={4}><TextField fullWidth label="Código de producto (Opcional)" name="product_code" value={formData.product_code} onChange={handleInputChange} error={!!formErrors.product_code} helperText={formErrors.product_code} size={isMobile ? "small" : "medium"} /></Grid>
               <Grid item xs={12} sm={4}><FormControl fullWidth size={isMobile ? "small" : "medium"}><InputLabel>Categoría</InputLabel><Select name="category" value={formData.category} onChange={handleInputChange} label="Categoría">{categories.map((category) => (<MenuItem key={category.id} value={category.category}>{category.category}</MenuItem>))}</Select></FormControl></Grid>
               <Grid item xs={12}><TextField fullWidth label="Descripción" name="description" multiline rows={isMobile ? 2 : 3} value={formData.description} onChange={handleInputChange} error={!!formErrors.description} helperText={formErrors.description} required size={isMobile ? "small" : "medium"} /></Grid>
@@ -615,7 +649,7 @@ const StoreManagment = () => {
               )}
 
               <Grid item xs={12}><Box sx={{ border: '1px dashed #ccc', p: 2, textAlign: 'center' }}><input accept="image/*" style={{ display: 'none' }} id="image-upload" type="file" onChange={handleImageUpload} /><label htmlFor="image-upload"><Button variant="outlined" component="span" startIcon={<ImageIcon />} size={isMobile ? "small" : "medium"} sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>Subir Imagen</Button></label>{formErrors.image && (<Typography color="error" variant="caption" display="block" fontSize={isMobile ? '0.7rem' : '0.75rem'}>{formErrors.image}</Typography>)}{formData.image_base64 && (<Box sx={{ mt: 2 }}><img src={formData.image_base64} alt="Preview" style={{ maxWidth: isMobile ? 150 : 200, maxHeight: isMobile ? 150 : 200, objectFit: 'contain' }} /></Box>)}</Box></Grid>
-              <Grid item xs={12}><Typography variant="subtitle2" gutterBottom sx={{ fontSize: isMobile ? '0.85rem' : '0.875rem' }}>Opciones de entrega:</Typography><Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}><FormControlLabel control={<Checkbox name="has_delivery" checked={formData.has_delivery} onChange={handleInputChange} disabled={formData.free_delivery} size={isMobile ? "small" : "medium"} />} label={<Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: formData.free_delivery ? 'text.disabled' : 'text.primary' }}>Mensajería/Envío a domicilio (costo adicional)</Typography>} /><FormControlLabel control={<Checkbox name="has_pickup" checked={formData.has_pickup} onChange={handleInputChange} disabled={formData.free_delivery} size={isMobile ? "small" : "medium"} />} label={<Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: formData.free_delivery ? 'text.disabled' : 'text.primary' }}>Recogida en tienda</Typography>} /><Box sx={{ borderTop: '1px solid', borderColor: 'divider', mt: 1, pt: 1 }}><FormControlLabel control={<Checkbox name="free_delivery" checked={formData.free_delivery} onChange={handleInputChange} disabled={formData.has_delivery || formData.has_pickup} size={isMobile ? "small" : "medium"} />} label={<Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: (formData.has_delivery || formData.has_pickup) ? 'text.disabled' : 'success.main', fontWeight: formData.free_delivery ? 600 : 400 }}>Entrega gratis (el vendedor entrega sin costo)</Typography>} /></Box></Box>{formErrors.delivery && (<Typography color="error" variant="caption" display="block" sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem', mt: 1 }}>{formErrors.delivery}</Typography>)}</Grid>
+              <Grid item xs={12}><Typography variant="subtitle2" gutterBottom sx={{ fontSize: isMobile ? '0.85rem' : '0.875rem' }}>Opciones de entrega:</Typography><Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}><FormControlLabel control={<Checkbox name="has_delivery" checked={formData.has_delivery} onChange={handleInputChange} disabled={formData.free_delivery} size={isMobile ? "small" : "medium"} />} label={<Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: formData.free_delivery ? 'text.disabled' : 'text.primary' }}>Mensajería/Envío a domicilio (costo adicional)</Typography>} /><FormControlLabel control={<Checkbox name="has_pickup" checked={formData.has_pickup} onChange={handleInputChange} disabled={formData.free_delivery} size={isMobile ? "small" : "medium"} />} label={<Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: formData.free_delivery ? 'text.disabled' : 'text.primary' }}>Recogida en tienda</Typography>} /><Box sx={{ borderTop: '1px solid', borderColor: 'divider', mt: 1, pt: 1 }}><FormControlLabel control={<Checkbox name="free_delivery" checked={formData.free_delivery} onChange={handleInputChange} disabled={formData.has_delivery} size={isMobile ? "small" : "medium"} />} label={<Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: (formData.has_delivery) ? 'text.disabled' : 'success.main', fontWeight: formData.free_delivery ? 600 : 400 }}>Entrega gratis (el vendedor entrega sin costo)</Typography>} /></Box></Box>{formErrors.delivery && (<Typography color="error" variant="caption" display="block" sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem', mt: 1 }}>{formErrors.delivery}</Typography>)}</Grid>
             </Grid>
           </Box>
         </DialogContent>

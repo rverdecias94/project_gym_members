@@ -21,6 +21,10 @@ export const lightTheme = createTheme({
       primary: '#000000', // Texto en modo claro
       secondary: '#000000', // Texto en modo claro
     },
+    error: {
+      // Si el modo es oscuro, usa un rojo más brillante. Si no, el rojo por defecto.
+      main: '#d32f2f',
+    },
   },
 });
 
@@ -47,6 +51,9 @@ export const darkTheme = createTheme({
       primary: '#ffffff',
       secondary: '#ffffff',
     },
+    error: {
+      main: '#ff9a9a'
+    }
   },
 });
 

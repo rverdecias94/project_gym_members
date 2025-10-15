@@ -40,6 +40,22 @@
   grid-template-columns: repeat(3, 1fr);
 }
 
+.navbar-mobile {
+  padding: 15px;
+  margin-bottom: 10px;
+  height: auto;
+  display: flex;
+  justify-content: space-between;
+  font-family: sans-serif;
+  font-weight: 700;
+  color: white;
+  align-items: center;
+  position: relative;
+  z-index: 999;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .navbar-links-out {
   padding: 15px 37px;
   margin-bottom: 10px;
