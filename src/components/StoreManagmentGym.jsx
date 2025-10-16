@@ -57,6 +57,7 @@ import {
   StorefrontOutlined as StoreIcon
 } from "@mui/icons-material";
 import moment from "moment/moment";
+import { useSnackbar } from "../context/Snackbar";
 
 const StoreManagmentGym = () => {
   const { getGymInfo } = useMembers();
@@ -98,9 +99,13 @@ const StoreManagmentGym = () => {
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [formIsValid, setFormIsValid] = useState(false);
-
+  const { showMessage } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterDelivery, setFilterDelivery] = useState("");
 
   const now = new Date();
 
@@ -147,7 +152,7 @@ const StoreManagmentGym = () => {
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
-      alert('Error al cargar productos');
+      showMessage('Error al cargar productos', 'error');
     } finally {
       setLoadingProducts(false);
     }
@@ -290,19 +295,19 @@ const StoreManagmentGym = () => {
       if (editingProduct) {
         const { error } = await supabase.from('products').update(productData).eq('id', editingProduct.id);
         if (error) throw error;
-        alert('Producto actualizado exitosamente');
+        showMessage('Producto actualizado exitosamente', 'success');
       } else {
         const { error } = await supabase.from('products').insert([productData]);
         if (error) throw error;
-        alert('Producto creado exitosamente');
+        showMessage('Producto creado exitosamente', 'success');
       }
       handleCloseDialog();
       await getProducts();
     } catch (error) {
       if (error.code === '23505') {
-        alert('Ya existe un producto con ese código. Por favor, use un código diferente o déjelo vacío.');
+        showMessage('Ya existe un producto con ese código. Por favor, use un código diferente o déjelo vacío.', 'error');
       } else {
-        alert('Error al guardar el producto: ' + (error.message || 'Error desconocido'));
+        showMessage('Error al guardar el producto: ' + (error.message || 'Error desconocido'), 'error');
       }
     } finally {
       setSubmitting(false);
@@ -339,11 +344,11 @@ const StoreManagmentGym = () => {
     try {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
-      alert('Producto eliminado exitosamente');
+      showMessage('Producto eliminado exitosamente', 'success');
       await getProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error al eliminar el producto');
+      showMessage('Error al eliminar el producto', 'error');
     }
   };
 
@@ -384,10 +389,27 @@ const StoreManagmentGym = () => {
     setCurrentPage(value);
   };
 
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory = !filterCategory || product.category === filterCategory;
+
+    const matchesDelivery =
+      !filterDelivery ||
+      (filterDelivery === "delivery" && product.has_delivery) ||
+      (filterDelivery === "pickup" && product.has_pickup) ||
+      (filterDelivery === "free" && product.free_delivery);
+
+    return matchesSearch && matchesCategory && matchesDelivery;
+  });
+
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentProducts = products.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const ProductCard = ({ product }) => (
     <Card sx={{ mb: 10, boxShadow: 2 }}>
@@ -582,10 +604,71 @@ const StoreManagmentGym = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 16 }}>
-      <Paper sx={{ p: isMobile ? 2 : 3 }}>
+    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 2, display: "flex", gap: "1rem", flexDirection: isMobile ? 'column' : 'row', }}>
+      <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} mb={3} sx={{ flex: 2, height: "20rem" }}>
+
+        <Paper sx={{ p: 4, width: "100%" }}>
+          <Typography variant="h6" gutterBottom>Filtros</Typography>
+
+          <TextField
+            label="Buscar producto"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            fullWidth
+            size="small"
+            sx={{ mb: 2 }}
+          />
+
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Categoría</InputLabel>
+            <Select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              label="Categoría"
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={cat.category}>
+                  {cat.category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Entrega</InputLabel>
+            <Select
+              value={filterDelivery}
+              onChange={(e) => setFilterDelivery(e.target.value)}
+              label="Entrega"
+            >
+              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value="delivery">Mensajería</MenuItem>
+              <MenuItem value="pickup">Recogida</MenuItem>
+              <MenuItem value="free">Entrega Gratis</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Button
+            variant="outlined"
+            color="secondary"
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={() => {
+              setSearchTerm("");
+              setFilterCategory("");
+              setFilterDelivery("");
+            }}
+          >
+            Limpiar filtros
+          </Button>
+        </Paper>
+
+      </Box>
+
+      <Paper sx={{ p: isMobile ? 2 : 3, flex: 5 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 2 : 0}>
-          <Typography variant={isMobile ? "h5" : "h4"} component="h1">
+          <Typography variant="h6" gutterBottom>
             Gestión de Tienda
           </Typography>
           <Button

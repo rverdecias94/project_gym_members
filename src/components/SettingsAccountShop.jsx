@@ -297,7 +297,7 @@ export default function SettingsAccountShop({
         maxWidth={"lg"}
       >
         <DialogTitle id="alert-dialog-title">
-          {"Configuración de la cuenta"}
+          {"Configuración de la cuenta"}: {profile.email || "correo@gmail.com"}
         </DialogTitle>
         <DialogContent>
           <Grid container sx={{ mt: 3 }}>

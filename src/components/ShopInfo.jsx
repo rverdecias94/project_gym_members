@@ -236,7 +236,7 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
           .eq("owner_id", id);
 
         if (result) {
-          navigate('/bienvenido');
+          navigate('/tienda');
         }
       } catch (error) {
         showMessage("Error al guardar la información. Intente nuevamente o contacte al administrador", "error");

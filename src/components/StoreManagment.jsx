@@ -99,6 +99,11 @@ const StoreManagment = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterDelivery, setFilterDelivery] = useState("");
+
+
   const now = new Date();
 
   useEffect(() => {
@@ -369,11 +374,28 @@ const StoreManagment = () => {
     setCurrentPage(value);
   };
 
-  // Lógica de paginación
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory = !filterCategory || product.category === filterCategory;
+
+    const matchesDelivery =
+      !filterDelivery ||
+      (filterDelivery === "delivery" && product.has_delivery) ||
+      (filterDelivery === "pickup" && product.has_pickup) ||
+      (filterDelivery === "free" && product.free_delivery);
+
+    return matchesSearch && matchesCategory && matchesDelivery;
+  });
+
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentProducts = products.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
 
   const ProductCard = ({ product }) => (
     <Card sx={{ mb: 10, boxShadow: 2 }}>
@@ -431,12 +453,89 @@ const StoreManagment = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ marginTop: "4rem", mb: 16 }}>
-      <Paper sx={{ p: isMobile ? 2 : 3 }}>
+    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 16, display: "flex", gap: "1rem" }}>
+
+      {/* Sidebar de filtros */}
+      <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} mb={3} sx={{ flex: 2, height: "20rem" }}>
+        <Paper sx={{ p: 4, width: "100%" }}>
+          <Typography variant="h6" gutterBottom>Filtros</Typography>
+
+          <TextField
+            label="Buscar producto"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            fullWidth
+            size="small"
+            sx={{ mb: 2 }}
+          />
+
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Categoría</InputLabel>
+            <Select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              label="Categoría"
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={cat.category}>
+                  {cat.category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Entrega</InputLabel>
+            <Select
+              value={filterDelivery}
+              onChange={(e) => setFilterDelivery(e.target.value)}
+              label="Entrega"
+            >
+              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value="delivery">Mensajería</MenuItem>
+              <MenuItem value="pickup">Recogida</MenuItem>
+              <MenuItem value="free">Entrega Gratis</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Button
+            variant="outlined"
+            color="secondary"
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={() => {
+              setSearchTerm("");
+              setFilterCategory("");
+              setFilterDelivery("");
+            }}
+          >
+            Limpiar filtros
+          </Button>
+        </Paper>
+
+      </Box>
+
+      <Paper sx={{ p: isMobile ? 2 : 1, flex: 8 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 2 : 0}>
-          <Typography variant={isMobile ? "h5" : "h4"} component="h1">Gestión de Tienda</Typography>
-          <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />} onClick={() => setOpenDialog(true)} size={isMobile ? "medium" : "large"} fullWidth={isMobile} sx={{ fontSize: isMobile ? '0.85rem' : '1rem' }}>Nuevo Producto</Button>
+          <Typography variant="h6" gutterBottom>
+            Gestión de Tienda
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon
+              sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
+            onClick={() => setOpenDialog(true)}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ fontSize: isMobile ? '0.85rem' : '1rem' }}>
+            Nuevo Producto
+          </Button>
         </Box>
+
+
+
+
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 3, '& .MuiTab-root': { fontSize: isMobile ? '0.8rem' : '0.875rem', minWidth: isMobile ? 'auto' : 160 } }} variant={isMobile ? "fullWidth" : "standard"}>
           <Tab label="Lista de Productos" />
           <Tab label="Catálogo" />
@@ -464,7 +563,6 @@ const StoreManagment = () => {
                       ) : products.length === 0 ? (
                         <TableRow><TableCell colSpan={6} align="center">No hay productos registrados</TableCell></TableRow>
                       ) : (
-                        // CHANGE: Se itera sobre 'currentProducts' en lugar de 'products' para mostrar solo los de la página actual.
                         currentProducts.map((product) => (
                           <TableRow key={product.id}>
                             <TableCell><Box sx={{ width: 50, height: 50 }}><img src={product.image_base64} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} /></Box></TableCell>

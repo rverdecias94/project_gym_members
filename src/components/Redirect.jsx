@@ -14,9 +14,19 @@ const Redirect = () => {
         return;
       }
 
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('uuid', user.id);
+      if (error) {
+        navigate('/login');
+        return;
+      } else if (data.length > 0) {
+        navigate('/admin/panel');
+        return;
+      }
       // Identificar el tipo de cuenta
       const { type } = await identifyAccountType(user.id);
-      console.log(type)
       switch (type) {
         case 'gym':
           navigate('/general_info');

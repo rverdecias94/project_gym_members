@@ -14,7 +14,7 @@ import MembersList from './components/MembersList';
 import Trainers from './components/TrainersList';
 import { BackdropProvider } from './components/BackdropProvider';
 /* import GeneralInfo from './components/GeneralInfo'; */
-import LoginAdmin from './admin/Login';
+/* import LoginAdmin from './admin/Login'; */
 import AdminPanel from './admin/AdminPanel';
 import Welcome from './components/Welcome';
 import TermsAndConditions from './components/TermsAndConditions';
@@ -83,13 +83,14 @@ function App() {
           navigate('/redirect')
 
           if (session?.user?.user_metadata) {
-            let { avatar_url, name, phone } = session.user.user_metadata;
+            let { avatar_url, name, phone, email } = session.user.user_metadata;
             setProfile((prev) => ({
               ...prev,
               name: name,
               avatar: avatar_url,
               phone: phone,
-              id: session.user.id
+              id: session.user.id,
+              email: email,
             }))
           }
         }
@@ -115,7 +116,7 @@ function App() {
                 <Route path='/general_info' element={<GymStepper id={userId} />} />
                 <Route path='/new_member' element={<MembersForm />} />
                 <Route path='/new_trainer' element={<TrainersForm />} />
-                <Route path='/admin' element={<LoginAdmin />} />
+                {/* <Route path='/admin' element={<LoginAdmin />} /> */}
                 <Route path='/admin/panel' element={<AdminPanel />} />
                 <Route path='/terms-conditions' element={<TermsAndConditions />} />
                 <Route path='/tienda-gym' element={<StoreManagmentGym />} />

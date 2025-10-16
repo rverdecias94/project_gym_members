@@ -25,7 +25,7 @@ const Welcome = () => {
       </h2>
 
       <p>
-        Hola 👋, nos alegra tenerte con nosotros.
+        Nos alegra tenerte con nosotros.
         Desde aquí podrás gestionar tu gimnasio de forma fácil y rápida: registra a tus miembros y entrenadores.
       </p>
       <p>

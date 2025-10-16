@@ -155,7 +155,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
             )}
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-            {!isMobile && <span className='hide'>{`¡Hola ${getName(profile.name) || "Admin"}!`}</span>}
+            {!isMobile && profile.name && <span className='hide'>{`¡Hola ${getName(profile.name) || "Admin"}!`}</span>}
             <Box sx={{ flexGrow: 0 }}>
               {!["/admin", "/admin/panel"].includes(location.pathname) && (
                 <>

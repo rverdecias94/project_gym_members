@@ -6,7 +6,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { Grid, TextField } from '@mui/material';
+import { Grid, TextField, Typography } from '@mui/material';
 import { useEffect } from 'react';
 import { supabase } from '../supabase/client';
 import { useState } from 'react';
@@ -128,6 +128,7 @@ export default function SettingsAccountGym({
 
   useEffect(() => {
     const existsUser = async () => {
+      console.log(profile)
       if (!profile.id) return;
       const { data } = await supabase
         .from('info_general_gym')
@@ -327,12 +328,11 @@ export default function SettingsAccountGym({
         maxWidth={"lg"}
       >
         <DialogTitle id="alert-dialog-title">
-          {"Configuración de la cuenta"}
+          {"Configuración de la cuenta"}: {profile.email || "correo@gmail.com"}
         </DialogTitle>
         <DialogContent>
           <Grid container sx={{ mt: 3 }}>
             <Grid item xl={6} lg={6} md={6} sm={6} xs={12}>
-
               <TextField
                 id="outlined-read-only-input"
                 label="Nombre de gimnasio"
