@@ -109,7 +109,7 @@ export default function AddRuleDialog({
         open={open}
         onClose={handleClose}
         aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
+        aria-describedby="dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
           {"Seleccione una regla a aplicar a los clientes seleccionados"}
