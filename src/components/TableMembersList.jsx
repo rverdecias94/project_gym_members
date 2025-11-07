@@ -182,8 +182,12 @@ export const TableMembersList = ({ membersList = [] }) => {
   };
 
   const handleOpenEdit = (member) => {
+    const normalized = {
+      ...member,
+      phone: member?.phone !== undefined && member?.phone !== null ? String(member.phone) : '',
+    };
     setOpenEdit(true);
-    setMemberInfo(member);
+    setMemberInfo(normalized);
   };
 
   const handleOpenRule = () => {
@@ -268,10 +272,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       width: 130,
       renderCell: (params) => (
         <div style={{ display: "flex", alignItems: "center" }}>
-          {
-            params.value !== null ? params.value
-              : <strong style={{ fontSize: 20 }}>-</strong>
-          }
+          {params.value ? params.value : <strong style={{ fontSize: 20 }}>-</strong>}
         </div>
       ),
     },
@@ -548,7 +549,6 @@ export const TableMembersList = ({ membersList = [] }) => {
       {adding && <span>Aplicando reglas a clientes seleccionados...</span>}
 
       <Grid container style={{ paddingBottom: '9rem' }}>
-
         {!isMobile && (
           <DataGrid
             rows={members}

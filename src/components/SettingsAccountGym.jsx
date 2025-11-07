@@ -128,7 +128,6 @@ export default function SettingsAccountGym({
 
   useEffect(() => {
     const existsUser = async () => {
-      console.log(profile)
       if (!profile.id) return;
       const { data } = await supabase
         .from('info_general_gym')

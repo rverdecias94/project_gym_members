@@ -160,8 +160,8 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
           fechaPago.setFullYear(fechaPago.getFullYear() + 1);
         }
         // Formatear la fecha en formato día, mes, año
-        const dia = fechaPago.getDate();
-        const mes = fechaPago.getMonth() + 1;
+        const dia = String(fechaPago.getDate()).padStart(2, '0');
+        const mes = String(fechaPago.getMonth() + 1).padStart(2, '0');
         const año = fechaPago.getFullYear();
         elem.pay_date = `${año}-${mes}-${dia}`;
       })

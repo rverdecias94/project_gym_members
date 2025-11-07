@@ -160,8 +160,8 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
     }
 
     // Formatear la fecha en formato día, mes, año
-    const dia = fechaActual.getDate();
-    const mes = fechaActual.getMonth() + 1;
+    const dia = String(fechaActual.getDate()).padStart(2, '0');
+    const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
     const año = fechaActual.getFullYear();
 
     let dataToSave = [...selectedRows]

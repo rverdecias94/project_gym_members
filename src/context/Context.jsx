@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "./Snackbar";
+import dayjs from "dayjs";
 
 export const Context = createContext();
 
@@ -34,7 +35,16 @@ export const ContextProvider = ({ children }) => {
     setNeedsUpdateClients(value);
   }
   const handlerFillMembersList = async (data) => {
-    setMembersList(data.sort((a, b) => b.id - a.id));
+    // Normalizar el campo `phone` para evitar pérdidas (asegurar string y valor por defecto)
+    try {
+      const normalized = (data || []).map(item => ({
+        ...item,
+        phone: item?.phone !== undefined && item?.phone !== null ? String(item.phone) : "",
+      }));
+      setMembersList(normalized.sort((a, b) => b.id - a.id));
+    } catch (err) {
+      setMembersList(data.sort((a, b) => b.id - a.id));
+    }
   }
 
 
@@ -42,6 +52,56 @@ export const ContextProvider = ({ children }) => {
   useEffect(() => {
 
     const getGymInfo = async () => {
+      setTimeout(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error("Usuario no autenticado");
+        }
+
+        const { data } = await supabase
+          .from('info_general_gym')
+          .select()
+          .eq('owner_id', user.id)
+
+        if (data && data.length > 0 && data[0].next_payment_date !== "") {
+          const calculateDays = () => {
+            const today = new Date();
+            const futureDate = new Date(data[0].next_payment_date);
+            const timeDifference = futureDate - today;
+            const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+            setDaysRemaining(daysDifference);
+          };
+
+          setGymInfo(data[0]);
+
+          calculateDays();
+        }
+      }, 100)
+    }
+    getGymInfo();
+  }, []);
+
+
+
+
+  const getShopInfo = async () => {
+    setTimeout(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      const { data } = await supabase
+        .from('info_shops')
+        .select()
+        .eq('owner_id', user.id)
+
+      return data[0]
+    }, 100)
+  }
+  const getGymInfo = async () => {
+    setTimeout(async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("Usuario no autenticado");
@@ -52,52 +112,8 @@ export const ContextProvider = ({ children }) => {
         .select()
         .eq('owner_id', user.id)
 
-      if (data && data.length > 0 && data[0].next_payment_date !== "") {
-        const calculateDays = () => {
-          const today = new Date();
-          const futureDate = new Date(data[0].next_payment_date);
-          const timeDifference = futureDate - today;
-          const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
-          setDaysRemaining(daysDifference);
-        };
-
-        setGymInfo(data[0]);
-
-        calculateDays();
-      }
-    }
-    getGymInfo();
-  }, []);
-
-
-
-
-  const getShopInfo = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error("Usuario no autenticado");
-    }
-
-    const { data } = await supabase
-      .from('info_shops')
-      .select()
-      .eq('owner_id', user.id)
-
-    return data[0]
-  }
-  const getGymInfo = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error("Usuario no autenticado");
-    }
-
-    const { data } = await supabase
-      .from('info_general_gym')
-      .select()
-      .eq('owner_id', user.id)
-
-    return data[0]
+      return data[0]
+    }, 100)
   }
 
 
@@ -125,7 +141,7 @@ export const ContextProvider = ({ children }) => {
             }
           })
       }
-    }, 1000)
+    }, 100)
 
   }
 
@@ -171,22 +187,29 @@ export const ContextProvider = ({ children }) => {
           setBackdrop(false);
         } else { setBackdrop(false); }
       }
-    }, 1000);
+    }, 100);
 
   }
+
 
   const createNewMember = async (memberData) => {
     setBackdrop(true);
     setAdding(true);
     await handlerNeedUpdateClients(true);
-    const fechaActual = new Date();
-    fechaActual.setMonth(fechaActual.getMonth() + 1);
-    if (fechaActual.getMonth() === 0) {
-      fechaActual.setFullYear(fechaActual.getFullYear() + 1);
-    }
 
-    let dataToSave = { ...memberData }
-    dataToSave.pay_date = fechaActual;
+    // 👇 tomamos la fecha seleccionada por el usuario
+    const fechaSeleccionada = dayjs(memberData.pay_date);
+
+    // 👇 sumamos un mes exacto, respetando el día y el año
+    const fechaFinal = fechaSeleccionada.add(1, "month");
+
+    // 👇 formateamos
+    const new_payment_date = fechaFinal.format("YYYY-MM-DD");
+
+    let dataToSave = {
+      ...memberData,
+      pay_date: new_payment_date,
+    };
 
     setTimeout(async () => {
       try {
@@ -204,8 +227,10 @@ export const ContextProvider = ({ children }) => {
           pay_date: dataToSave.pay_date,
           gym_id: data?.user?.id,
         });
+
         setBackdrop(false);
-        navigate('/clientes');
+        navigate("/clientes");
+
         if (result) {
           showMessage("Registro guardado satisfactoriamente", "success");
           await getMembers(true);
@@ -213,13 +238,12 @@ export const ContextProvider = ({ children }) => {
           showMessage("Registro no guardado", "error");
         }
       } catch (error) {
-        console.error(error)
+        console.error(error);
       } finally {
         setAdding(false);
       }
-    }, 2000);
-  }
-
+    }, 100);
+  };
   const createNewTrainer = async (trainerData) => {
     setBackdrop(true);
     setAdding(true);
@@ -284,34 +308,32 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
     const { data } = await supabase.auth.getUser();
     let memberToSave = { ...member };
+
     if (virifiedAcount) {
-      const fechaActual = new Date();
-      fechaActual.setMonth(fechaActual.getMonth() + 1);
-      if (fechaActual.getMonth() === 0) {
-        fechaActual.setFullYear(fechaActual.getFullYear() + 1);
-      }
-
-      const dia = fechaActual.getDate();
-      const mes = fechaActual.getMonth() + 1;
-      const año = fechaActual.getFullYear();
-
-      memberToSave.initial_gym_date = `${año}-${mes}-${dia}`;
+      const fechaActual = dayjs().add(1, "month"); // si lo necesitas
+      memberToSave.initial_gym_date = fechaActual.format("YYYY-MM-DD");
       memberToSave.verified_account = data?.user?.id;
     } else {
       memberToSave.gym_id = data?.user?.id;
     }
+
     setTimeout(async () => {
       try {
         await handlerNeedUpdateClients(true);
-        const result = await supabase.from("members").update(memberToSave).eq("id", member?.id);
+        const result = await supabase
+          .from("members")
+          .update(memberToSave)
+          .eq("id", member?.id);
+
         setBackdrop(false);
-        navigate('/clientes');
+        navigate("/clientes");
+
         if (result) {
           await getMembers(true);
           showMessage("Registro actualizado satisfactoriamente", "success");
         }
       } catch (error) {
-        console.error(error)
+        console.error(error);
       } finally {
         setAdding(false);
       }

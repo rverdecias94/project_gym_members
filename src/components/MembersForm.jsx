@@ -17,6 +17,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import "dayjs/locale/es";
 
 
 function MembersForm({ member = {}, open, handleClose, virifiedAcount = false }) {
@@ -46,10 +47,17 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
   const location = useLocation();
   const from = location.state?.from || "/clientes";
 
+  dayjs.locale("es");
+
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
-      setMemberData(member);
-      setImageBase64(member?.image_profile ?? null)
+      // Asegurar que phone sea string para evitar problemas en los inputs
+      const normalizedMember = {
+        ...member,
+        phone: member?.phone !== undefined && member?.phone !== null ? String(member.phone) : '',
+      };
+      setMemberData(normalizedMember);
+      setImageBase64(member?.image_profile ?? null);
       setEditing(true);
     }
   }, [member]);
@@ -146,8 +154,10 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
         memberData?.last_name !== '' &&
         !errors.phone &&
         memberData?.phone?.length === 8 &&
-        memberData?.trainer_name !== ''
+        memberData?.trainer_name !== '' &&
+        (memberData?.pay_date !== undefined)
       );
+
     }
     return (
       !errors?.first_name && //campo requerido
@@ -157,40 +167,52 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
       memberData?.phone?.length === 8 && //campo requerido
       memberData?.ci?.length === 11 &&
       memberData?.first_name !== '' &&
-      memberData?.last_name !== ''
+      memberData?.last_name !== '' &&
+      memberData?.trainer_name !== '' &&
+      (memberData?.pay_date !== undefined)
     );
   };
 
 
-  const handlerDatePaymentChange = (e) => {
+  const handlerDatePaymentChange = (value) => {
+    if (!value) return;
 
-    const fechaActual = new Date(e.$d);
-    fechaActual.setMonth(fechaActual.getMonth() + 1);
+    // guardamos la fecha seleccionada exactamente como el usuario la escogió
+    const new_payment_date = dayjs(value).format("YYYY-MM-DD");
 
-    if (fechaActual.getMonth() === 0) {
-      fechaActual.setFullYear(fechaActual.getFullYear() + 1);
-    }
-
-    const dia = fechaActual.getDate();
-    const mes = fechaActual.getMonth();
-    const año = fechaActual.getFullYear();
-    let new_payment_date = `${año}-${mes}-${dia}`;
-    setMemberData(prev => ({
+    setMemberData((prev) => ({
       ...prev,
-      pay_date: new_payment_date
-    }))
+      pay_date: new_payment_date,
+    }));
   };
+
+
+  const clearAndClose = () => {
+    setMemberData({
+      first_name: '',
+      last_name: '',
+      gender: '',
+      ci: '',
+      address: '',
+      phone: '',
+      has_trainer: false,
+      trainer_name: null,
+    });
+    setImageBase64(null);
+    setEditing(false);
+    handleClose();
+  }
 
   return (
     <>
       <Dialog
         open={open}
-        onClose={handleClose}
+        onClose={() => clearAndClose()}
         maxWidth={"xl"}
       >
         <DialogTitle id="alert-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {editing ? "Editar Cliente" : "Nuevo Cliente"}
-          <IconButton aria-label="cancel" size="large" onClick={() => handleClose()}>
+          <IconButton aria-label="cancel" size="large" onClick={() => clearAndClose()}>
             <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
           </IconButton>
         </DialogTitle>
@@ -372,16 +394,35 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
                   </Grid>
 
 
-                  {editing &&
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <MobileDatePicker
-                        label="Fecha de pago *"
-                        size='small'
-                        defaultValue={dayjs(memberData?.pay_date)}
-                        onChange={handlerDatePaymentChange}
-                      />
-                    </LocalizationProvider>
+
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+                    <MobileDatePicker
+                      label={editing ? "Próxima fecha de pago *" : "Fecha de pago inicial *"}
+                      size="small"
+                      value={memberData?.pay_date ? dayjs(memberData.pay_date) : null}
+                      onChange={handlerDatePaymentChange}
+                      maxDate={editing ? null : dayjs()} // solo crear restringe
+                      minDate={editing ? null : dayjs().subtract(2, "months")}
+                    />
+                  </LocalizationProvider>
+
+                  {!editing &&
+                    <div style={{ marginLeft: "1rem", marginTop: "10px", marginBottom: "10px", fontSize: "1rem", }}>
+                      <ul style={{ listStyle: 'none' }}>
+                        <li>
+                          Si el cliente es nuevo, selecciona la <b>fecha de hoy</b> como fecha de pago.
+                        </li>
+                        <li>
+                          Si ya tenía un pago previo, usa esa <b>última fecha real de pago</b>.
+                        </li>
+                        <li>
+                          El sistema sumará <b>automáticamente un mes</b> a la fecha ingresada para calcular el próximo pago.
+                        </li>
+                      </ul>
+                    </div>
                   }
+
+
                 </Grid>
               </Grid>
             </form>
