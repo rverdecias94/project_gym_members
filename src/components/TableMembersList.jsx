@@ -404,6 +404,12 @@ export const TableMembersList = ({ membersList = [] }) => {
             <DeleteIcon />
           </IconButton>
         </Tooltip>
+        <Tooltip title="Historial de pago" placement="top">
+          <RequestQuoteIcon
+            sx={{ color: "#22b189ff", cursor: 'pointer' }}
+            onClick={() => handleOpenPaymentRecords(member)}
+          />
+        </Tooltip>
       </CardActions>
     </Card>
   );
