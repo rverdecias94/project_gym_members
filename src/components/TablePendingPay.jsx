@@ -1,5 +1,5 @@
-import { Button, Checkbox, FormControlLabel, Grid, MenuItem, TextField, Tooltip } from '@mui/material';
-import { DataGrid,/*  GridToolbarContainer, GridToolbarExport */ } from '@mui/x-data-grid';
+import { Button, Grid, MenuItem, TextField, Tooltip, IconButton } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 import { useState, useEffect } from 'react';
 import { useMembers } from '../context/Context';
 import jsPDF from 'jspdf';
@@ -10,38 +10,37 @@ import ViewDetails from './ViewDetails';
 import ContactPageIcon from '@mui/icons-material/ContactPage';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useTheme } from '@mui/material/styles';
-
+import PaymentModal from './PaymentModal'; // Importar el nuevo modal
+import PaymentIcon from '@mui/icons-material/Payment';
 
 // eslint-disable-next-line react/prop-types
 export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   const theme = useTheme();
-  const { trainersList, makePayment, adding } = useMembers();
+  const { trainersList } = useMembers();
   const [membersPendingOriginal, setMembersPendingOriginal] = useState([]);
   const [membersPending, setMembersPending] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
   const [trainer_name, setTrainerName] = useState("");
   const [trainers, setTrainers] = useState([]);
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
     if (trainersList?.length > 0) {
       const trainers = [];
-
       trainers.push({ value: "Todos", label: "Todos" })
       trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
-
       trainersList.forEach(element => {
         trainers.push({ value: element.name, label: element.name });
       });
       setTrainers(trainers);
     }
-  }, [])
+  }, [trainersList])
 
   useEffect(() => {
     setMembersPendingOriginal(membersPendingPayment);
     setMembersPending(membersPendingPayment);
-    setSelectedRows([]);
   }, [membersPendingPayment]);
 
   useEffect(() => {
@@ -65,30 +64,48 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
     setOpen(true);
     setProfile(client);
   };
+
+  const handleOpenPayment = (member) => {
+    setSelectedMember(member);
+    setPaymentModalOpen(true);
+  };
+
+  const handleClosePayment = () => {
+    setPaymentModalOpen(false);
+    setSelectedMember(null);
+  };
+
   const columns = [
     {
-      field: 'actions',
-      headerName: '',
+      field: 'details',
+      headerName: 'Detalles',
       sortable: false,
       width: 100,
       renderCell: (params) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={selectedRows?.includes(params.row)}
-                onChange={(e) => handlerChangeStatus(e, params.row)}
-                name='active'
-              />
-            }
+        <Tooltip title="Ver Detalles">
+          <ContactPageIcon
+            color="primary"
+            onClick={() => handleOpenEdit(params?.row)}
+            style={{ cursor: 'pointer' }}
           />
-          <Tooltip title="Ver Detalles">
-            <ContactPageIcon
-              color="primary"
-              onClick={() => handleOpenEdit(params?.row)}
-            />
-          </Tooltip>
-        </div>
+        </Tooltip>
+      ),
+    },
+    {
+      field: 'payment',
+      headerName: 'Pago',
+      sortable: false,
+      width: 100,
+      renderCell: (params) => (
+        <Tooltip title="Registrar Pago">
+          <IconButton
+            color="primary"
+            onClick={() => handleOpenPayment(params?.row)}
+            size="small"
+          >
+            <PaymentIcon />
+          </IconButton>
+        </Tooltip>
       ),
     },
     { field: 'first_name', headerName: 'Nombre', width: 130 },
@@ -121,7 +138,7 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
       ),
     },
     {
-      field: '',
+      field: 'contact',
       headerName: 'Contacto',
       width: 130,
       renderCell: ({ row }) => (
@@ -133,7 +150,8 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
         }}>
           {
             row.phone !== "" &&
-            <WhatsAppIcon style={{ color: theme.palette.primary.main, cursor: "pointer" }}
+            <WhatsAppIcon
+              style={{ color: theme.palette.primary.main, cursor: "pointer" }}
               onClick={() => enviarNotificacion(row)}
             />
           }
@@ -150,36 +168,6 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
-  const handlerMakePayment = async () => {
-    if (selectedRows.length > 0) {
-      selectedRows.forEach(elem => {
-        const fechaPago = new Date(elem.pay_date);
-        fechaPago.setMonth(fechaPago.getMonth() + 1);
-        // Verificar si el mes resultante es enero para ajustar el año
-        if (fechaPago.getMonth() === 0) {
-          fechaPago.setFullYear(fechaPago.getFullYear() + 1);
-        }
-        // Formatear la fecha en formato día, mes, año
-        const dia = String(fechaPago.getDate()).padStart(2, '0');
-        const mes = String(fechaPago.getMonth() + 1).padStart(2, '0');
-        const año = fechaPago.getFullYear();
-        elem.pay_date = `${año}-${mes}-${dia}`;
-      })
-
-      makePayment(selectedRows);
-    }
-  }
-
-  const handlerChangeStatus = (e, row) => {
-    if (e.target.checked) {
-      setSelectedRows((prevSelectedRows) => [...prevSelectedRows, row]);
-    } else {
-      setSelectedRows((prevSelectedRows) =>
-        prevSelectedRows?.filter((item) => item.id !== row.id)
-      );
-    }
-  };
-
   const handlerChange = (e) => {
     setTrainerName(e?.target?.value)
   }
@@ -188,8 +176,8 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
     const data = [...membersPending];
     const doc = new jsPDF();
     doc.autoTable({
-      head: [columns.map((column) => column.headerName)],
-      body: data.map((row) => columns.map((column) => row[column.field])),
+      head: [columns.filter(col => col.field !== 'payment').map((column) => column.headerName)],
+      body: data.map((row) => columns.filter(col => col.field !== 'payment').map((column) => row[column.field])),
     });
 
     doc.save('Listado de clientes próximos a pagar.pdf');
@@ -199,17 +187,6 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
     <Grid style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
       <Grid container style={{ display: "flex", justifyContent: "start", gap: 10 }}>
-        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
-          <Button
-            variant='contained'
-            disabled={selectedRows?.length === 0}
-            onClick={handlerMakePayment}
-            fullWidth
-            sx={{ height: "100%", color: "white", background: "#e49c10" }}
-          >
-            Registrar Pago
-          </Button>
-        </Grid>
         <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
@@ -244,16 +221,13 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
             ))}
           </TextField>
         </Grid>
-
       </Grid>
       <br />
-      {adding && <span>Actializando...</span>}
       <Grid container style={{ paddingBottom: '5rem' }}>
         <DataGrid
           autoHeight
           rows={membersPending}
           columns={columns}
-          paginationPerPage={5}
           initialState={{
             pagination: {
               paginationModel: { page: 0, pageSize: 5 },
@@ -266,6 +240,11 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
         handleClose={handleClose}
         open={open}
         profile={profile}
+      />
+      <PaymentModal
+        open={paymentModalOpen}
+        handleClose={handleClosePayment}
+        member={selectedMember}
       />
     </Grid>
   );

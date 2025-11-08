@@ -45,6 +45,8 @@ import MembersForm from './MembersForm';
 import { useSnackbar } from '../context/Snackbar';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import QrReader from './QrReader'; // Importar el nuevo componente
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import PaymentRecords from './PaymentRecords';
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
@@ -61,6 +63,8 @@ export const TableMembersList = ({ membersList = [] }) => {
   const [trainers, setTrainers] = useState([]);
   const [membersOriginal, setMembersOriginal] = useState([]);
   const [members, setMembers] = useState([]);
+  const [paymentRecordsOpen, setPaymentRecordsOpen] = useState(false);
+  const [selectedMemberForRecords, setSelectedMemberForRecords] = useState(null);
 
   const [open, setOpen] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false); // Nuevo estado para alternar entre formulario y QR
@@ -171,6 +175,16 @@ export const TableMembersList = ({ membersList = [] }) => {
     setMemberInfo(member);
   };
 
+  const handleOpenPaymentRecords = (member) => {
+    setSelectedMemberForRecords(member);
+    setPaymentRecordsOpen(true);
+  };
+
+  const handleClosePaymentRecords = () => {
+    setPaymentRecordsOpen(false);
+    setSelectedMemberForRecords(null);
+  };
+
   const handleClose = () => {
     setOpenDelete(false);
     setOpenEdit(false);
@@ -234,11 +248,11 @@ export const TableMembersList = ({ membersList = [] }) => {
   const columns = [
     {
       field: 'actions',
-      headerName: 'Acciones',
+      headerName: 'Seleccionar',
       sortable: false,
-      width: 100,
+      width: 80,
       renderCell: (params) => (
-        <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+        <div style={{ display: "flex", alignItems: "center", cursor: "pointer", height: "100%" }}>
           <FormControlLabel
             control={
               <Checkbox
@@ -249,18 +263,6 @@ export const TableMembersList = ({ membersList = [] }) => {
             }
             style={{ marginRight: 0 }}
           />
-          <Tooltip title="Editar">
-            <EditIcon
-              color="primary"
-              onClick={() => handleOpenEdit(params?.row)}
-            />
-          </Tooltip>
-          <Tooltip title="Eliminar">
-            <DeleteIcon
-              sx={{ color: "#e7657e" }}
-              onClick={() => handleOpenDelete(params?.row)}
-            />
-          </Tooltip>
         </div>
       ),
     },
@@ -291,6 +293,34 @@ export const TableMembersList = ({ membersList = [] }) => {
         </div>
       ),
     },
+    {
+      field: 'options',
+      headerName: "Opciones",
+      width: 150,
+      renderCell: (params) => (
+        <div style={{ display: "flex", alignItems: "center", height: "100%", gap: 8 }}>
+          <Tooltip title="Editar" placement="top">
+            <EditIcon
+              color="primary"
+              onClick={() => handleOpenEdit(params?.row)}
+              style={{ cursor: 'pointer' }}
+            />
+          </Tooltip>
+          <Tooltip title="Eliminar" placement="top">
+            <DeleteIcon
+              sx={{ color: "#e7657e", cursor: 'pointer' }}
+              onClick={() => handleOpenDelete(params?.row)}
+            />
+          </Tooltip>
+          <Tooltip title="Historial de pago" placement="top">
+            <RequestQuoteIcon
+              sx={{ color: "#22b189ff", cursor: 'pointer' }}
+              onClick={() => handleOpenPaymentRecords(params?.row)}
+            />
+          </Tooltip>
+        </div>
+      )
+    }
   ];
 
   const downloadPDF = () => {
@@ -613,6 +643,8 @@ export const TableMembersList = ({ membersList = [] }) => {
         setSelectedRows={setSelectedRows}
       />
 
+
+
       {/* MODAL ASOCIAR CLIENTE */}
       <Dialog
         open={open}
@@ -719,6 +751,12 @@ export const TableMembersList = ({ membersList = [] }) => {
         handleClose={handleCloseMemberForm}
       />
       <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} virifiedAcount={verifiedAcount} />
+
+      <PaymentRecords
+        open={paymentRecordsOpen}
+        handleClose={handleClosePaymentRecords}
+        memberInfo={selectedMemberForRecords}
+      />
     </Grid>
   );
 }

@@ -563,6 +563,70 @@ export const ContextProvider = ({ children }) => {
     }
   };
 
+  const registerPayment = async (memberData, months, trainerIncluded) => {
+    setBackdrop(true);
+    setAdding(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      // Calcular nueva fecha de pago sumando los meses
+      const currentPayDate = dayjs(memberData.pay_date);
+      const newPayDate = currentPayDate.add(months, 'month').format('YYYY-MM-DD');
+
+      // Calcular el monto total basado en los precios del gimnasio
+      const monthlyPayment = gymInfo.monthly_payment || 0;
+      const trainerCost = gymInfo.trainers_cost || 0;
+
+      let totalAmount = monthlyPayment * months;
+      if (trainerIncluded && memberData.trainer_name) {
+        totalAmount += trainerCost * months;
+      }
+
+      console.log(newPayDate, memberData.trainer_name, memberData.trainer_name !== null && memberData.trainer_name !== '')
+      // Actualizar el miembro con la nueva fecha de pago y entrenador
+      const { error: updateError } = await supabase
+        .from('members')
+        .update({
+          pay_date: newPayDate,
+          trainer_name: memberData.trainer_name,
+          has_trainer: memberData.trainer_name !== null && memberData.trainer_name !== ''
+        })
+        .eq('id', memberData.id)
+        .eq('gym_id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Registrar en el historial de pagos (con el esquema ajustado)
+      const { error: historyError } = await supabase
+        .from('payment_history_members')
+        .insert({
+          member_id: memberData.id, // bigint de members.id
+          gym_id: user.id, // uuid del gimnasio
+          quantity_paid: totalAmount,
+          currency: gymInfo.monthly_currency || 'CUP',
+          trainer_included: trainerIncluded,
+          next_payment: newPayDate
+        });
+
+      if (historyError) throw historyError;
+
+      showMessage("Pago registrado exitosamente", "success");
+      await getMembers(true);
+
+    } catch (error) {
+      console.error('Error registering payment:', error);
+      showMessage("Error al registrar el pago", "error");
+    } finally {
+      setBackdrop(false);
+      setAdding(false);
+    }
+  };
+
   return <Context.Provider
     value={{
       gymInfo,
@@ -596,7 +660,8 @@ export const ContextProvider = ({ children }) => {
       updateProduct,
       deleteProduct,
       setShopInfo,
-      getShopInfo
+      getShopInfo,
+      registerPayment,
     }}>
     {children}
   </Context.Provider>

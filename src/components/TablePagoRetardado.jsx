@@ -1,52 +1,51 @@
-import { Button, Checkbox, FormControlLabel, Grid, MenuItem, TextField, Tooltip } from '@mui/material';
-import { DataGrid,/*  GridToolbarContainer, GridToolbarExport */ } from '@mui/x-data-grid';
-import { useState } from 'react';
+import { Button, Grid, MenuItem, TextField, Tooltip, IconButton } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { useState, useEffect } from 'react';
 import { useMembers } from '../context/Context';
-import { useEffect } from 'react';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import "./css/styles.css"
 import ViewDetails from './ViewDetails';
 import ContactPageIcon from '@mui/icons-material/ContactPage';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useTheme } from '@mui/material/styles';
-
+import PaymentModal from './PaymentModal'; // Importar el nuevo modal
+import PaymentIcon from '@mui/icons-material/Payment';
 
 // eslint-disable-next-line react/prop-types
 export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   const theme = useTheme();
-  const [selectedRows, setSelectedRows] = useState([]);
-  const { trainersList, makePayment, adding } = useMembers();
-  const [membersPaymentDelayedOriginal, setMembersPaymentDelayedOriginal] = useState([]);
+  const { trainersList } = useMembers();
+  const [membersPendingOriginal, setMembersPendingOriginal] = useState([]);
   const [membersDelayed, setMembersDelayed] = useState([]);
   const [trainer_name, setTrainerName] = useState("");
   const [trainers, setTrainers] = useState([]);
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(false);
-
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
     if (trainersList?.length > 0) {
       const trainers = [];
-
       trainers.push({ value: "Todos", label: "Todos" })
       trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
-
       trainersList.forEach(element => {
         trainers.push({ value: element.name, label: element.name });
       });
       setTrainers(trainers);
     }
-  }, [])
+  }, [trainersList])
 
   useEffect(() => {
-    setMembersPaymentDelayedOriginal(membersPaymentDelayed);
+    setMembersPendingOriginal(membersPaymentDelayed);
     setMembersDelayed(membersPaymentDelayed);
-    setSelectedRows([]);
   }, [membersPaymentDelayed]);
 
   useEffect(() => {
     if (trainer_name !== "") {
-      let members = [...membersPaymentDelayedOriginal]
+      let members = [...membersPendingOriginal]
       if (trainer_name !== "Sin Entrenador" && trainer_name !== "Todos") {
         setMembersDelayed(members.filter(elem => elem.trainer_name === trainer_name));
       } else if (trainer_name === "Sin Entrenador") {
@@ -66,32 +65,33 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
     setProfile(client);
   };
 
+  const handleOpenPayment = (member) => {
+    setSelectedMember(member);
+    setPaymentModalOpen(true);
+  };
+
+  const handleClosePayment = () => {
+    setPaymentModalOpen(false);
+    setSelectedMember(null);
+  };
+
   const columns = [
     {
-      field: 'actions',
-      headerName: '',
+      field: 'details',
+      headerName: 'Detalles',
       sortable: false,
       width: 100,
       renderCell: (params) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={selectedRows?.includes(params.row)}
-                onChange={(e) => handlerChangeStatus(e, params.row)}
-                name='active'
-              />
-            }
+        <Tooltip title="Ver Detalles">
+          <ContactPageIcon
+            color="primary"
+            onClick={() => handleOpenEdit(params?.row)}
+            style={{ cursor: 'pointer' }}
           />
-          <Tooltip title="Ver Detalles">
-            <ContactPageIcon
-              color="primary"
-              onClick={() => handleOpenEdit(params?.row)}
-            />
-          </Tooltip>
-        </div>
+        </Tooltip>
       ),
     },
+
     { field: 'first_name', headerName: 'Nombre', width: 130 },
     { field: 'last_name', headerName: 'Apellidos', width: 130 },
     {
@@ -122,7 +122,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
       ),
     },
     {
-      field: '',
+      field: 'contact',
       headerName: 'Contacto',
       width: 130,
       renderCell: ({ row }) => (
@@ -134,11 +134,29 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         }}>
           {
             row.phone !== "" &&
-            <WhatsAppIcon style={{ color: theme.palette.primary.main, cursor: "pointer" }}
+            <WhatsAppIcon
+              style={{ color: theme.palette.primary.main, cursor: "pointer" }}
               onClick={() => enviarNotificacion(row)}
             />
           }
         </div>
+      ),
+    },
+    {
+      field: 'payment',
+      headerName: 'Pago',
+      sortable: false,
+      width: 100,
+      renderCell: (params) => (
+        <Tooltip title="Registrar Pago" placement='top'>
+          <IconButton
+            sx={{ color: "green" }}
+            onClick={() => handleOpenPayment(params?.row)}
+            size="small"
+          >
+            <PaymentIcon />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];
@@ -146,77 +164,38 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   const enviarNotificacion = ({ first_name, last_name, pay_date, phone }) => {
     let nombre = [first_name, last_name].join(" ");
     const phoneNumber = `53${phone}`;
-    const message = encodeURIComponent(`Hola ${nombre}, le informamos que su fecha de pago ya venció el pasado (${pay_date}).`);
+    const message = encodeURIComponent(`Hola ${nombre}, le recordamos que próximamente se cumplirá su fecha de pago (${pay_date}).`);
 
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
-
-  const handlerMakePayment = () => {
-    const fechaActual = new Date();
-    fechaActual.setMonth(fechaActual.getMonth() + 1);
-    // Verificar si el mes resultante es enero para ajustar el año
-    if (fechaActual.getMonth() === 0) {
-      fechaActual.setFullYear(fechaActual.getFullYear() + 1);
-    }
-
-    // Formatear la fecha en formato día, mes, año
-    const dia = String(fechaActual.getDate()).padStart(2, '0');
-    const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
-    const año = fechaActual.getFullYear();
-
-    let dataToSave = [...selectedRows]
-    dataToSave.forEach(elem => elem.pay_date = `${año}-${mes}-${dia}`);
-    makePayment(dataToSave);
-  }
-
-  const handlerChangeStatus = (e, row) => {
-    if (e.target.checked) {
-      setSelectedRows((prevSelectedRows) => [...prevSelectedRows, row]);
-    } else {
-      setSelectedRows((prevSelectedRows) =>
-        prevSelectedRows?.filter((item) => item.id !== row.id)
-      );
-    }
-  };
-
-  const downloadPDF = () => {
-    const data = [...membersDelayed];
-    const doc = new jsPDF();
-    doc.autoTable({
-      head: [columns.map((column) => column.headerName)],
-      body: data.map((row) => columns.map((column) => row[column.field])),
-    });
-
-    doc.save('Listado de clientes con pago atrasado.pdf');
-  }
 
   const handlerChange = (e) => {
     setTrainerName(e?.target?.value)
   }
 
+  const downloadPDF = () => {
+    const data = [...membersDelayed];
+    const doc = new jsPDF();
+    doc.autoTable({
+      head: [columns.filter(col => col.field !== 'payment').map((column) => column.headerName)],
+      body: data.map((row) => columns.filter(col => col.field !== 'payment').map((column) => row[column.field])),
+    });
+
+    doc.save('Listado de clientes próximos a pagar.pdf');
+  }
+
   return (
     <Grid style={{ height: 400, width: '100%', marginBottom: 40 }}>
       <br />
-      <Grid container style={{ display: "flex", gap: 10 }}>
+      <Grid container style={{ display: "flex", justifyContent: "start", gap: 10 }}>
         <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <Button
             variant='contained'
-            sx={{ height: "100%", color: "white", background: "#e49c10" }}
-            fullWidth
-            disabled={selectedRows?.length === 0}
-            onClick={handlerMakePayment}
-          >
-            Registrar Pago
-          </Button>
-        </Grid>
-        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
-          <Button
-            variant='contained'
+            onClick={downloadPDF}
             fullWidth
             color='primary'
-            onClick={downloadPDF}
-            disabled={membersDelayed.length === 0}
             sx={{ height: "100%" }}
+            disabled={membersDelayed.length === 0}
             className='btn-pdf'
           >
             <PictureAsPdfIcon /> Descargar
@@ -224,9 +203,9 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         </Grid>
         <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
           <TextField
-            disabled={membersDelayed.length === 0}
             id="outlined-select-currency"
             select
+            disabled={membersDelayed.length === 0}
             label="Entrenador"
             defaultValue=""
             placeholder="Entrenador"
@@ -245,7 +224,6 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         </Grid>
       </Grid>
       <br />
-      {adding && <span>Actializando...</span>}
       <Grid container style={{ paddingBottom: '5rem' }}>
         <DataGrid
           autoHeight
@@ -263,6 +241,11 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         handleClose={handleClose}
         open={open}
         profile={profile}
+      />
+      <PaymentModal
+        open={paymentModalOpen}
+        handleClose={handleClosePayment}
+        member={selectedMember}
       />
     </Grid>
   );
