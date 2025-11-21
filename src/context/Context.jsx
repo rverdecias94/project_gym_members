@@ -662,6 +662,7 @@ export const ContextProvider = ({ children }) => {
       setShopInfo,
       getShopInfo,
       registerPayment,
+      setGymInfo,
     }}>
     {children}
   </Context.Provider>

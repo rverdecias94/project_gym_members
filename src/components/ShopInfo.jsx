@@ -1,5 +1,5 @@
-import { Button, Grid, TextField, Typography } from "@mui/material"
-import { useEffect, useState } from "react"
+import { Button, Grid, TextField, Typography, Checkbox, FormControlLabel } from "@mui/material"
+import { useEffect, useState, useCallback } from "react"
 import { supabase } from "../supabase/client"
 import { useLocation, useNavigate } from "react-router-dom";
 import TimerButton from "./TimerButton";
@@ -73,6 +73,9 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
   const [state, setProvincia] = useState('');
   const [city, setMunicipio] = useState('');
   const [errors, setErrors] = useState({});
+  const [useGeneralSchedule, setUseGeneralSchedule] = useState(false);
+  const [generalScheduleType, setGeneralScheduleType] = useState('mon_fri');
+  const [customSchedules, setCustomSchedules] = useState(null);
 
   useEffect(() => {
     const existsUser = () => {
@@ -244,6 +247,71 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
       }
     }, 1000);
   }
+
+  const applyTemplateSchedule = useCallback((templateSlots, scheduleType) => {
+    setShopInfoState(prev => {
+      const newSchedules = { ...prev.schedules };
+
+      const daysToApply = [];
+      if (scheduleType === 'mon_fri') {
+        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday');
+      } else if (scheduleType === 'mon_sat') {
+        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
+      } else if (scheduleType === 'all_week') {
+        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
+      }
+
+      const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+      allDays.forEach(day => {
+        if (daysToApply.includes(day)) {
+          newSchedules[day] = templateSlots;
+        } else {
+          newSchedules[day] = [];
+        }
+      });
+
+      return { ...prev, schedules: newSchedules };
+    });
+  }, []);
+
+  const handleTemplateScheduleChange = (index, field, value) => {
+    const newTemplateSlots = [...(shopInfo.schedules.monday || [])];
+    newTemplateSlots[index] = { ...newTemplateSlots[index], [field]: value };
+    applyTemplateSchedule(newTemplateSlots, generalScheduleType);
+  };
+
+  const addTemplateTimeSlot = () => {
+    const newTemplateSlots = [...(shopInfo.schedules.monday || []), { start: "08:00", end: "09:00" }];
+    applyTemplateSchedule(newTemplateSlots, generalScheduleType);
+  };
+
+  const removeTemplateTimeSlot = (index) => {
+    const newTemplateSlots = [...(shopInfo.schedules.monday || [])];
+    newTemplateSlots.splice(index, 1);
+    applyTemplateSchedule(newTemplateSlots, generalScheduleType);
+  };
+
+  const handleUseGeneralScheduleChange = (e) => {
+    const isChecked = e.target.checked;
+    setUseGeneralSchedule(isChecked);
+    if (isChecked) {
+      setCustomSchedules(shopInfo.schedules);
+    } else {
+      if (customSchedules) {
+        setShopInfoState(prev => ({ ...prev, schedules: customSchedules }));
+      }
+      setCustomSchedules(null);
+    }
+  };
+
+  useEffect(() => {
+    if (useGeneralSchedule) {
+      const template = (shopInfo.schedules.monday || []);
+      applyTemplateSchedule(template, generalScheduleType);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generalScheduleType, useGeneralSchedule, applyTemplateSchedule]);
 
   const checkFormValidity = () => {
     const { shop_name, address, owner_name, owner_phone, public_phone, state, city } = shopInfo;
@@ -457,73 +525,138 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
 
           {step === 1 &&
             <Grid>
-              {shopInfo?.schedules &&
-                [
-                  { key: "monday", label: "Lunes" },
-                  { key: "tuesday", label: "Martes" },
-                  { key: "wednesday", label: "Miércoles" },
-                  { key: "thursday", label: "Jueves" },
-                  { key: "friday", label: "Viernes" },
-                  { key: "saturday", label: "Sábado" },
-                  { key: "sunday", label: "Domingo" }
-                ].map(({ key, label }) => (
-                  <div key={key} style={{ marginBottom: 15, marginTop: 20, display: 'grid', flexDirection: 'column' }}>
-                    <strong>{label}</strong>
-                    {Array.isArray(shopInfo.schedules[key]) &&
-                      shopInfo.schedules[key].map((slot, idx) => (
-                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
-                          <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <MobileTimePicker
-                              label="Inicio"
-                              value={dayjs(slot.start, 'HH:mm')}
-                              onChange={(newValue) => {
-                                const formatted = dayjs(newValue).format("HH:mm");
-                                handleScheduleChange(key, idx, "start", formatted);
-                              }}
-                              ampm={false}
-                              touchUi
-                              slotProps={{
-                                textField: {
-                                  size: "small",
-                                  fullWidth: true,
-                                },
-                              }}
-                            />
-                          </LocalizationProvider>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useGeneralSchedule}
+                    onChange={handleUseGeneralScheduleChange}
+                    name="useGeneralSchedule"
+                  />
+                }
+                label="Aplicar el mismo horario para todos los días"
+              />
 
-                          <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <MobileTimePicker
-                              label="Fin"
-                              value={dayjs(slot.end, 'HH:mm')}
-                              onChange={(newValue) => {
-                                const formatted = dayjs(newValue).format("HH:mm");
-                                handleScheduleChange(key, idx, "end", formatted);
-                              }}
-                              ampm={false}
-                              touchUi
-                              slotProps={{
-                                textField: {
-                                  size: "small",
-                                  fullWidth: true,
-                                },
-                              }}
-                            />
-                          </LocalizationProvider>
+              {useGeneralSchedule ? (
+                <div>
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Aplicar a</InputLabel>
+                    <Select
+                      value={generalScheduleType}
+                      onChange={(e) => setGeneralScheduleType(e.target.value)}
+                    >
+                      <MenuItem value="mon_fri">Lunes a Viernes</MenuItem>
+                      <MenuItem value="mon_sat">Lunes a Sábado</MenuItem>
+                      <MenuItem value="all_week">Todos los 7 días</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <hr style={{ marginTop: 20, color: "#ccc", borderTop: "1px solid #ccc" }} />
+                  <strong>Horario General</strong>
+                  {(shopInfo.schedules.monday || []).map((slot, idx) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <MobileTimePicker
+                          label="Inicio"
+                          value={dayjs(slot.start, 'HH:mm')}
+                          onChange={(newValue) => {
+                            const formatted = dayjs(newValue).format("HH:mm");
+                            handleTemplateScheduleChange(idx, "start", formatted);
+                          }}
+                          ampm={false}
+                          touchUi
+                          slotProps={{ textField: { size: "small", fullWidth: true } }}
+                        />
+                      </LocalizationProvider>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <MobileTimePicker
+                          label="Fin"
+                          value={dayjs(slot.end, 'HH:mm')}
+                          onChange={(newValue) => {
+                            const formatted = dayjs(newValue).format("HH:mm");
+                            handleTemplateScheduleChange(idx, "end", formatted);
+                          }}
+                          ampm={false}
+                          touchUi
+                          slotProps={{ textField: { size: "small", fullWidth: true } }}
+                        />
+                      </LocalizationProvider>
+                      <Button onClick={() => removeTemplateTimeSlot(idx)} color="error" size="small">Eliminar</Button>
+                    </div>
+                  ))}
+                  <Button variant="contained" onClick={addTemplateTimeSlot} size="small" sx={{ mt: 1, width: "fit-content" }}>
+                    + Añadir horario
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {shopInfo?.schedules &&
+                    [
+                      { key: "monday", label: "Lunes" },
+                      { key: "tuesday", label: "Martes" },
+                      { key: "wednesday", label: "Miércoles" },
+                      { key: "thursday", label: "Jueves" },
+                      { key: "friday", label: "Viernes" },
+                      { key: "saturday", label: "Sábado" },
+                      { key: "sunday", label: "Domingo" }
+                    ].map(({ key, label }) => (
+                      <div key={key} style={{ marginBottom: 15, marginTop: 20, display: 'grid', flexDirection: 'column' }}>
+                        <strong>{label}</strong>
+                        {Array.isArray(shopInfo.schedules[key]) &&
+                          shopInfo.schedules[key].map((slot, idx) => (
+                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
+                              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <MobileTimePicker
+                                  label="Inicio"
+                                  value={dayjs(slot.start, 'HH:mm')}
+                                  onChange={(newValue) => {
+                                    const formatted = dayjs(newValue).format("HH:mm");
+                                    handleScheduleChange(key, idx, "start", formatted);
+                                  }}
+                                  ampm={false}
+                                  touchUi
+                                  slotProps={{
+                                    textField: {
+                                      size: "small",
+                                      fullWidth: true,
+                                    },
+                                  }}
+                                />
+                              </LocalizationProvider>
 
-                          <Button onClick={() => removeTimeSlot(key, idx)} color="error" size="small">Eliminar</Button>
-                        </div>
-                      ))}
-                    <Button variant="contained" onClick={() => addTimeSlot(key)} size="small" sx={{ mt: 1, width: "fit-content" }}>
-                      + Añadir horario
-                    </Button>
-                    <hr style={{
-                      marginTop: 20,
-                      color: "#ccc",
-                      borderTop: "1px solid #ccc"
-                    }} />
-                  </div>
-                ))
-              }
+                              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <MobileTimePicker
+                                  label="Fin"
+                                  value={dayjs(slot.end, 'HH:mm')}
+                                  onChange={(newValue) => {
+                                    const formatted = dayjs(newValue).format("HH:mm");
+                                    handleScheduleChange(key, idx, "end", formatted);
+                                  }}
+                                  ampm={false}
+                                  touchUi
+                                  slotProps={{
+                                    textField: {
+                                      size: "small",
+                                      fullWidth: true,
+                                    },
+                                  }}
+                                />
+                              </LocalizationProvider>
+
+                              <Button onClick={() => removeTimeSlot(key, idx)} color="error" size="small">Eliminar</Button>
+                            </div>
+                          ))}
+                        <Button variant="contained" onClick={() => addTimeSlot(key)} size="small" sx={{ mt: 1, width: "fit-content" }}>
+                          + Añadir horario
+                        </Button>
+                        <hr style={{
+                          marginTop: 20,
+                          color: "#ccc",
+                          borderTop: "1px solid #ccc"
+                        }} />
+                      </div>
+                    ))
+                  }
+                </>
+              )}
             </Grid>
           }
         </Grid>
