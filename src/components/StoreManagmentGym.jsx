@@ -41,6 +41,7 @@ import {
   CardActions,
   Pagination,
   FormHelperText,
+  Switch,
 } from "@mui/material";
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -93,6 +94,7 @@ const StoreManagmentGym = () => {
     discount: '',
     discount_start_date: null,
     discount_end_date: null,
+    enable: true,
   });
 
   const [showDiscount, setShowDiscount] = useState(false);
@@ -293,10 +295,12 @@ const StoreManagmentGym = () => {
       };
 
       if (editingProduct) {
+        productData.enable = formData.enable;
         const { error } = await supabase.from('products').update(productData).eq('id', editingProduct.id);
         if (error) throw error;
         showMessage('Producto actualizado exitosamente', 'success');
       } else {
+        productData.enable = true;
         const { error } = await supabase.from('products').insert([productData]);
         if (error) throw error;
         showMessage('Producto creado exitosamente', 'success');
@@ -333,7 +337,8 @@ const StoreManagmentGym = () => {
       discount_end_date: product.discount_end_date ? new Date(product.discount_end_date) : null,
       category: product.category || '',
       city: product.city || 'El cerro',
-      state: product.state || 'La Habana'
+      state: product.state || 'La Habana',
+      enable: product.enable === false ? false : true,
     });
     setOpenDialog(true);
   };
@@ -371,7 +376,8 @@ const StoreManagmentGym = () => {
       discount_end_date: null,
       category: '',
       city: 'El cerro',
-      state: 'La Habana'
+      state: 'La Habana',
+      enable: true,
     });
     setFormErrors({});
   };
@@ -918,6 +924,14 @@ const StoreManagmentGym = () => {
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <Grid container spacing={2}>
+              {editingProduct && (
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={<Switch checked={formData.enable} onChange={handleInputChange} name="enable" />}
+                    label="Producto Disponible"
+                  />
+                </Grid>
+              )}
               <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
@@ -1019,12 +1033,11 @@ const StoreManagmentGym = () => {
                         name="has_delivery"
                         checked={formData.has_delivery}
                         onChange={handleInputChange}
-                        disabled={formData.free_delivery}
                         size={isMobile ? "small" : "medium"}
                       />
                     }
                     label={
-                      <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: formData.free_delivery ? 'text.disabled' : 'text.primary' }}>Mensajería/Envío a domicilio (costo adicional)
+                      <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: 'text.primary' }}>Mensajería/Envío a domicilio (costo adicional)
                       </Typography>}
                   />
                   <FormControlLabel
@@ -1033,10 +1046,9 @@ const StoreManagmentGym = () => {
                         name="free_delivery"
                         checked={formData.free_delivery}
                         onChange={handleInputChange}
-                        disabled={formData.has_delivery}
                         size={isMobile ? "small" : "medium"} />}
                     label={
-                      <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: (formData.has_delivery) ? 'text.disabled' : 'success.main', fontWeight: formData.free_delivery ? 600 : 400 }}>Entrega gratis (el vendedor entrega sin costo)
+                      <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: 'success.main', fontWeight: formData.free_delivery ? 600 : 400 }}>Entrega gratis (el vendedor entrega sin costo)
                       </Typography>}
                   />
                   <Box sx={{ borderTop: '1px solid', borderColor: 'divider', mt: 1, pt: 1 }}>
