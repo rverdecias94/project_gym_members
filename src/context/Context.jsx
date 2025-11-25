@@ -3,6 +3,7 @@ import { supabase } from "../supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "./Snackbar";
 import dayjs from "dayjs";
+import { identifyAccountType } from "../services/accountType";
 
 export const Context = createContext();
 
@@ -49,72 +50,97 @@ export const ContextProvider = ({ children }) => {
 
 
 
-  useEffect(() => {
+  // Unified getGymInfo function
+  const getGymInfo = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
 
-    const getGymInfo = async () => {
-      setTimeout(async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error("Usuario no autenticado");
+      const { data, error } = await supabase
+        .from('info_general_gym')
+        .select('*')
+        .eq('owner_id', user.id)
+        .single(); // Expecting a single row
+
+      if (error) {
+        console.error("Error fetching gym info:", error);
+        showMessage("Error al cargar la información del gimnasio", "error");
+        return null;
+      }
+
+      if (data) {
+        setGymInfo(data); // Update state
+        if (data.next_payment_date) {
+          const today = new Date();
+          const futureDate = new Date(data.next_payment_date);
+          const timeDifference = futureDate - today;
+          const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+          setDaysRemaining(daysDifference);
         }
+      }
+      return data; // Return data if needed by caller
+    } catch (error) {
+      console.error(error);
+      showMessage("Ha ocurrido un error inesperado al obtener la información del gimnasio.", "error");
+      return null;
+    }
+  };
 
-        const { data } = await supabase
-          .from('info_general_gym')
-          .select()
-          .eq('owner_id', user.id)
+  // Unified getShopInfo function
+  const getShopInfo = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
 
-        if (data && data.length > 0 && data[0].next_payment_date !== "") {
-          const calculateDays = () => {
+      const { data, error } = await supabase
+        .from('info_shops')
+        .select('*')
+        .eq('owner_id', user.id)
+        .single(); // Expecting a single row
+
+      if (error) {
+        console.error("Error fetching shop info:", error);
+        showMessage("Error al cargar la información de la tienda", "error");
+        return null;
+      }
+
+      if (data) {
+        setShopInfo(data); // Update state
+      }
+      return data; // Return data if needed by caller
+    } catch (error) {
+      console.error(error);
+      showMessage("Ha ocurrido un error inesperado al obtener la información de la tienda.", "error");
+      return null;
+    }
+  };
+
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { type, data } = await identifyAccountType(user.id);
+        if (type === 'gym') {
+          setGymInfo(data);
+          if (data.next_payment_date) {
             const today = new Date();
-            const futureDate = new Date(data[0].next_payment_date);
+            const futureDate = new Date(data.next_payment_date);
             const timeDifference = futureDate - today;
             const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
             setDaysRemaining(daysDifference);
-          };
-
-          setGymInfo(data[0]);
-
-          calculateDays();
+          }
+        } else if (type === 'shop') {
+          setShopInfo(data);
         }
-      }, 100)
-    }
-    getGymInfo();
+      }
+    };
+    fetchInitialData();
   }, []);
-
-
-
-
-  const getShopInfo = async () => {
-    setTimeout(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("Usuario no autenticado");
-      }
-
-      const { data } = await supabase
-        .from('info_shops')
-        .select()
-        .eq('owner_id', user.id)
-
-      return data[0]
-    }, 100)
-  }
-  const getGymInfo = async () => {
-    setTimeout(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("Usuario no autenticado");
-      }
-
-      const { data } = await supabase
-        .from('info_general_gym')
-        .select()
-        .eq('owner_id', user.id)
-
-      return data[0]
-    }, 100)
-  }
 
 
   const getMembers = async (value) => {
@@ -213,8 +239,8 @@ export const ContextProvider = ({ children }) => {
 
     setTimeout(async () => {
       try {
-        const { data } = await supabase.auth.getUser();
-        const result = await supabase.from("members").insert({
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: newMembers, error: insertError } = await supabase.from("members").insert({
           first_name: dataToSave.first_name,
           last_name: dataToSave.last_name,
           ci: dataToSave.ci,
@@ -225,17 +251,51 @@ export const ContextProvider = ({ children }) => {
           trainer_name: dataToSave.trainer_name,
           image_profile: dataToSave.image_profile,
           pay_date: dataToSave.pay_date,
-          gym_id: data?.user?.id,
-        });
+          gym_id: user?.id,
+        }).select();
 
         setBackdrop(false);
         navigate("/clientes");
 
-        if (result) {
-          showMessage("Registro guardado satisfactoriamente", "success");
+        if (insertError) {
+          showMessage("Registro no guardado: " + insertError.message, "error");
+          return;
+        }
+
+        if (newMembers && newMembers.length > 0) {
+          const newMember = newMembers[0];
+          const months = 1; // Primer pago es siempre de 1 mes
+          const trainerIncluded = newMember.has_trainer;
+
+          const monthlyPayment = gymInfo.monthly_payment || 0;
+          const trainerCost = gymInfo.trainers_cost || 0;
+
+          let totalAmount = monthlyPayment * months;
+          if (trainerIncluded && newMember.trainer_name) {
+            totalAmount += trainerCost * months;
+          }
+
+          const { error: historyError } = await supabase
+            .from('payment_history_members')
+            .insert({
+              member_id: newMember.id,
+              gym_id: user.id,
+              quantity_paid: totalAmount,
+              currency: gymInfo.monthly_currency || 'CUP',
+              trainer_included: trainerIncluded,
+              next_payment: new_payment_date
+            });
+
+          if (historyError) {
+            showMessage("Cliente creado, pero falló el registro del pago inicial.", "warning");
+            console.error("Payment history error:", historyError);
+          } else {
+            showMessage("Registro guardado satisfactoriamente", "success");
+          }
+
           await getMembers(true);
         } else {
-          showMessage("Registro no guardado", "error");
+          showMessage("Registro no guardado.", "error");
         }
       } catch (error) {
         console.error(error);
@@ -415,7 +475,8 @@ export const ContextProvider = ({ children }) => {
       }
     } catch (error) {
       console.error(error)
-    } finally {
+    }
+    finally {
       setAdding(false);
     }
   };

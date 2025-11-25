@@ -28,19 +28,22 @@ const CustomSwitch = styled(Switch)(() => ({
       transform: 'translateX(22px)',
       '& + .MuiSwitch-track': {
         opacity: 1,
-        backgroundColor: '#aab4be',
+        backgroundColor: '#d8d1f1d0',
       },
     },
   },
   '& .MuiSwitch-thumb': {
-    backgroundColor: '#e49c10',
+    backgroundColor: '#1da274ff',
     width: 32,
     height: 32,
   },
   '& .MuiSwitch-track': {
     opacity: 1,
-    backgroundColor: '#aab4be',
+    backgroundColor: '#46a27266',
     borderRadius: 20 / 2,
+  },
+  '& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb': {
+    backgroundColor: '#6353bd',
   },
 }));
 
@@ -89,7 +92,7 @@ const AdminPanel = () => {
   const getAllGyms = async () => {
     setRotate(true);
     try {
-      const { data, error } = await supabase.from('info_general_gym').select('*');
+      const { data, error } = await supabase.from('info_general_gym').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       setGymInfo(data || []);
       setGymInfoOriginal(data || []);
@@ -105,7 +108,7 @@ const AdminPanel = () => {
   const getAllShops = async () => {
     setRotate(true);
     try {
-      const { data, error } = await supabase.from('info_shops').select('*');
+      const { data, error } = await supabase.from('info_shops').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       setShopInfo(data || []);
       setShopInfoOriginal(data || []);
@@ -221,11 +224,31 @@ const AdminPanel = () => {
     }
   }
 
+  const isNewRow = (row) => {
+    const propertiesToCheck = ['gym_name', 'address', 'owner_name', 'owner_phone', 'public_phone', 'state', 'city'];
+    return row.active === null && propertiesToCheck.some(prop => row[prop]?.includes('DEFAULT_'));
+  };
+
+  const isOverdue = (row) => {
+    return dayjs(row.next_payment_date).isBefore(dayjs(), 'day');
+  };
+
+  const getRowClassName = (params) => {
+    if (isNewRow(params.row)) {
+      return 'new-row';
+    }
+    if (isOverdue(params.row)) {
+      return 'overdue-row';
+    }
+    return '';
+  };
+
   const gymColumns = [
     { field: 'gym_name', headerName: 'Nombre Gym', width: 130 },
     { field: 'address', headerName: 'Dirección', width: 130 },
     { field: 'owner_name', headerName: 'Propietario', width: 110 },
     { field: 'owner_phone', headerName: 'Teléfono', width: 110, renderCell: (params) => params.value || "-" },
+    { field: 'created_at', headerName: 'Fecha Creación', width: 120, renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY') },
     {
       field: 'next_payment_date', headerName: 'Fecha de Pago', width: 180,
       renderCell: ({ row }) => (
@@ -239,10 +262,13 @@ const AdminPanel = () => {
     },
     { field: 'state', headerName: 'Provincia', width: 110, renderCell: (params) => params.value || "-" },
     { field: 'city', headerName: 'Municipio', width: 110, renderCell: (params) => params.value || "-" },
-    { field: 'clients', headerName: 'Clientes', width: 80 },
+    { field: 'clients', headerName: 'Clientes', width: 80, renderCell: (params) => params.value > 0 ? params.value : "-" },
     {
       field: 'monthly_payment', headerName: 'Pago Mensual', width: 100,
-      renderCell: ({ row }) => (<Typography>{row.store ? calculateDebt(row.created_at, row.next_payment_date, 28) : calculateDebt(row.created_at, row.next_payment_date, 15)} USD</Typography>),
+      renderCell: ({ row }) => {
+        const payment = row.store ? calculateDebt(row.created_at, row.next_payment_date, 28) : calculateDebt(row.created_at, row.next_payment_date, 15);
+        return <Typography>{payment > 0 ? `${payment.toFixed(2)} USD` : '-'}</Typography>;
+      },
     },
     {
       field: 'actions', headerName: 'Activar', sortable: false, width: 100,
@@ -259,6 +285,7 @@ const AdminPanel = () => {
     { field: 'address', headerName: 'Dirección', width: 150 },
     { field: 'owner_name', headerName: 'Propietario', width: 130 },
     { field: 'owner_phone', headerName: 'Teléfono', width: 120, renderCell: (params) => params.value || "-" },
+    { field: 'created_at', headerName: 'Fecha Creación', width: 120, renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY') },
     {
       field: 'next_payment_date', headerName: 'Fecha de Pago', width: 180,
       renderCell: ({ row }) => (
@@ -280,6 +307,16 @@ const AdminPanel = () => {
 
   return (
     <>
+      <style>
+        {`
+          .new-row {
+            background-color: rgba(188, 238, 219, 1) !important;
+          }
+          .overdue-row {
+            background-color: #ffcccb !important;
+          }
+        `}
+      </style>
       <Box p={2}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
           <Grid item xs={12} sm={4}>
@@ -310,20 +347,21 @@ const AdminPanel = () => {
 
         <TabPanel value={tabValue} index={0}>
           {!isMobile ? (
-            <DataGrid autoHeight rows={gymInfo} columns={gymColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} />
+            <DataGrid autoHeight rows={gymInfo} columns={gymColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} getRowClassName={getRowClassName} />
           ) : (
             <Grid container spacing={2}>
               {gymInfo.map((gym) => (
                 <Grid item xs={12} key={gym.owner_id}>
-                  <Card>
+                  <Card className={getRowClassName({ row: gym })}>
                     <CardContent>
                       <Typography variant="h6">{gym.gym_name}</Typography>
                       <Typography variant="body2">Dirección: {gym.address}</Typography>
                       <Typography variant="body2">Propietario: {gym.owner_name}</Typography>
                       <Typography variant="body2">Teléfono: {gym.owner_phone || '-'}</Typography>
+                      <Typography variant="body2">Fecha Creación: {dayjs(gym.created_at).format('DD/MM/YYYY')}</Typography>
                       <Typography variant="body2">Provincia: {gym.state || '-'}</Typography>
                       <Typography variant="body2">Municipio: {gym.city || '-'}</Typography>
-                      <Typography variant="body2">Clientes: {gym.clients}</Typography>
+                      <Typography variant="body2">Clientes: {gym.clients > 0 ? gym.clients : '-'}</Typography>
                       <Box mt={2}>
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                           <MobileDatePicker
@@ -353,17 +391,18 @@ const AdminPanel = () => {
 
         <TabPanel value={tabValue} index={1}>
           {!isMobile ? (
-            <DataGrid autoHeight rows={shopInfo} columns={shopColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} />
+            <DataGrid autoHeight rows={shopInfo} columns={shopColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} getRowClassName={getRowClassName} />
           ) : (
             <Grid container spacing={2}>
               {shopInfo.map((shop) => (
                 <Grid item xs={12} key={shop.owner_id}>
-                  <Card>
+                  <Card className={getRowClassName({ row: shop })}>
                     <CardContent>
                       <Typography variant="h6">{shop.shop_name}</Typography>
                       <Typography variant="body2">Dirección: {shop.address}</Typography>
                       <Typography variant="body2">Propietario: {shop.owner_name}</Typography>
                       <Typography variant="body2">Teléfono: {shop.owner_phone || '-'}</Typography>
+                      <Typography variant="body2">Fecha Creación: {dayjs(shop.created_at).format('DD/MM/YYYY')}</Typography>
                       <Typography variant="body2">Provincia: {shop.state || '-'}</Typography>
                       <Typography variant="body2">Municipio: {shop.city || '-'}</Typography>
                       <Box mt={2}>

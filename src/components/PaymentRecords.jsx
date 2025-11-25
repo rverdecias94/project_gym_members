@@ -74,7 +74,6 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: '#f5f5f5'
       }}>
         <Typography variant="h6">
           Historial de Pagos - {memberInfo?.first_name} {memberInfo?.last_name}
@@ -93,7 +92,7 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
         ) : paymentsList?.length > 0 ? (
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650 }} aria-label="historial de pagos">
-              <TableHead sx={{ backgroundColor: '#f8f9fa' }}>
+              <TableHead>
                 <TableRow>
                   <TableCell><strong>Fecha de Pago</strong></TableCell>
                   <TableCell><strong>Próximo Pago</strong></TableCell>
@@ -104,12 +103,11 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paymentsList.map((payment, index) => (
+                {paymentsList.map((payment) => (
                   <TableRow
                     key={payment.id}
                     sx={{
-                      '&:last-child td, &:last-child th': { border: 0 },
-                      backgroundColor: index % 2 === 0 ? '#fafafa' : 'white'
+                      '&:last-child td, &:last-child th': { border: 0 }
                     }}
                   >
                     <TableCell>
@@ -156,7 +154,7 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
 
         {/* Información resumida */}
         {paymentsList.length > 0 && (
-          <Paper sx={{ p: 2, mt: 2, backgroundColor: '#e3f2fd' }}>
+          <Paper sx={{ p: 2, mt: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
               <strong>Resumen:</strong> {paymentsList.length} pago(s) registrado(s)
             </Typography>
