@@ -5,7 +5,9 @@ import { styled, useTheme } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import {
   Button, Grid, TextField, Typography, useMediaQuery,
-  Card, CardContent, CardActions, Box, Tabs, Tab
+  Card, CardContent, CardActions, Box, Tabs, Tab,
+  Tooltip,
+  IconButton
 } from "@mui/material";
 import { supabase } from '../supabase/client';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
@@ -14,6 +16,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { useSnackbar } from "../context/Snackbar";
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import PaymentIcon from '@mui/icons-material/Payment';
 
 const CustomSwitch = styled(Switch)(() => ({
   width: 62,
@@ -246,7 +250,7 @@ const AdminPanel = () => {
   const gymColumns = [
     { field: 'gym_name', headerName: 'Nombre Gym', width: 130 },
     { field: 'address', headerName: 'Dirección', width: 130 },
-    { field: 'owner_name', headerName: 'Propietario', width: 110 },
+    { field: 'owner_name', headerName: 'Propietario', width: 200 },
     { field: 'owner_phone', headerName: 'Teléfono', width: 110, renderCell: (params) => params.value || "-" },
     { field: 'created_at', headerName: 'Fecha Creación', width: 120, renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY') },
     {
@@ -275,15 +279,49 @@ const AdminPanel = () => {
       renderCell: ({ row }) => (<CustomSwitch onChange={() => updateActiveStatus(row, 'gym')} checked={row.active} />),
     },
     {
-      field: 'store', headerName: 'Tienda Activa', sortable: false, width: 120,
-      renderCell: ({ row }) => (<CustomSwitch onChange={() => updateStoreActivation(row)} checked={row.store} />),
+      field: 'store', headerName: 'Plan Activo', sortable: false, width: 130,
+      renderCell: ({ row }) => {
+        return (
+          <div>
+            {/* <CustomSwitch onChange={() => updateStoreActivation(row)} checked={row.store} /> */}
+            {row.store ? "Premium" : "Estándar"}
+          </div>
+        )
+      }
     },
+    {
+      field: 'payments', headerName: 'Registrar Pago', width: 150,
+      renderCell: ({ row }) => {
+        return (
+          <div>
+            <Tooltip title="Registrar Pago" placement='top'>
+              <IconButton
+                sx={{ color: "green" }}
+                onClick={() => alert(row?.owner_id)}
+                size="small"
+              >
+                <PaymentIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Historial de Pago" placement='top'>
+              <IconButton
+                sx={{ color: "green" }}
+                onClick={() => alert(row?.owner_name)}
+                size="small"
+              >
+                <RequestQuoteIcon />
+              </IconButton>
+            </Tooltip>
+          </div>
+        )
+      },
+    }
   ];
 
   const shopColumns = [
     { field: 'shop_name', headerName: 'Nombre Tienda', width: 150 },
     { field: 'address', headerName: 'Dirección', width: 150 },
-    { field: 'owner_name', headerName: 'Propietario', width: 130 },
+    { field: 'owner_name', headerName: 'Propietario', width: 200 },
     { field: 'owner_phone', headerName: 'Teléfono', width: 120, renderCell: (params) => params.value || "-" },
     { field: 'created_at', headerName: 'Fecha Creación', width: 120, renderCell: (params) => dayjs(params.value).format('DD/MM/YYYY') },
     {

@@ -108,12 +108,22 @@ const StoreManagment = () => {
 
   const now = new Date();
 
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersItemsPerPage] = useState(5);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [cancelOrder, setCancelOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+
   useEffect(() => {
     const getData = async () => {
       try {
         let data = await getShopInfo();
         if (data) {
           await getProducts();
+          await getOrders();
         }
       } catch (error) {
         console.error('Error getting shop info:', error);
@@ -152,6 +162,101 @@ const StoreManagment = () => {
       console.error('Error fetching products:', error);
     } finally {
       setLoadingProducts(false);
+    }
+  };
+
+  const mapPurchaseType = (t) => {
+    if (t === 0) return 'Recogida local';
+    if (t === 1) return 'Envío rápido';
+    if (t === 2) return 'Envío gratis';
+    return '-';
+  };
+
+  const mapStatus = (s) => {
+    if (s === 0) return 'Recibida';
+    if (s === 1) return 'Procesada';
+    if (s === 2) return 'Entregada';
+    if (s === 3) return 'Cancelada';
+    return '-';
+  };
+
+  const getOrders = async () => {
+    setLoadingOrders(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('uid_shop', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      const rows = data || [];
+      const memberIds = Array.from(new Set(rows.map(r => r.uid_members).filter(Boolean)));
+      let membersMap = {};
+      if (memberIds.length > 0) {
+        const { data: membersData } = await supabase
+          .from('members')
+          .select('member_id, first_name, last_name')
+          .in('member_id', memberIds);
+        (membersData || []).forEach(m => { membersMap[m.member_id] = `${m.first_name} ${m.last_name}`; });
+      }
+      const enriched = rows.map(r => ({
+        ...r,
+        member_name: r.uid_members ? (membersMap[r.uid_members] || '-') : '-',
+      }));
+      setOrders(enriched);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      showMessage('Error al cargar órdenes', 'error');
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  const handleChangeOrderStatus = async (order, newStatus) => {
+    if (newStatus === 3) {
+      setCancelOrder(order);
+      setCancelReason('');
+      setOpenCancelDialog(true);
+      return;
+    }
+    setStatusUpdatingId(order.id);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus, modification_date: new Date().toISOString() })
+        .eq('id', order.id);
+      if (error) throw error;
+      await getOrders();
+      showMessage('Estado actualizado', 'success');
+    } catch (err) {
+      console.error(err);
+      showMessage('No se pudo actualizar el estado', 'error');
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const confirmCancelOrder = async () => {
+    if (!cancelOrder) return;
+    setStatusUpdatingId(cancelOrder.id);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 3, cancellation_reason: cancelReason, modification_date: new Date().toISOString() })
+        .eq('id', cancelOrder.id);
+      if (error) throw error;
+      setOpenCancelDialog(false);
+      setCancelOrder(null);
+      setCancelReason('');
+      await getOrders();
+      showMessage('Orden cancelada', 'success');
+    } catch (err) {
+      console.error(err);
+      showMessage('No se pudo cancelar la orden', 'error');
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -544,6 +649,7 @@ const StoreManagment = () => {
 
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 3, '& .MuiTab-root': { fontSize: isMobile ? '0.8rem' : '0.875rem', minWidth: isMobile ? 'auto' : 160 } }} variant={isMobile ? "fullWidth" : "standard"}>
           <Tab label="Lista de Productos" />
+          <Tab label="Órdenes" />
           <Tab label="Catálogo" />
         </Tabs>
         {tabValue === 0 && (
@@ -641,7 +747,154 @@ const StoreManagment = () => {
             )}
           </>
         )}
-        {tabValue === 1 && (
+
+        {
+          tabValue === 1 && (
+            <>
+              {!isMobile ? (
+                <>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Fecha</TableCell>
+                          <TableCell>Cliente</TableCell>
+                          <TableCell>Productos</TableCell>
+                          <TableCell>Precio</TableCell>
+                          <TableCell>Total</TableCell>
+                          <TableCell>Cantidad</TableCell>
+                          <TableCell>Tipo de entrega</TableCell>
+                          <TableCell>Dirección</TableCell>
+                          <TableCell>Estado</TableCell>
+                          <TableCell>Acciones</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {loadingOrders ? (
+                          <TableRow>
+                            <TableCell colSpan={10} align="center"><CircularProgress size={24} /></TableCell>
+                          </TableRow>
+                        ) : orders.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={10} align="center">No hay órdenes registradas</TableCell>
+                          </TableRow>
+                        ) : (
+                          (() => {
+                            const startIndex = (ordersPage - 1) * ordersItemsPerPage;
+                            const endIndex = startIndex + ordersItemsPerPage;
+                            const currentOrders = orders.slice(startIndex, endIndex);
+                            return currentOrders.map(order => (
+                              <TableRow key={order.id}>
+                                <TableCell>{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</TableCell>
+                                <TableCell>{order.member_name}</TableCell>
+                                <TableCell>{order.name_products}</TableCell>
+                                <TableCell>{order.price} {order.currency}</TableCell>
+                                <TableCell>{order.price_total} {order.currency}</TableCell>
+                                <TableCell>{order.amount ?? '-'}</TableCell>
+                                <TableCell>{mapPurchaseType(order.purchase_type)}</TableCell>
+                                <TableCell>{order.delivery_address ? order.delivery_address : '-'}</TableCell>
+                                <TableCell>
+                                  <Chip label={mapStatus(order.status)} size="small" color={order.status === 3 ? 'error' : (order.status === 2 ? 'success' : 'default')} />
+                                </TableCell>
+                                <TableCell>
+                                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                                    <Select
+                                      value={order.status}
+                                      onChange={(e) => handleChangeOrderStatus(order, parseInt(e.target.value))}
+                                      disabled={statusUpdatingId === order.id}
+                                    >
+                                      <MenuItem value={0}>Recibida</MenuItem>
+                                      <MenuItem value={1}>Procesada</MenuItem>
+                                      <MenuItem value={2}>Entregada</MenuItem>
+                                      <MenuItem value={3}>Cancelada</MenuItem>
+                                    </Select>
+                                  </FormControl>
+                                </TableCell>
+                              </TableRow>
+                            ));
+                          })()
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  {Math.ceil(orders.length / ordersItemsPerPage) > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                      <Pagination
+                        count={Math.ceil(orders.length / ordersItemsPerPage)}
+                        page={ordersPage}
+                        onChange={(e, v) => setOrdersPage(v)}
+                        color="primary"
+                        showFirstButton
+                        showLastButton
+                      />
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <Box sx={{ width: '100%' }}>
+                  {loadingOrders ? (
+                    <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
+                  ) : orders.length === 0 ? (
+                    <Typography variant="body1" sx={{ textAlign: 'center', py: 4, fontSize: '0.9rem' }}>No hay órdenes registradas</Typography>
+                  ) : (
+                    (() => {
+                      const startIndex = (ordersPage - 1) * ordersItemsPerPage;
+                      const endIndex = startIndex + ordersItemsPerPage;
+                      const currentOrders = orders.slice(startIndex, endIndex);
+                      return (
+                        <>
+                          {currentOrders.map(order => (
+                            <Card key={order.id} sx={{ mb: 2 }}>
+                              <CardContent>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{order.member_name}</Typography>
+                                <Typography variant="body2">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</Typography>
+                                <Typography variant="body2"><strong>Productos:</strong> {order.name_products}</Typography>
+                                <Typography variant="body2"><strong>Monto:</strong> {order.price_total} {order.currency}</Typography>
+                                <Typography variant="body2"><strong>Cantidad:</strong> {order.amount ?? '-'}</Typography>
+                                <Typography variant="body2"><strong>Tipo:</strong> {mapPurchaseType(order.purchase_type)}</Typography>
+                                <Typography variant="body2"><strong>Dirección:</strong> {order.delivery_address ? order.delivery_address : '-'}</Typography>
+                                <Box mt={1}><Chip label={mapStatus(order.status)} size="small" color={order.status === 3 ? 'error' : (order.status === 2 ? 'success' : 'default')} /></Box>
+                              </CardContent>
+                              <CardActions sx={{ justifyContent: 'flex-end' }}>
+                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                                  <Select
+                                    value={order.status}
+                                    onChange={(e) => handleChangeOrderStatus(order, parseInt(e.target.value))}
+                                    disabled={statusUpdatingId === order.id}
+                                  >
+                                    <MenuItem value={0}>Recibida</MenuItem>
+                                    <MenuItem value={1}>Procesada</MenuItem>
+                                    <MenuItem value={2}>Entregada</MenuItem>
+                                    <MenuItem value={3}>Cancelada</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              </CardActions>
+                            </Card>
+                          ))}
+                          {Math.ceil(orders.length / ordersItemsPerPage) > 1 && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                              <Pagination
+                                count={Math.ceil(orders.length / ordersItemsPerPage)}
+                                page={ordersPage}
+                                onChange={(e, v) => setOrdersPage(v)}
+                                color="primary"
+                                size="small"
+                                showFirstButton
+                                showLastButton
+                              />
+                            </Box>
+                          )}
+                        </>
+                      );
+                    })()
+                  )}
+                </Box>
+              )}
+            </>
+          )
+        }
+
+        {tabValue === 2 && (
           <Grid container spacing={isMobile ? 2 : 3}>
             {loadingProducts ? (
               <Grid item xs={12} display="flex" justifyContent="center"><CircularProgress /></Grid>
@@ -768,6 +1021,30 @@ const StoreManagment = () => {
         <DialogActions style={{ padding: "1.25rem" }}>
           <Button onClick={handleCloseDialog} color='error' variant='contained' size={isMobile ? "small" : "medium"} sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>Cancelar</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={submitting || !formIsValid} size={isMobile ? "small" : "medium"} sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>{submitting ? (<CircularProgress size={isMobile ? 16 : 24} />) : ('Guardar')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openCancelDialog}
+        onClose={() => setOpenCancelDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Cancelar orden</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>Confirme la cancelación e indique el motivo.</Typography>
+          <TextField
+            label="Motivo de cancelación"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            fullWidth
+            multiline
+            minRows={2}
+          />
+        </DialogContent>
+        <DialogActions style={{ padding: "1.25rem" }}>
+          <Button onClick={() => setOpenCancelDialog(false)} color='inherit' variant='outlined' size={isMobile ? "small" : "medium"}>Cerrar</Button>
+          <Button onClick={confirmCancelOrder} color='error' variant='contained' size={isMobile ? "small" : "medium"} disabled={!cancelReason || statusUpdatingId === (cancelOrder?.id || null)}>Cancelar orden</Button>
         </DialogActions>
       </Dialog>
     </Container >
