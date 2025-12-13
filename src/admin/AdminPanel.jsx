@@ -7,7 +7,15 @@ import {
   Button, Grid, TextField, Typography, useMediaQuery,
   Card, CardContent, CardActions, Box, Tabs, Tab,
   Tooltip,
-  IconButton
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from "@mui/material";
 import { supabase } from '../supabase/client';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
@@ -83,6 +91,16 @@ const AdminPanel = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { showMessage } = useSnackbar();
+  const [openPayment, setOpenPayment] = useState(false);
+  const [openHistory, setOpenHistory] = useState(false);
+  const [selectedGym, setSelectedGym] = useState(null);
+  const [selectedType, setSelectedType] = useState('gym');
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentCurrency, setPaymentCurrency] = useState("USD");
+  const [paymentNextDate, setPaymentNextDate] = useState(null);
+  const [paymentPlan, setPaymentPlan] = useState("Estándar");
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [historyRows, setHistoryRows] = useState([]);
 
   useEffect(() => {
     fetchAllData();
@@ -168,6 +186,72 @@ const AdminPanel = () => {
       getAllGyms();
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleOpenPayment = (row) => {
+    setSelectedGym(row);
+    setSelectedType(tabValue === 0 ? 'gym' : 'shop');
+    setPaymentAmount("");
+    setPaymentCurrency("USD");
+    setPaymentNextDate(row?.next_payment_date ? dayjs(row.next_payment_date) : null);
+    setPaymentPlan(row?.store ? "Premium" : "Estándar");
+    setOpenPayment(true);
+  };
+
+  const handleSavePayment = async () => {
+    if (!selectedGym || !paymentAmount || !paymentCurrency) {
+      showMessage("Complete los campos requeridos", "error");
+      return;
+    }
+    setSavingPayment(true);
+    try {
+      if (selectedType === 'gym') {
+        const desiredStore = paymentPlan === "Premium";
+        if (!!selectedGym.store !== desiredStore) {
+          await updateStoreActivation(selectedGym);
+        }
+      }
+      await updateNextPaymentDate(selectedGym, paymentNextDate, selectedType);
+      const payload = {
+        uid_customer: selectedGym.owner_id,
+        quantity_paid: parseFloat(paymentAmount),
+        currency: paymentCurrency,
+        next_payment_date: paymentNextDate ? dayjs(paymentNextDate).format("YYYY-MM-DD") : null,
+        active_plan: selectedType === 'gym' ? paymentPlan : null,
+      };
+      const { error } = await supabase.from('payment_history_customer').insert(payload);
+      if (error) throw error;
+      showMessage("Pago registrado", "success");
+      setOpenPayment(false);
+      setSelectedGym(null);
+      setPaymentAmount("");
+      setPaymentCurrency("USD");
+      setPaymentNextDate(null);
+      setPaymentPlan("Estándar");
+    } catch (err) {
+      console.error(err);
+      showMessage("Error registrando pago", "error");
+    } finally {
+      setSavingPayment(false);
+    }
+  };
+
+  const handleOpenHistory = async (row) => {
+    setSelectedGym(row);
+    setSelectedType(tabValue === 0 ? 'gym' : 'shop');
+    setOpenHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('payment_history_customer')
+        .select('*')
+        .eq('uid_customer', row.owner_id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setHistoryRows(data || []);
+    } catch (err) {
+      console.error(err);
+      showMessage("Error cargando historial", "error");
     }
   };
 
@@ -297,7 +381,7 @@ const AdminPanel = () => {
             <Tooltip title="Registrar Pago" placement='top'>
               <IconButton
                 sx={{ color: "green" }}
-                onClick={() => alert(row?.owner_id)}
+                onClick={() => handleOpenPayment(row)}
                 size="small"
               >
                 <PaymentIcon />
@@ -306,7 +390,7 @@ const AdminPanel = () => {
             <Tooltip title="Historial de Pago" placement='top'>
               <IconButton
                 sx={{ color: "green" }}
-                onClick={() => alert(row?.owner_name)}
+                onClick={() => handleOpenHistory(row)}
                 size="small"
               >
                 <RequestQuoteIcon />
@@ -340,6 +424,23 @@ const AdminPanel = () => {
     {
       field: 'active', headerName: 'Activar', sortable: false, width: 100,
       renderCell: ({ row }) => (<CustomSwitch onChange={() => updateActiveStatus(row, 'shop')} checked={row.active} />),
+    },
+    {
+      field: 'payments', headerName: 'Registrar Pago', width: 150,
+      renderCell: ({ row }) => (
+        <div>
+          <Tooltip title="Registrar Pago" placement='top'>
+            <IconButton sx={{ color: "green" }} onClick={() => handleOpenPayment(row)} size="small">
+              <PaymentIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Historial de Pago" placement='top'>
+            <IconButton sx={{ color: "green" }} onClick={() => handleOpenHistory(row)} size="small">
+              <RequestQuoteIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
+      ),
     },
   ];
 
@@ -464,6 +565,68 @@ const AdminPanel = () => {
           )}
         </TabPanel>
       </Box>
+
+      <Dialog open={openPayment} onClose={() => setOpenPayment(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Registrar Pago</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2, mt: 1 }}>
+            <Typography variant="body2">{selectedGym?.gym_name || selectedGym?.shop_name}</Typography>
+            <TextField label="Cantidad a pagar" type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} fullWidth />
+            <FormControl fullWidth>
+              <InputLabel>Moneda</InputLabel>
+              <Select value={paymentCurrency} label="Moneda" onChange={(e) => setPaymentCurrency(e.target.value)}>
+                <MenuItem value="CUP">CUP</MenuItem>
+                <MenuItem value="USD">USD</MenuItem>
+              </Select>
+            </FormControl>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <MobileDatePicker
+                label="Próxima fecha de pago"
+                value={paymentNextDate}
+                onChange={(newDate) => setPaymentNextDate(newDate)}
+              />
+            </LocalizationProvider>
+            {selectedType === 'gym' && (
+              <FormControl fullWidth>
+                <InputLabel>Tipo de plan</InputLabel>
+                <Select value={paymentPlan} label="Tipo de plan" onChange={(e) => setPaymentPlan(e.target.value)}>
+                  <MenuItem value="Estándar">Estándar</MenuItem>
+                  <MenuItem value="Premium">Premium</MenuItem>
+                </Select>
+              </FormControl>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPayment(false)}>Cerrar</Button>
+          <Button onClick={handleSavePayment} variant="contained" disabled={savingPayment || !paymentAmount || !paymentCurrency}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Historial de Pago</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
+            {historyRows.length === 0 ? (
+              <Typography variant="body2">Sin registros</Typography>
+            ) : (
+              historyRows.map((h) => (
+                <Card key={h.id} sx={{ mb: 1 }}>
+                  <CardContent>
+                    <Typography variant="body2">{dayjs(h.created_at).format('DD/MM/YYYY')}</Typography>
+                    <Typography variant="body2">{h.quantity_paid} {h.currency}</Typography>
+                    <Typography variant="body2">Próximo pago: {h.next_payment_date ? dayjs(h.next_payment_date).format('DD/MM/YYYY') : '-'}</Typography>
+                    <Typography variant="body2">Plan: {h.active_plan}</Typography>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenHistory(false)}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
