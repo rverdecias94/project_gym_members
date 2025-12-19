@@ -470,15 +470,6 @@ const AdminPanel = () => {
               <TextField fullWidth label={`Buscar en ${tabValue === 0 ? 'Gimnasios' : 'Tiendas'}`} value={search} onChange={handleSearch} size="small" />
             }
           </Grid>
-          <Grid item xs={12} sm={2}>
-            <Button
-              fullWidth
-              onClick={fetchAllData}
-              sx={{ transition: 'transform 1s ease', transform: rotate ? 'rotate(360deg)' : 'rotate(0deg)' }}
-            >
-              <AutorenewIcon />
-            </Button>
-          </Grid>
         </Grid>
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
@@ -491,7 +482,16 @@ const AdminPanel = () => {
 
         <TabPanel value={tabValue} index={0}>
           {!isMobile ? (
-            <DataGrid autoHeight rows={gymInfo} columns={gymColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} getRowClassName={getRowClassName} />
+            <>
+              <DataGrid autoHeight rows={gymInfo} columns={gymColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} getRowClassName={getRowClassName} />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Tooltip title="Recargar">
+                  <IconButton onClick={getAllGyms} sx={{ transition: 'transform 1s ease', transform: rotate ? 'rotate(360deg)' : 'rotate(0deg)' }}>
+                    <AutorenewIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </>
           ) : (
             <Grid container spacing={2}>
               {gymInfo.map((gym) => (
@@ -534,7 +534,16 @@ const AdminPanel = () => {
         </TabPanel>
         <TabPanel value={tabValue} index={1}>
           {!isMobile ? (
-            <DataGrid autoHeight rows={shopInfo} columns={shopColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} getRowClassName={getRowClassName} />
+            <>
+              <DataGrid autoHeight rows={shopInfo} columns={shopColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} getRowClassName={getRowClassName} />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Tooltip title="Recargar">
+                  <IconButton onClick={getAllShops} sx={{ transition: 'transform 1s ease', transform: rotate ? 'rotate(360deg)' : 'rotate(0deg)' }}>
+                    <AutorenewIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </>
           ) : (
             <Grid container spacing={2}>
               {shopInfo.map((shop) => (

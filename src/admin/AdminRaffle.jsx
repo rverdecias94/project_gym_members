@@ -16,7 +16,8 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  InputAdornment
+  InputAdornment,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -25,6 +26,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import PeopleIcon from '@mui/icons-material/People';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 import { supabase } from '../supabase/client';
 import dayjs from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -40,6 +42,8 @@ const AdminRaffle = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { showMessage } = useSnackbar();
   const theme = useTheme();
+  const [rotate, setRotate] = useState(false);
+
   // Run Raffle State
   const [runningRaffle, setRunningRaffle] = useState(null);
 
@@ -66,6 +70,7 @@ const AdminRaffle = () => {
 
   const fetchRaffles = async () => {
     setLoading(true);
+    setRotate(true);
     try {
       const { data, error } = await supabase
         .from('raffles_tronoss')
@@ -77,12 +82,14 @@ const AdminRaffle = () => {
         showMessage("Error cargando sorteos", "error");
       } else {
         setRaffles(data || []);
+        showMessage("Listado de sorteos actualizado", "success");
       }
     } catch (err) {
       console.error(err);
       showMessage("Error cargando sorteos", "error");
     } finally {
       setLoading(false);
+      setTimeout(() => setRotate(false), 1000);
     }
   };
 
@@ -237,7 +244,12 @@ const AdminRaffle = () => {
           <EmojiEventsIcon color="primary" /> Gestión de Sorteos
         </Typography>
 
-        <Box display="flex" gap={2} width={{ xs: '100%', sm: 'auto' }}>
+        <Box display="flex" gap={2} width={{ xs: '100%', sm: 'auto' }} alignItems="center">
+          <Tooltip title="Recargar">
+            <IconButton onClick={fetchRaffles} sx={{ transition: 'transform 1s ease', transform: rotate ? 'rotate(360deg)' : 'rotate(0deg)' }}>
+              <AutorenewIcon />
+            </IconButton>
+          </Tooltip>
           <TextField
             size="small"
             placeholder="Buscar sorteo..."
