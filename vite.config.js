@@ -10,9 +10,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       manifest: {
-        name: 'GYManager',
-        short_name: 'GYManager',
-        description: 'Aplicación para gestionar y monitoriar la información de un gimnasio',
+        name: 'Tronoss',
+        short_name: 'Tronoss',
+        description: 'Plataforma para gestionar gimnasios y tiendas: membresías, pagos, inventario y sorteos. Administra socios, entrenadores y ventas desde cualquier dispositivo.',
         theme_color: 'rgb(53, 109, 172)',
         background_color: 'rgb(53, 109, 172)',
         display: 'standalone',
