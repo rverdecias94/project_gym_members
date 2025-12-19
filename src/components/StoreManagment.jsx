@@ -637,7 +637,7 @@ const StoreManagment = () => {
             startIcon={<AddIcon
               sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
             onClick={() => setOpenDialog(true)}
-            size={isMobile ? "medium" : "large"}
+            size={isMobile ? "medium" : "small"}
             fullWidth={isMobile}
             sx={{ fontSize: isMobile ? '0.85rem' : '1rem' }}>
             Nuevo Producto

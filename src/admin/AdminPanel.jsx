@@ -26,6 +26,7 @@ import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { useSnackbar } from "../context/Snackbar";
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PaymentIcon from '@mui/icons-material/Payment';
+import AdminRaffle from "./AdminRaffle";
 
 const CustomSwitch = styled(Switch)(() => ({
   width: 62,
@@ -464,7 +465,10 @@ const AdminPanel = () => {
             </Typography>
           </Grid>
           <Grid item xs={12} sm={5}>
-            <TextField fullWidth label={`Buscar en ${tabValue === 0 ? 'Gimnasios' : 'Tiendas'}`} value={search} onChange={handleSearch} />
+            {
+              tabValue !== 2 &&
+              <TextField fullWidth label={`Buscar en ${tabValue === 0 ? 'Gimnasios' : 'Tiendas'}`} value={search} onChange={handleSearch} size="small" />
+            }
           </Grid>
           <Grid item xs={12} sm={2}>
             <Button
@@ -481,6 +485,7 @@ const AdminPanel = () => {
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="admin tabs">
             <Tab label="Gimnasios" id="tab-0" />
             <Tab label="Tiendas" id="tab-1" />
+            <Tab label="Sorteos" id="tab-2" />
           </Tabs>
         </Box>
 
@@ -527,7 +532,6 @@ const AdminPanel = () => {
             </Grid>
           )}
         </TabPanel>
-
         <TabPanel value={tabValue} index={1}>
           {!isMobile ? (
             <DataGrid autoHeight rows={shopInfo} columns={shopColumns} pageSizeOptions={[5, 10, 20]} getRowId={(row) => row.owner_id} getRowClassName={getRowClassName} />
@@ -563,6 +567,9 @@ const AdminPanel = () => {
               ))}
             </Grid>
           )}
+        </TabPanel>
+        <TabPanel value={tabValue} index={2}>
+          <AdminRaffle />
         </TabPanel>
       </Box>
 

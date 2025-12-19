@@ -15,6 +15,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import GroupsIcon from '@mui/icons-material/Groups';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import SettingsIcon from '@mui/icons-material/Settings';
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import { NavButton } from './NavButton';
 import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
@@ -28,37 +29,12 @@ import SettingsAccountGym from './SettingsAccountGym';
 import SettingsAccountShop from './SettingsAccountShop';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import PaymentHistoryModal from './PaymentHistoryModal';
 
-const settings = ['Perfil'];
-
-/* const CustomSwitch = styled(Switch)(() => ({
-  width: 62,
-  height: 34,
-  padding: 7,
-  '& .MuiSwitch-switchBase': {
-    margin: 1,
-    padding: 0,
-    transform: 'translateX(6px)',
-    '&.Mui-checked': {
-      color: '#fff',
-      transform: 'translateX(22px)',
-      '& + .MuiSwitch-track': {
-        opacity: 1,
-        backgroundColor: '#8796A5',
-      },
-    },
-  },
-  '& .MuiSwitch-thumb': {
-    backgroundColor: '#e49c10',
-    width: 32,
-    height: 32,
-  },
-  '& .MuiSwitch-track': {
-    opacity: 1,
-    backgroundColor: '#aab4be',
-    borderRadius: 20 / 2,
-  },
-})); */
+const settings = [
+  { name: 'Perfil', action: 'profile', icon: <SettingsIcon /> },
+  { name: 'Historial de pago', action: 'history', icon: <RequestQuoteIcon /> }
+];
 
 export default function Navbar({ profile, mode, toggleTheme }) {
   const theme = useTheme();
@@ -67,6 +43,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   const [anchorElUser, setAnchorElUser] = useState(null);
   const { navBarOptions, setNavBarOptions, daysRemaining, gymInfo } = useMembers();
   const [openSettings, setOpenSettings] = useState(false);
+  const [openHistory, setOpenHistory] = useState(false);
   const [showNav, setShowNav] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -85,7 +62,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     } else {
       setNavBarOptions(false);
     }
-  }, [location.pathname]);
+  }, [location.pathname, gymInfo.active, setNavBarOptions]);
 
   const logoutUser = async () => {
     try {
@@ -104,14 +81,23 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     setAnchorElUser(event.currentTarget);
   };
 
-  const handleCloseUserMenu = () => {
+  const handleCloseUserMenu = (action) => {
     setAnchorElUser(null);
-    setOpenSettings(true);
+    if (action === 'profile') {
+      setOpenSettings(true);
+    }
+    if (action === 'history') {
+      setOpenHistory(true);
+    }
   };
 
   const handleClose = () => {
     setAnchorElUser(null);
     setOpenSettings(false);
+  };
+  
+  const handleCloseHistory = () => {
+    setOpenHistory(false);
   };
 
   const getName = (name) => {
@@ -171,12 +157,12 @@ export default function Navbar({ profile, mode, toggleTheme }) {
                     keepMounted
                     transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                     open={Boolean(anchorElUser)}
-                    onClose={handleClose}
+                    onClose={() => setAnchorElUser(null)}
                   >
                     {settings.map((setting) => (
-                      <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                        <SettingsIcon />
-                        <Typography sx={{ ml: 1 }}>{setting}</Typography>
+                      <MenuItem key={setting.name} onClick={() => handleCloseUserMenu(setting.action)}>
+                        {setting.icon}
+                        <Typography sx={{ ml: 1 }}>{setting.name}</Typography>
                       </MenuItem>
                     ))}
                   </Menu>
@@ -202,6 +188,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
           }
           {accountType === "shop" && <SettingsAccountShop open={openSettings} handleClose={handleClose} profile={profile} />
           }
+          <PaymentHistoryModal open={openHistory} onClose={handleCloseHistory} accountId={profile?.id} />
         </div>
       )}
 

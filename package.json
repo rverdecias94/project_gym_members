@@ -20,6 +20,7 @@
     "@mui/x-data-grid": "^7.1.0",
     "@mui/x-date-pickers": "^6.11.2",
     "@supabase/supabase-js": "^2.40.0",
+    "canvas-confetti": "^1.9.4",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.10",
     "frontend": "file:",
