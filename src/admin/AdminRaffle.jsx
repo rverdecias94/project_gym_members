@@ -35,6 +35,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useSnackbar } from "../context/Snackbar";
 import SorteoFitness from "./Sorteo";
 import { useTheme } from '@mui/material/styles';
+import ConfirmationDialog from "../components/ConfirmationDialog";
 
 const AdminRaffle = () => {
   const [raffles, setRaffles] = useState([]);
@@ -43,6 +44,8 @@ const AdminRaffle = () => {
   const { showMessage } = useSnackbar();
   const theme = useTheme();
   const [rotate, setRotate] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [raffleToDelete, setRaffleToDelete] = useState(null);
 
   // Run Raffle State
   const [runningRaffle, setRunningRaffle] = useState(null);
@@ -169,23 +172,35 @@ const AdminRaffle = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!menuRaffleId) return;
+  const handleOpenConfirm = () => {
+    const raffleData = raffles.find(r => r.id === menuRaffleId);
+    setRaffleToDelete(raffleData);
+    setOpenConfirm(true);
+    handleCloseMenu();
+  };
+
+  const handleCloseConfirm = () => {
+    setRaffleToDelete(null);
+    setOpenConfirm(false);
+  };
+  
+  const handleDeleteConfirm = async () => {
+    if (!raffleToDelete) return;
     try {
       const { error } = await supabase
         .from('raffles_tronoss')
         .delete()
-        .eq('id', menuRaffleId);
+        .eq('id', raffleToDelete.id);
 
       if (error) throw error;
 
-      setRaffles(prev => prev.filter(r => r.id !== menuRaffleId));
+      setRaffles(prev => prev.filter(r => r.id !== raffleToDelete.id));
       showMessage("Sorteo eliminado", "success");
     } catch (err) {
       console.error(err);
       showMessage("Error eliminando sorteo", "error");
     } finally {
-      handleCloseMenu();
+      handleCloseConfirm();
     }
   };
 
@@ -368,7 +383,7 @@ const AdminRaffle = () => {
           const r = raffles.find(i => i.id === menuRaffleId);
           handleOpenModal(r);
         }}>Editar</MenuItem>
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>Eliminar</MenuItem>
+        <MenuItem onClick={handleOpenConfirm} sx={{ color: 'error.main' }}>Eliminar</MenuItem>
       </Menu>
 
       {/* Create/Edit Modal */}
@@ -446,6 +461,13 @@ const AdminRaffle = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <ConfirmationDialog
+        open={openConfirm}
+        onClose={handleCloseConfirm}
+        onConfirm={handleDeleteConfirm}
+        title="Confirmar Eliminación"
+        contentText={`¿Estás seguro de que quieres eliminar el sorteo "${raffleToDelete?.name_lottery}"? Esta acción es irreversible.`}
+      />
     </Box>
   );
 };

@@ -26,7 +26,9 @@ import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { useSnackbar } from "../context/Snackbar";
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PaymentIcon from '@mui/icons-material/Payment';
+import DeleteIcon from '@mui/icons-material/Delete';
 import AdminRaffle from "./AdminRaffle";
+import ConfirmationDialog from "../components/ConfirmationDialog";
 
 const CustomSwitch = styled(Switch)(() => ({
   width: 62,
@@ -102,6 +104,8 @@ const AdminPanel = () => {
   const [paymentPlan, setPaymentPlan] = useState("Estándar");
   const [savingPayment, setSavingPayment] = useState(false);
   const [historyRows, setHistoryRows] = useState([]);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   useEffect(() => {
     fetchAllData();
@@ -156,7 +160,7 @@ const AdminPanel = () => {
       const { error } = await supabase.from(tableName).update(updatedRow).eq("owner_id", row.owner_id);
       if (error) throw error;
       showMessage("¡Fecha de pago actualizada con éxito!", "success");
-      dataType === 'gym' ? getAllGyms() : getAllShops();
+      if (dataType === 'gym') getAllGyms(); else getAllShops();
     } catch (error) {
       showMessage("Error al actualizar la fecha de pago.", "error");
     }
@@ -170,7 +174,7 @@ const AdminPanel = () => {
       const { error } = await supabase.from(tableName).update(updatedRow).eq("owner_id", row.owner_id);
       if (error) throw error;
       showMessage("¡Estado actualizado con éxito!", "success");
-      dataType === 'gym' ? getAllGyms() : getAllShops();
+      if (dataType === 'gym') getAllGyms(); else getAllShops();
     } catch (error) {
       showMessage("Error al actualizar el estado.", "error");
       console.error(error);
@@ -226,10 +230,6 @@ const AdminPanel = () => {
       showMessage("Pago registrado", "success");
       setOpenPayment(false);
       setSelectedGym(null);
-      setPaymentAmount("");
-      setPaymentCurrency("USD");
-      setPaymentNextDate(null);
-      setPaymentPlan("Estándar");
     } catch (err) {
       console.error(err);
       showMessage("Error registrando pago", "error");
@@ -240,7 +240,6 @@ const AdminPanel = () => {
 
   const handleOpenHistory = async (row) => {
     setSelectedGym(row);
-    setSelectedType(tabValue === 0 ? 'gym' : 'shop');
     setOpenHistory(true);
     try {
       const { data, error } = await supabase
@@ -256,9 +255,41 @@ const AdminPanel = () => {
     }
   };
 
+  const handleOpenConfirm = (item) => {
+    setItemToDelete(item);
+    setOpenConfirm(true);
+  };
+
+  const handleCloseConfirm = () => {
+    setItemToDelete(null);
+    setOpenConfirm(false);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    const type = tabValue === 0 ? 'gym' : 'shop';
+    const tableName = type === 'gym' ? 'info_general_gym' : 'info_shops';
+
+    try {
+      const { error } = await supabase.from(tableName).delete().eq('owner_id', itemToDelete.owner_id);
+      if (error) throw error;
+      showMessage("Cuenta eliminada con éxito", "success");
+      if (type === 'gym') {
+        getAllGyms();
+      } else {
+        getAllShops();
+      }
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      showMessage("Error al eliminar la cuenta", "error");
+    } finally {
+      handleCloseConfirm();
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    setSearchTerm(""); // Limpiar búsqueda al cambiar de pestaña
+    setSearchTerm("");
     setGymInfo(gymInfoOriginal);
     setShopInfo(shopInfoOriginal);
   };
@@ -268,30 +299,22 @@ const AdminPanel = () => {
     setSearchTerm(value);
 
     if (value === '') {
-      setGymInfo(gymInfoOriginal);
-      setShopInfo(shopInfoOriginal);
+      if (tabValue === 0) setGymInfo(gymInfoOriginal);
+      else setShopInfo(shopInfoOriginal);
       return;
     }
 
-    if (tabValue === 0) { // Filtrar Gimnasios
-      const filteredData = gymInfoOriginal.filter(item =>
-        item.gym_name?.toLowerCase().includes(value) ||
-        item.address?.toLowerCase().includes(value) ||
-        item.owner_name?.toLowerCase().includes(value) ||
-        item.city?.toLowerCase().includes(value)
-      );
-      setGymInfo(filteredData);
-    } else { // Filtrar Tiendas
-      const filteredData = shopInfoOriginal.filter(item =>
-        item.shop_name?.toLowerCase().includes(value) ||
-        item.address?.toLowerCase().includes(value) ||
-        item.owner_name?.toLowerCase().includes(value) ||
-        item.city?.toLowerCase().includes(value)
-      );
-      setShopInfo(filteredData);
-    }
+    const source = tabValue === 0 ? gymInfoOriginal : shopInfoOriginal;
+    const filteredData = source.filter(item =>
+      (item.gym_name || item.shop_name)?.toLowerCase().includes(value) ||
+      item.address?.toLowerCase().includes(value) ||
+      item.owner_name?.toLowerCase().includes(value) ||
+      item.city?.toLowerCase().includes(value)
+    );
+    if (tabValue === 0) setGymInfo(filteredData);
+    else setShopInfo(filteredData);
   };
-
+  
   function calculateDebt(created_at, next_payment_date, paymentAmount) {
     const created = new Date(created_at);
     const now = new Date(next_payment_date);
@@ -331,7 +354,7 @@ const AdminPanel = () => {
     }
     return '';
   };
-
+  
   const gymColumns = [
     { field: 'gym_name', headerName: 'Nombre Gym', width: 130 },
     { field: 'address', headerName: 'Dirección', width: 130 },
@@ -368,33 +391,29 @@ const AdminPanel = () => {
       renderCell: ({ row }) => {
         return (
           <div>
-            {/* <CustomSwitch onChange={() => updateStoreActivation(row)} checked={row.store} /> */}
             {row.store ? "Premium" : "Estándar"}
           </div>
         )
       }
     },
     {
-      field: 'payments', headerName: 'Registrar Pago', width: 150,
+      field: 'payments', headerName: 'Acciones', width: 180,
       renderCell: ({ row }) => {
         return (
           <div>
             <Tooltip title="Registrar Pago" placement='top'>
-              <IconButton
-                sx={{ color: "green" }}
-                onClick={() => handleOpenPayment(row)}
-                size="small"
-              >
+              <IconButton sx={{ color: "green" }} onClick={() => handleOpenPayment(row)} size="small">
                 <PaymentIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Historial de Pago" placement='top'>
-              <IconButton
-                sx={{ color: "green" }}
-                onClick={() => handleOpenHistory(row)}
-                size="small"
-              >
+              <IconButton sx={{ color: "green" }} onClick={() => handleOpenHistory(row)} size="small">
                 <RequestQuoteIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Eliminar" placement='top'>
+              <IconButton sx={{ color: "red" }} onClick={() => handleOpenConfirm(row)} size="small">
+                <DeleteIcon />
               </IconButton>
             </Tooltip>
           </div>
@@ -427,7 +446,7 @@ const AdminPanel = () => {
       renderCell: ({ row }) => (<CustomSwitch onChange={() => updateActiveStatus(row, 'shop')} checked={row.active} />),
     },
     {
-      field: 'payments', headerName: 'Registrar Pago', width: 150,
+      field: 'payments', headerName: 'Acciones', width: 180,
       renderCell: ({ row }) => (
         <div>
           <Tooltip title="Registrar Pago" placement='top'>
@@ -438,6 +457,11 @@ const AdminPanel = () => {
           <Tooltip title="Historial de Pago" placement='top'>
             <IconButton sx={{ color: "green" }} onClick={() => handleOpenHistory(row)} size="small">
               <RequestQuoteIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Eliminar" placement='top'>
+            <IconButton sx={{ color: "red" }} onClick={() => handleOpenConfirm(row)} size="small">
+              <DeleteIcon />
             </IconButton>
           </Tooltip>
         </div>
@@ -643,6 +667,14 @@ const AdminPanel = () => {
           <Button onClick={() => setOpenHistory(false)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmationDialog
+        open={openConfirm}
+        onClose={handleCloseConfirm}
+        onConfirm={handleDelete}
+        title="Confirmar Eliminación"
+        contentText={`¿Estás seguro de que quieres eliminar la cuenta de ${itemToDelete?.gym_name || itemToDelete?.shop_name}? Esta acción es irreversible.`}
+      />
     </>
   );
 };
