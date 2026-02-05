@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase/client';
 import { ThemeProvider, CssBaseline } from '@mui/material';
@@ -25,12 +25,14 @@ import GymStepper from './components/GymStepper';
 import ShopStepper from './components/ShopStepper';
 import SessionManager from './components/SessionManager';
 import StoreManagmentGym from './components/StoreManagmentGym';
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 function App() {
   const navigate = useNavigate();
-  /* const location = useLocation(); */
+  const location = useLocation();
   const [userId, setUserId] = useState(false);
+  const [is404, setIs404] = useState(false);
   const [event, setEvent] = useState("SIGNED_OUT");
   const [profile, setProfile] = useState({
     avatar: null,
@@ -38,6 +40,7 @@ function App() {
     phone: null,
   });
   const [darkMode, setDarkMode] = useState(false);
+  const validPath = ['/shop-stepper', '/redirect', '/planes', '/tienda', '/tienda-gym', '/terms-conditions', '/admin/panel', '/new_trainer', '/new_member', '/general_info', '/entrenadores', '/bienvenido', '/clientes', '/login', '/panel']
 
   useEffect(() => {
     const fetchTheme = async (userId) => {
@@ -67,36 +70,54 @@ function App() {
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      supabase.auth.onAuthStateChange((event, session) => {
-        setEvent(event)
-        if (!session && window.location.pathname !== '/admin' && window.location.pathname !== '/terms-conditions' && window.location.pathname !== '/admin/panel') {
-          const userUUID = session?.user?.id;
-          setUserId(userUUID);
-          navigate('/login');
-        } else if (event === "SIGNED_IN ") {
-          navigate('/panel');
-        } else if (session && event === "INITIAL_SESSION") {
-          const userUUID = session?.user?.id;
-          setUserId(userUUID);
-          /* navigate('/general_info') */
-          navigate('/redirect')
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setEvent(event);
 
-          if (session?.user?.user_metadata) {
-            let { avatar_url, name, phone, email } = session.user.user_metadata;
-            setProfile((prev) => ({
-              ...prev,
-              name: name,
-              avatar: avatar_url,
-              phone: phone,
-              id: session.user.id,
-              email: email,
-            }))
+      if (session) {
+        const userUUID = session.user.id;
+        setUserId(userUUID);
+
+        if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "SIGNED_IN ") {
+          // Si el usuario está en login y se autentica, redirigir a /redirect para que el componente decida dónde ir
+          if (location.pathname === '/login' || location.pathname === '/') {
+            navigate('/redirect');
+          }
+
+          if (event === "INITIAL_SESSION") {
+            /* navigate('/general_info') */
+            // navigate('/redirect') // Comentado para evitar redirecciones forzadas al recargar
+
+            if (session.user.user_metadata) {
+              let { avatar_url, name, phone, email } = session.user.user_metadata;
+              setProfile((prev) => ({
+                ...prev,
+                name: name,
+                avatar: avatar_url,
+                phone: phone,
+                id: session.user.id,
+                email: email,
+              }));
+            }
           }
         }
-      })
-    }, 0);
-  }, [])
+      } else {
+        setUserId(false);
+        setProfile({ avatar: null, name: null, phone: null });
+        // No redirigimos manualmente aquí, ProtectedRoute se encarga
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, location.pathname]);
+
+
+  useEffect(() => {
+    if (!validPath.includes(location.pathname))
+      setIs404(true);
+    else
+      setIs404(false);
+  }, [location.pathname])
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -104,26 +125,31 @@ function App() {
       <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
         <ContextProvider>
           <BackdropProvider>
-            {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+            {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && !is404 && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
             {userId && <SessionManager />}
             <div className='main-content'>
               <Routes>
-                <Route path='/panel' element={<Dashboard />} />
+                {/* Rutas Públicas */}
                 <Route path='/login' element={<Login id={userId} />} />
-                <Route path='/clientes' element={<MembersList />} />
-                <Route path='/bienvenido' element={<Welcome />} />
-                <Route path='/entrenadores' element={<Trainers />} />
-                <Route path='/general_info' element={<GymStepper id={userId} />} />
-                <Route path='/new_member' element={<MembersForm />} />
-                <Route path='/new_trainer' element={<TrainersForm />} />
-                {/* <Route path='/admin' element={<LoginAdmin />} /> */}
-                <Route path='/admin/panel' element={<AdminPanel />} />
                 <Route path='/terms-conditions' element={<TermsAndConditions />} />
-                <Route path='/tienda-gym' element={<StoreManagmentGym />} />
-                <Route path='/tienda' element={<StoreManagment />} />
-                <Route path='/planes' element={<PlansPage />} />
                 <Route path='/redirect' element={<Redirect />} />
-                <Route path='/shop-stepper' element={<ShopStepper id={userId} />} />
+
+                {/* Rutas Protegidas */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path='/panel' element={<Dashboard />} />
+                  <Route path='/clientes' element={<MembersList />} />
+                  <Route path='/bienvenido' element={<Welcome />} />
+                  <Route path='/entrenadores' element={<Trainers />} />
+                  <Route path='/general_info' element={<GymStepper id={userId} />} />
+                  <Route path='/new_member' element={<MembersForm />} />
+                  <Route path='/new_trainer' element={<TrainersForm />} />
+                  <Route path='/admin/panel' element={<AdminPanel />} />
+                  <Route path='/tienda-gym' element={<StoreManagmentGym />} />
+                  <Route path='/tienda' element={<StoreManagment />} />
+                  <Route path='/planes' element={<PlansPage />} />
+                  <Route path='/shop-stepper' element={<ShopStepper id={userId} />} />
+                </Route>
+
                 <Route path='*' element={<NotFound />} />
               </Routes>
             </div>
