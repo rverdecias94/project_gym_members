@@ -50,6 +50,29 @@ export const ContextProvider = ({ children }) => {
 
 
 
+  // Helper function to check payment status and update products
+  const checkPaymentAndDisableProducts = async (userData, userId) => {
+    if (userData?.next_payment_date) {
+      const nextPayment = dayjs(userData.next_payment_date);
+      const today = dayjs();
+
+      if (today.isAfter(nextPayment, 'day')) {
+        console.log("Payment overdue for user:", userId);
+        try {
+          const { error } = await supabase
+            .from('products')
+            .update({ enable: false })
+            .eq('user_store_id', userId);
+
+          if (error) throw error;
+          console.log("Products disabled successfully");
+        } catch (err) {
+          console.error("Error disabling products:", err);
+        }
+      }
+    }
+  };
+
   // Unified getGymInfo function
   const getGymInfo = async () => {
     try {
@@ -79,6 +102,8 @@ export const ContextProvider = ({ children }) => {
           const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
           setDaysRemaining(daysDifference);
         }
+        // Check overdue payment
+        await checkPaymentAndDisableProducts(data, user.id);
       }
       return data; // Return data if needed by caller
     } catch (error) {
@@ -110,6 +135,9 @@ export const ContextProvider = ({ children }) => {
 
       if (data) {
         setShopInfo(data); // Update state
+        console.log(data)
+        // Check overdue payment
+        await checkPaymentAndDisableProducts(data, user.id);
       }
       return data; // Return data if needed by caller
     } catch (error) {
@@ -134,8 +162,10 @@ export const ContextProvider = ({ children }) => {
             const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
             setDaysRemaining(daysDifference);
           }
+          await checkPaymentAndDisableProducts(data, user.id);
         } else if (type === 'shop') {
           setShopInfo(data);
+          await checkPaymentAndDisableProducts(data, user.id);
         }
       }
     };
