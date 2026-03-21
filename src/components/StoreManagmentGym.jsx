@@ -523,7 +523,7 @@ const StoreManagmentGym = () => {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const ProductCard = ({ product }) => (
-    <Card sx={{ mb: 10, boxShadow: 2 }}>
+    <Card sx={{ mb: 10, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
       <Box sx={{ position: 'relative' }}>
         <CardMedia
           component="img"
@@ -609,7 +609,7 @@ const StoreManagmentGym = () => {
   if (!store) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
-        <Paper sx={{ p: isMobile ? 2 : 4 }}>
+        <Paper sx={{ p: isMobile ? 2 : 4, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={5}>
               <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
@@ -623,6 +623,7 @@ const StoreManagmentGym = () => {
 
                 <Button
                   variant="contained"
+                  disableElevation
                   size={isMobile ? "medium" : "large"}
                   startIcon={<WhatsAppIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
                   onClick={handleWhatsAppRequest}
@@ -634,6 +635,9 @@ const StoreManagmentGym = () => {
                     py: isMobile ? 1 : 1.5,
                     px: isMobile ? 2 : 4,
                     fontSize: isMobile ? '0.9rem' : '1.1rem',
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontWeight: 600,
                     mb: 2
                   }}
                   fullWidth={isMobile}
@@ -650,11 +654,12 @@ const StoreManagmentGym = () => {
 
             <Grid item xs={12} md={7}>
               <Paper
-                elevation={2}
+                elevation={0}
                 sx={{
                   p: isMobile ? 2 : 3,
                   background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
-                  border: '1px solid #9c27b0'
+                  border: '1px solid #e1bee7',
+                  borderRadius: '12px'
                 }}
               >
                 <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: '#7b1fa2', fontWeight: 'bold' }}>
@@ -667,7 +672,7 @@ const StoreManagmentGym = () => {
                 <Grid container spacing={3}>
 
                   <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: 'white' }}>
+                    <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: 'white', borderRadius: '12px', boxShadow: 'none', border: '1px solid #eaeaea' }}>
                       <Typography variant={isMobile ? "h5" : "h4"} color="success.main" sx={{ fontWeight: 'bold' }}>
                         $5
                       </Typography>
@@ -718,8 +723,8 @@ const StoreManagmentGym = () => {
     <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 2, display: "flex", gap: "1rem", flexDirection: isMobile ? 'column' : 'row', }}>
       <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} mb={3} sx={{ flex: 2, height: "20rem" }}>
 
-        <Paper sx={{ p: 4, width: "100%" }}>
-          <Typography variant="h6" gutterBottom>Filtros</Typography>
+        <Paper sx={{ p: 4, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+          <Typography variant="h6" gutterBottom fontWeight="600">Filtros</Typography>
 
           <TextField
             label="Buscar producto"
@@ -727,15 +732,16 @@ const StoreManagmentGym = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             fullWidth
             size="small"
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
           />
 
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <FormControl fullWidth size="small" sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
             <InputLabel>Categoría</InputLabel>
             <Select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               label="Categoría"
+              sx={{ borderRadius: '8px' }}
             >
               <MenuItem value="">Todas</MenuItem>
               {categories.map((cat) => (
@@ -746,12 +752,13 @@ const StoreManagmentGym = () => {
             </Select>
           </FormControl>
 
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <FormControl fullWidth size="small" sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
             <InputLabel>Entrega</InputLabel>
             <Select
               value={filterDelivery}
               onChange={(e) => setFilterDelivery(e.target.value)}
               label="Entrega"
+              sx={{ borderRadius: '8px' }}
             >
               <MenuItem value="">Todas</MenuItem>
               <MenuItem value="delivery">Mensajería</MenuItem>
@@ -764,7 +771,7 @@ const StoreManagmentGym = () => {
             variant="outlined"
             color="secondary"
             fullWidth
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
             onClick={() => {
               setSearchTerm("");
               setFilterCategory("");
@@ -777,18 +784,19 @@ const StoreManagmentGym = () => {
 
       </Box>
 
-      <Paper sx={{ p: isMobile ? 2 : 3, flex: 5 }}>
+      <Paper sx={{ p: isMobile ? 2 : 3, flex: 5, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 2 : 0}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom fontWeight="600">
             Gestión de Tienda
           </Typography>
           <Button
             variant="contained"
+            disableElevation
             startIcon={<AddIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
             onClick={() => setOpenDialog(true)}
             size={isMobile ? "medium" : "small"}
             fullWidth={isMobile}
-            sx={{ fontSize: isMobile ? '0.85rem' : '1rem' }}
+            sx={{ fontSize: isMobile ? '0.85rem' : '1rem', borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
           >
             Nuevo Producto
           </Button>
@@ -1053,7 +1061,7 @@ const StoreManagmentGym = () => {
                       return (
                         <>
                           {currentOrders.map(order => (
-                            <Card key={order.id} sx={{ mb: 2 }}>
+                            <Card key={order.id} sx={{ mb: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
                               <CardContent>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{order.member_name}</Typography>
                                 <Typography variant="body2">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</Typography>
@@ -1118,7 +1126,7 @@ const StoreManagmentGym = () => {
             ) : (
               products.map((product) => (
                 <Grid item xs={12} sm={6} md={4} key={product.id}>
-                  <Card>
+                  <Card sx={{ boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardMedia
                       component="img"
                       sx={{ width: "100%", height: "100%", objectFit: "contain" }}
@@ -1169,8 +1177,15 @@ const StoreManagmentGym = () => {
         maxWidth="md"
         fullWidth
         fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            borderRadius: isMobile ? 0 : '12px',
+            boxShadow: 'none',
+            border: isMobile ? 'none' : '1px solid #eaeaea'
+          }
+        }}
       >
-        <DialogTitle sx={{ fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
+        <DialogTitle sx={{ fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: 600 }}>
           {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
         </DialogTitle>
         <DialogContent>
@@ -1331,17 +1346,19 @@ const StoreManagmentGym = () => {
             onClick={handleCloseDialog}
             color='error'
             variant='contained'
+            disableElevation
             size={isMobile ? "small" : "medium"}
-            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}
+            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
+            disableElevation
             disabled={submitting || !formIsValid}
             size={isMobile ? "small" : "medium"}
-            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}
+            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
           >
             {submitting ? (
               <CircularProgress size={isMobile ? 16 : 24} />
@@ -1357,8 +1374,15 @@ const StoreManagmentGym = () => {
         onClose={() => setOpenCancelDialog(false)}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            boxShadow: 'none',
+            border: '1px solid #eaeaea'
+          }
+        }}
       >
-        <DialogTitle>Cancelar orden</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>Cancelar orden</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>Confirme la cancelación e indique el motivo.</Typography>
           <TextField
@@ -1368,11 +1392,12 @@ const StoreManagmentGym = () => {
             fullWidth
             multiline
             minRows={2}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCancelDialog(false)} color="inherit">Cerrar</Button>
-          <Button onClick={confirmCancelOrder} color="error" variant="contained" disabled={!cancelReason || statusUpdatingId === (cancelOrder?.id || null)}>Cancelar orden</Button>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenCancelDialog(false)} color="inherit" variant="outlined" sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>Cerrar</Button>
+          <Button onClick={confirmCancelOrder} color="error" variant="contained" disableElevation disabled={!cancelReason || statusUpdatingId === (cancelOrder?.id || null)} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>Cancelar orden</Button>
         </DialogActions>
       </Dialog>
     </Container>

@@ -29,6 +29,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AdminRaffle from "./AdminRaffle";
 import ConfirmationDialog from "../components/ConfirmationDialog";
+import ReactApexChart from 'react-apexcharts';
 
 const CustomSwitch = styled(Switch)(() => ({
   width: 62,
@@ -48,13 +49,13 @@ const CustomSwitch = styled(Switch)(() => ({
     },
   },
   '& .MuiSwitch-thumb': {
-    backgroundColor: '#1da274ff',
+    backgroundColor: '#bdbdbd',
     width: 32,
     height: 32,
   },
   '& .MuiSwitch-track': {
     opacity: 1,
-    backgroundColor: '#46a27266',
+    backgroundColor: '#e0e0e0',
     borderRadius: 20 / 2,
   },
   '& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb': {
@@ -107,6 +108,23 @@ const AdminPanel = () => {
   const [openConfirm, setOpenConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
+  // Estados para estadísticas
+  const [statistics, setStatistics] = useState({
+    gymsByProvince: {},
+    shopsByProvince: {},
+    clientsByGym: {},
+    membersByGymName: {},
+    upcomingPayments: [],
+    premiumGyms: 0,
+    standardGyms: 0,
+    shopsWithProducts: {},
+    totalProductsByShop: {},
+    shopWithMostProducts: null,
+    totalGyms: 0,
+    totalShops: 0,
+    totalProducts: 0
+  });
+
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -114,6 +132,7 @@ const AdminPanel = () => {
   const fetchAllData = () => {
     getAllGyms();
     getAllShops();
+    getStatistics();
   };
 
   const getAllGyms = async () => {
@@ -129,6 +148,133 @@ const AdminPanel = () => {
       showMessage("Error cargando listado de gimnasios", "error");
     } finally {
       setTimeout(() => setRotate(false), 1000);
+    }
+  };
+
+  const getStatistics = async () => {
+    try {
+      // Obtener datos de gimnasios
+      const { data: gymsData } = await supabase.from('info_general_gym').select('*');
+      
+      // Obtener datos de tiendas
+      const { data: shopsData } = await supabase.from('info_shops').select('*');
+      
+      // Obtener productos por tienda
+      const { data: productsData } = await supabase.from('products').select('user_store_id');
+      
+      // Obtener miembros por gimnasio
+      const { data: membersData } = await supabase.from('members').select('gym_id');
+
+      // Mapa de IDs a Nombres
+      const storeNamesMap = {};
+      gymsData?.forEach(gym => {
+        if (gym.owner_id) storeNamesMap[gym.owner_id] = gym.gym_name || 'Gimnasio Desconocido';
+      });
+      shopsData?.forEach(shop => {
+        if (shop.owner_id) storeNamesMap[shop.owner_id] = shop.shop_name || 'Tienda Desconocida';
+      });
+
+      // Estadísticas de gimnasios y tiendas por provincia
+      const gymsByProvince = {};
+      gymsData?.forEach(gym => {
+        const province = gym.state || 'Sin provincia';
+        gymsByProvince[province] = (gymsByProvince[province] || 0) + 1;
+      });
+
+      const shopsByProvince = {};
+      shopsData?.forEach(shop => {
+        const province = shop.state || 'Sin provincia';
+        shopsByProvince[province] = (shopsByProvince[province] || 0) + 1;
+      });
+
+      // Estadísticas de clientes por gimnasio
+      const clientsByGym = {};
+      membersData?.forEach(member => {
+        if (member.gym_id) {
+          clientsByGym[member.gym_id] = (clientsByGym[member.gym_id] || 0) + 1;
+        }
+      });
+
+      const membersByGymName = {};
+      Object.entries(clientsByGym).forEach(([gymId, count]) => {
+        const gymName = storeNamesMap[gymId] || 'Gimnasio Desconocido';
+        membersByGymName[gymName] = count;
+      });
+
+      // Próximas cuentas a pagar (semana actual)
+      const startOfWeek = dayjs().startOf('week');
+      const endOfWeek = dayjs().endOf('week');
+      const upcomingPayments = [];
+
+      const checkUpcoming = (item, type) => {
+        if (item.next_payment_date) {
+          const payDate = dayjs(item.next_payment_date);
+          if (payDate.isAfter(startOfWeek.subtract(1, 'day')) && payDate.isBefore(endOfWeek.add(1, 'day'))) {
+            upcomingPayments.push({
+              id: item.owner_id,
+              name: item.gym_name || item.shop_name,
+              type: type,
+              date: item.next_payment_date
+            });
+          }
+        }
+      };
+
+      gymsData?.forEach(gym => checkUpcoming(gym, 'Gimnasio'));
+      shopsData?.forEach(shop => checkUpcoming(shop, 'Tienda'));
+      upcomingPayments.sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
+
+      // Cuentas premium vs estándar
+      let premiumGyms = 0;
+      let standardGyms = 0;
+      gymsData?.forEach(gym => {
+        if (gym.store) {
+          premiumGyms++;
+        } else {
+          standardGyms++;
+        }
+      });
+
+      // Productos por tienda usando nombres en lugar de UUIDs
+      const productsByShop = {};
+      productsData?.forEach(product => {
+        const shopId = product.user_store_id;
+        if (shopId) {
+          const storeName = storeNamesMap[shopId] || 'Tienda Desconocida';
+          productsByShop[storeName] = (productsByShop[storeName] || 0) + 1;
+        }
+      });
+
+      // Tienda con más productos
+      let shopWithMostProducts = null;
+      let maxProducts = 0;
+      Object.entries(productsByShop).forEach(([storeName, count]) => {
+        if (count > maxProducts) {
+          maxProducts = count;
+          shopWithMostProducts = storeName;
+        }
+      });
+
+      // Actualizar estadísticas
+      setStatistics({
+        gymsByProvince,
+        shopsByProvince,
+        clientsByGym,
+        membersByGymName,
+        upcomingPayments,
+        premiumGyms,
+        standardGyms,
+        shopsWithProducts: productsByShop,
+        totalProductsByShop: productsByShop,
+        shopWithMostProducts,
+        totalGyms: gymsData?.length || 0,
+        totalShops: shopsData?.length || 0,
+        totalProducts: productsData?.length || 0
+      });
+
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      showMessage('Error al cargar estadísticas', 'error');
     }
   };
 
@@ -292,6 +438,10 @@ const AdminPanel = () => {
     setSearchTerm("");
     setGymInfo(gymInfoOriginal);
     setShopInfo(shopInfoOriginal);
+    // Cargar estadísticas cuando se selecciona la pestaña de estadísticas
+    if (newValue === 3) {
+      getStatistics();
+    }
   };
 
   const handleSearch = (event) => {
@@ -355,6 +505,49 @@ const AdminPanel = () => {
     return '';
   };
   
+  const getChartOptions = (categories, isPie = false, customColors = null) => {
+    const baseOptions = {
+      chart: {
+        toolbar: { show: false },
+        background: 'transparent',
+        fontFamily: 'Montserrat, sans-serif',
+      },
+      colors: customColors || ['#6157d6', '#f278b6', '#1da274', '#ed6c02'],
+      theme: {
+        mode: theme.palette.mode,
+      },
+      tooltip: {
+        theme: theme.palette.mode,
+        style: {
+          fontSize: '12px',
+          fontFamily: 'Montserrat, sans-serif'
+        },
+      },
+    };
+
+    if (isPie) {
+      return {
+        ...baseOptions,
+        labels: categories,
+        stroke: { show: false },
+        dataLabels: { enabled: false },
+        legend: {
+          position: 'bottom',
+          labels: { colors: theme.palette.text.secondary }
+        },
+      };
+    }
+
+    return {
+      ...baseOptions,
+      xaxis: { categories },
+      yaxis: { show: false },
+      grid: { show: false },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+    };
+  };
+
   const gymColumns = [
     { field: 'gym_name', headerName: 'Nombre Gym', width: 130 },
     { field: 'address', headerName: 'Dirección', width: 130 },
@@ -383,8 +576,14 @@ const AdminPanel = () => {
       },
     },
     {
-      field: 'actions', headerName: 'Activar', sortable: false, width: 100,
-      renderCell: ({ row }) => (<CustomSwitch onChange={() => updateActiveStatus(row, 'gym')} checked={row.active} />),
+      field: 'actions', headerName: 'Estado', sortable: false, width: 100,
+      renderCell: ({ row }) => (
+        <Tooltip title={row.active ? "Activo" : "Inactivo"} placement="top">
+          <span>
+            <CustomSwitch onChange={() => updateActiveStatus(row, 'gym')} checked={row.active} />
+          </span>
+        </Tooltip>
+      ),
     },
     {
       field: 'store', headerName: 'Plan Activo', sortable: false, width: 130,
@@ -401,17 +600,17 @@ const AdminPanel = () => {
       renderCell: ({ row }) => {
         return (
           <div>
-            <Tooltip title="Registrar Pago" placement='top'>
+            <Tooltip title='Registrar Pago' placement='top'>
               <IconButton sx={{ color: "green" }} onClick={() => handleOpenPayment(row)} size="small">
                 <PaymentIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Historial de Pago" placement='top'>
+            <Tooltip title='Historial de Pago' placement='top'>
               <IconButton sx={{ color: "green" }} onClick={() => handleOpenHistory(row)} size="small">
                 <RequestQuoteIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Eliminar" placement='top'>
+            <Tooltip title='Eliminar' placement='top'>
               <IconButton sx={{ color: "red" }} onClick={() => handleOpenConfirm(row)} size="small">
                 <DeleteIcon />
               </IconButton>
@@ -442,24 +641,30 @@ const AdminPanel = () => {
     { field: 'state', headerName: 'Provincia', width: 120, renderCell: (params) => params.value || "-" },
     { field: 'city', headerName: 'Municipio', width: 120, renderCell: (params) => params.value || "-" },
     {
-      field: 'active', headerName: 'Activar', sortable: false, width: 100,
-      renderCell: ({ row }) => (<CustomSwitch onChange={() => updateActiveStatus(row, 'shop')} checked={row.active} />),
+      field: 'active', headerName: 'Estado', sortable: false, width: 100,
+      renderCell: ({ row }) => (
+        <Tooltip title={row.active ? "Activo" : "Inactivo"} placement="top">
+          <span>
+            <CustomSwitch onChange={() => updateActiveStatus(row, 'shop')} checked={row.active} />
+          </span>
+        </Tooltip>
+      ),
     },
     {
       field: 'payments', headerName: 'Acciones', width: 180,
       renderCell: ({ row }) => (
         <div>
-          <Tooltip title="Registrar Pago" placement='top'>
+          <Tooltip title='Registrar Pago' placement='top'>
             <IconButton sx={{ color: "green" }} onClick={() => handleOpenPayment(row)} size="small">
               <PaymentIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Historial de Pago" placement='top'>
+          <Tooltip title='Historial de Pago' placement='top'>
             <IconButton sx={{ color: "green" }} onClick={() => handleOpenHistory(row)} size="small">
               <RequestQuoteIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Eliminar" placement='top'>
+          <Tooltip title='Eliminar' placement='top'>
             <IconButton sx={{ color: "red" }} onClick={() => handleOpenConfirm(row)} size="small">
               <DeleteIcon />
             </IconButton>
@@ -490,7 +695,7 @@ const AdminPanel = () => {
           </Grid>
           <Grid item xs={12} sm={5}>
             {
-              tabValue !== 2 &&
+              tabValue !== 2 && tabValue !== 3 &&
               <TextField fullWidth label={`Buscar en ${tabValue === 0 ? 'Gimnasios' : 'Tiendas'}`} value={search} onChange={handleSearch} size="small" />
             }
           </Grid>
@@ -501,6 +706,7 @@ const AdminPanel = () => {
             <Tab label="Gimnasios" id="tab-0" />
             <Tab label="Tiendas" id="tab-1" />
             <Tab label="Sorteos" id="tab-2" />
+            <Tab label="Estadísticas" id="tab-3" />
           </Tabs>
         </Box>
 
@@ -520,7 +726,7 @@ const AdminPanel = () => {
             <Grid container spacing={2}>
               {gymInfo.map((gym) => (
                 <Grid item xs={12} key={gym.owner_id}>
-                  <Card className={getRowClassName({ row: gym })}>
+                  <Card className={getRowClassName({ row: gym })} sx={{ boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
                     <CardContent>
                       <Typography variant="h6">{gym.gym_name}</Typography>
                       <Typography variant="body2">Dirección: {gym.address}</Typography>
@@ -542,8 +748,12 @@ const AdminPanel = () => {
                     </CardContent>
                     <CardActions sx={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="body2">Activo:</Typography>
-                        <CustomSwitch onChange={() => updateActiveStatus(gym, 'gym')} checked={gym.active} />
+                        <Typography variant="body2">Estado:</Typography>
+                        <Tooltip title={gym.active ? "Activo" : "Inactivo"} placement="top">
+                          <span>
+                            <CustomSwitch onChange={() => updateActiveStatus(gym, 'gym')} checked={gym.active} />
+                          </span>
+                        </Tooltip>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Typography variant="body2">Tienda:</Typography>
@@ -572,7 +782,7 @@ const AdminPanel = () => {
             <Grid container spacing={2}>
               {shopInfo.map((shop) => (
                 <Grid item xs={12} key={shop.owner_id}>
-                  <Card className={getRowClassName({ row: shop })}>
+                  <Card className={getRowClassName({ row: shop })} sx={{ boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
                     <CardContent>
                       <Typography variant="h6">{shop.shop_name}</Typography>
                       <Typography variant="body2">Dirección: {shop.address}</Typography>
@@ -592,8 +802,12 @@ const AdminPanel = () => {
                       </Box>
                     </CardContent>
                     <CardActions>
-                      <Typography variant="body2" ml={1.5}>Activo:</Typography>
-                      <CustomSwitch onChange={() => updateActiveStatus(shop, 'shop')} checked={shop.active} />
+                      <Typography variant="body2" ml={1.5}>Estado:</Typography>
+                      <Tooltip title={shop.active ? "Activo" : "Inactivo"} placement="top">
+                        <span>
+                          <CustomSwitch onChange={() => updateActiveStatus(shop, 'shop')} checked={shop.active} />
+                        </span>
+                      </Tooltip>
                     </CardActions>
                   </Card>
                 </Grid>
@@ -604,9 +818,185 @@ const AdminPanel = () => {
         <TabPanel value={tabValue} index={2}>
           <AdminRaffle />
         </TabPanel>
+        <TabPanel value={tabValue} index={3}>
+          <Grid container spacing={3}>
+            {/* Resumen General */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>Resumen General</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                    <Typography variant="h4" color="primary">{statistics.totalGyms}</Typography>
+                    <Typography variant="body2">Total Gimnasios</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                    <Typography variant="h4" color="secondary">{statistics.totalShops}</Typography>
+                    <Typography variant="body2">Total Tiendas</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                    <Typography variant="h4" color="success">{statistics.totalProducts}</Typography>
+                    <Typography variant="body2">Total Productos</Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                    <Typography variant="h4" color="warning">{statistics.premiumGyms}</Typography>
+                    <Typography variant="body2">Cuentas Premium</Typography>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Gimnasios por Provincia */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ p: 3, height: '400px', boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Gimnasios por Provincia</Typography>
+                {Object.keys(statistics.gymsByProvince).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.gymsByProvince))}
+                    series={[{ name: 'Gimnasios', data: Object.values(statistics.gymsByProvince) }]}
+                    type="bar"
+                    height={300}
+                  />
+                ) : (
+                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                    <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+
+            {/* Tiendas por Provincia */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ p: 3, height: '400px', boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Tiendas por Provincia</Typography>
+                {Object.keys(statistics.shopsByProvince || {}).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.shopsByProvince))}
+                    series={[{ name: 'Tiendas', data: Object.values(statistics.shopsByProvince) }]}
+                    type="bar"
+                    height={300}
+                  />
+                ) : (
+                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                    <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+
+            {/* Miembros por Gimnasio */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Miembros por Gimnasio</Typography>
+                {Object.keys(statistics.membersByGymName || {}).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.membersByGymName).map(name => name.length > 15 ? name.substring(0, 15) + '...' : name))}
+                    series={[{ name: 'Miembros', data: Object.values(statistics.membersByGymName) }]}
+                    type="bar"
+                    height={300}
+                  />
+                ) : (
+                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                    <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+
+            {/* Cuentas Premium vs Estándar */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ p: 3, height: '400px', boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Tipos de Cuentas</Typography>
+                <ReactApexChart
+                  options={getChartOptions(['Premium', 'Estándar'], true, ['#1da274', '#f278b6'])}
+                  series={[statistics.premiumGyms, statistics.standardGyms]}
+                  type="donut"
+                  height={300}
+                />
+              </Card>
+            </Grid>
+
+            {/* Productos por Tienda */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Productos por Tienda</Typography>
+                {Object.keys(statistics.totalProductsByShop).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.totalProductsByShop))}
+                    series={[{ name: 'Productos', data: Object.values(statistics.totalProductsByShop) }]}
+                    type="bar"
+                    height={300}
+                  />
+                ) : (
+                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                    <Typography variant="body2" color="text.secondary">No hay tiendas con productos</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+
+            {/* Próximas Cuentas a Pagar */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Próximos Pagos (Esta Semana)</Typography>
+                {statistics.upcomingPayments?.length > 0 ? (
+                  <Box sx={{ mt: 2 }}>
+                    {statistics.upcomingPayments.map((payment, index) => (
+                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.5, borderBottom: index < statistics.upcomingPayments.length - 1 ? '1px solid #eaeaea' : 'none' }}>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight="bold">{payment.name}</Typography>
+                          <Typography variant="body2" color="text.secondary">{payment.type}</Typography>
+                        </Box>
+                        <Typography variant="body1" color={dayjs(payment.date).isBefore(dayjs(), 'day') ? 'error' : 'primary'} fontWeight="bold">
+                          {dayjs(payment.date).format('DD/MM/YYYY')}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>No hay pagos programados para esta semana</Typography>
+                )}
+              </Card>
+            </Grid>
+
+            {/* Estadísticas Adicionales */}
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Información Adicional</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body1">
+                      <strong>Tienda con más productos:</strong> {statistics.shopWithMostProducts ? statistics.shopWithMostProducts : 'Ninguna'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body1">
+                      <strong>Cantidad máxima de productos:</strong> {Math.max(...Object.values(statistics.totalProductsByShop), 0)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body1">
+                      <strong>Promedio de productos por tienda:</strong> {statistics.totalShops > 0 ? Math.round(statistics.totalProducts / statistics.totalShops) : 0}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body1">
+                      <strong>Porcentaje de cuentas premium:</strong> {statistics.totalGyms > 0 ? Math.round((statistics.premiumGyms / statistics.totalGyms) * 100) : 0}%
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
       </Box>
 
-      <Dialog open={openPayment} onClose={() => setOpenPayment(false)} maxWidth="sm" fullWidth>
+      <Dialog open={openPayment} onClose={() => setOpenPayment(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' } }}>
         <DialogTitle>Registrar Pago</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2, mt: 1 }}>
@@ -643,7 +1033,7 @@ const AdminPanel = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="sm" fullWidth>
+      <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' } }}>
         <DialogTitle>Historial de Pago</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
@@ -651,7 +1041,7 @@ const AdminPanel = () => {
               <Typography variant="body2">Sin registros</Typography>
             ) : (
               historyRows.map((h) => (
-                <Card key={h.id} sx={{ mb: 1 }}>
+                <Card key={h.id} sx={{ mb: 1, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
                   <CardContent>
                     <Typography variant="body2">{dayjs(h.created_at).format('DD/MM/YYYY')}</Typography>
                     <Typography variant="body2">{h.quantity_paid} {h.currency}</Typography>

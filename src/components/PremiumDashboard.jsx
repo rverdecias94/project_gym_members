@@ -1,8 +1,6 @@
 /* eslint-disable react/prop-types */
 import { Divider, useTheme } from "@mui/material";
-import { BarChart } from "@mui/x-charts/BarChart";
-import { PieChart } from "@mui/x-charts/PieChart";
-import { LineChart } from "@mui/x-charts/LineChart";
+import ReactApexChart from 'react-apexcharts';
 import { useEffect, useState } from "react";
 
 export default function PremiumDashboard({
@@ -18,6 +16,98 @@ export default function PremiumDashboard({
   const [paymentsByMonth, setPaymentsByMonth] = useState(Array(12).fill(0));
   const [last7DaysData, setLast7DaysData] = useState([]);
   const [dayLabels, setDayLabels] = useState([]);
+
+  const getChartOptions = (categories, isPie = false, customColors = null, isLine = false) => {
+    const baseOptions = {
+      chart: {
+        toolbar: { show: false },
+        background: 'transparent',
+        fontFamily: 'Montserrat, sans-serif',
+      },
+      colors: customColors || [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.primary.accent],
+      theme: {
+        mode: theme.palette.mode,
+      },
+      tooltip: {
+        theme: theme.palette.mode,
+        style: {
+          fontSize: '12px',
+          fontFamily: 'Montserrat, sans-serif'
+        },
+      },
+    };
+
+    if (isPie) {
+      return {
+        ...baseOptions,
+        labels: categories,
+        stroke: { show: false },
+        dataLabels: { enabled: false },
+        legend: {
+          position: 'bottom',
+          labels: { colors: theme.palette.text.secondary }
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '70%',
+              labels: {
+                show: true,
+                name: { color: theme.palette.text.secondary },
+                value: { color: theme.palette.text.primary, fontSize: '20px', fontWeight: 600 }
+              }
+            }
+          }
+        }
+      };
+    }
+
+    const gridOptions = {
+      borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+      strokeDashArray: 4,
+      yaxis: { lines: { show: true } },
+      xaxis: { lines: { show: false } }
+    };
+
+    const axisOptions = {
+      xaxis: {
+        categories: categories,
+        labels: { style: { colors: theme.palette.text.secondary } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        labels: { style: { colors: theme.palette.text.secondary } }
+      }
+    };
+
+    if (isLine) {
+      return {
+        ...baseOptions,
+        ...axisOptions,
+        grid: gridOptions,
+        stroke: { curve: 'smooth', width: 3 },
+        markers: { size: 4 },
+        dataLabels: { enabled: false },
+        legend: { show: false }
+      };
+    }
+
+    return {
+      ...baseOptions,
+      ...axisOptions,
+      grid: gridOptions,
+      plotOptions: {
+        bar: {
+          borderRadius: 4,
+          columnWidth: '40%',
+          distributed: true
+        }
+      },
+      dataLabels: { enabled: false },
+      legend: { show: false }
+    };
+  };
 
   useEffect(() => {
     if (membersList?.length > 0 && gymInfo) {
@@ -138,112 +228,102 @@ export default function PremiumDashboard({
 
   return (
     <div style={{ marginTop: "3rem", padding: "1rem" }}>
-      <Divider />
-      <h2 style={{ margin: "1rem" }}>📊 Estadísticas Premium</h2>
+      <Divider sx={{ mb: 3 }} />
+      
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '8px', 
+        marginBottom: '1.5rem',
+        padding: '0 10px'
+      }}>
+        <span style={{ fontSize: '1.3rem' }}>💎</span>
+        <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 600, color: theme.palette.text.primary }}>Estadísticas Premium</h2>
+        <div style={{
+          marginLeft: '10px',
+          padding: '2px 8px',
+          borderRadius: '12px',
+          backgroundColor: 'rgba(97, 87, 214, 0.1)',
+          border: '1px solid rgba(97, 87, 214, 0.2)',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          color: '#6157d6'
+        }}>
+          PRO
+        </div>
+      </div>
 
-      <div
-        className="stats-grid"
-      >
-        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
-          <BarChart
-            sx={{
-              "& .MuiBarElement-root:nth-of-type(odd)": {
-                fill:
-                  theme.palette.mode === "dark"
-                    ? theme.palette.primary.main
-                    : theme.palette.primary.main,
-              },
-              "& .MuiBarElement-root:nth-of-type(even)": {
-                fill:
-                  theme.palette.mode === "dark"
-                    ? theme.palette.secondary.main
-                    : theme.palette.primary.accent,
-              },
-            }}
-            xAxis={[
-              {
-                scaleType: "band",
-                data: dayLabels,
-                categoryGapRatio: 0.5,
-                barGapRatio: 1,
-              },
-            ]}
-            series={[{ data: last7DaysData }]}
-            height={250}
-            slotProps={{
-              bar: { clipPath: `inset(0px round 3px 3px 0px 0px)` },
-            }}
-          />
-          <span>Nuevos Clientes - Últimos 7 Días</span>
+      <div className="stats-grid">
+        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
+          <div style={{ width: '100%' }}>
+            <ReactApexChart 
+              options={getChartOptions(dayLabels, false, ['#6157d6', '#f278b6'])} 
+              series={[{ name: 'Nuevos Clientes', data: last7DaysData }]} 
+              type="bar" 
+              height={250} 
+            />
+            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Nuevos Clientes - Últimos 7 Días</span>
+          </div>
         </div>
 
-        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
-          <BarChart
-            xAxis={[{ scaleType: "band", data: Object.keys(ageRanges) }]}
-            series={[{ data: Object.values(ageRanges) }]}
-            height={250}
-          />
-          <span>Distribución de clientes por rango de edad</span>
+        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
+          <div style={{ width: '100%' }}>
+            <ReactApexChart 
+              options={getChartOptions(Object.keys(ageRanges), false, ['#6157d6', '#f278b6', '#3b82f6', '#10b981'])} 
+              series={[{ name: 'Clientes', data: Object.values(ageRanges) }]} 
+              type="bar" 
+              height={250} 
+            />
+            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Distribución de clientes por rango de edad</span>
+          </div>
         </div>
 
-        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
-          <PieChart
-            series={[
-              {
-                data: [
-                  { id: 0, value: avgStay, label: "Meses promedio" },
-                  { id: 1, value: 12, label: "Referencia (12 meses)" },
-                ],
-                innerRadius: 30,
-                outerRadius: 90,
-              },
-            ]}
-            height={250}
-          />
-          <span>Permanencia promedio de clientes</span>
+        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
+          <div style={{ width: '100%' }}>
+            <ReactApexChart 
+              options={getChartOptions(["Meses promedio", "Referencia (12 meses)"], true, ['#6157d6', '#f278b6'])} 
+              series={[Number(avgStay) || 0, 12]} 
+              type="donut" 
+              height={250} 
+            />
+            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Permanencia promedio de clientes</span>
+          </div>
         </div>
 
-        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
-          <BarChart
-            xAxis={[{ scaleType: "band", data: ["Mes anterior", "Mes actual"] }]}
-            series={[{ data: [lastMonthIncome, monthlyIncome] }]}
-            height={250}
-          />
-          <span>Ingresos proyectados ({gymInfo?.monthly_currency || "CUP"})</span>
+        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
+          <div style={{ width: '100%' }}>
+            <ReactApexChart 
+              options={getChartOptions(["Mes anterior", "Mes actual"], false, ['#f278b6', '#6157d6'])} 
+              series={[{ name: 'Ingresos', data: [lastMonthIncome, monthlyIncome] }]} 
+              type="bar" 
+              height={250} 
+            />
+            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Ingresos proyectados ({gymInfo?.monthly_currency || "CUP"})</span>
+          </div>
         </div>
 
-        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
-          <PieChart
-            series={[
-              {
-                data: [
-                  { id: 0, value: weeklyPayers, label: "Con pago" },
-                  { id: 1, value: membersList.length - weeklyPayers, label: "Sin pago" },
-                ],
-                innerRadius: 30,
-                outerRadius: 90,
-              },
-            ]}
-            height={250}
-          />
-          <span>Clientes con pago en la semana actual</span>
+        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
+          <div style={{ width: '100%' }}>
+            <ReactApexChart 
+              options={getChartOptions(["Con pago", "Sin pago"], true, ['#10b981', '#ef4444'])} 
+              series={[weeklyPayers, membersList.length - weeklyPayers]} 
+              type="donut" 
+              height={250} 
+            />
+            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Clientes con pago en la semana actual</span>
+          </div>
         </div>
 
-        <div className={theme.palette.mode === "dark" ? "chart-box-dark" : "chart-box-light"}>
-          <LineChart
-            xAxis={[
-              {
-                scaleType: "point",
-                data: [
-                  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-                  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
-                ],
-              },
-            ]}
-            series={[{ data: paymentsByMonth, label: "Pagos" }]}
-            height={300}
-          />
-          <span>Tendencia de pagos mensuales</span>
+        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
+          <div style={{ width: '100%' }}>
+            <ReactApexChart 
+              options={getChartOptions(["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"], false, ['#6157d6'], true)} 
+              series={[{ name: 'Pagos', data: paymentsByMonth }]} 
+              type="line" 
+              height={250} 
+            />
+            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Tendencia de pagos mensuales</span>
+          </div>
         </div>
       </div>
 
