@@ -51,7 +51,7 @@ const SignIn = () => {
         </div>
 
 
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "2rem" }}>
           {!acceptedTerms && (
             <Checkbox
               checked={acceptedTerms}
@@ -60,7 +60,7 @@ const SignIn = () => {
             />
           )}
 
-          <Typography variant="body2" sx={{ color: 'white', fontSize: '14px', marginBottom: "2rem" }}>
+          <Typography variant="body2" sx={{ color: 'white', fontSize: '14px' }}>
             {!acceptedTerms ? "Acepto los " : "Aceptaste los "}
             <Link
               component="button"
