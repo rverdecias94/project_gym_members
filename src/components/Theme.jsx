@@ -1,6 +1,59 @@
 // themes.js
 import { createTheme } from '@mui/material/styles';
 
+const commonComponents = {
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          textTransform: 'none',
+          boxShadow: 'none',
+          padding: '8px 16px',
+          minHeight: '40px',
+          '&:hover': {
+            boxShadow: 'none',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 5,
+          boxShadow: 'none',
+          border: '1px solid #eaeaea',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 5,
+          boxShadow: 'none',
+          border: '1px solid #eaeaea',
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: 5,
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 5,
+          boxShadow: 'none',
+          border: '1px solid #eaeaea',
+        },
+      },
+    },
+  },
+};
+
 export const lightTheme = createTheme({
   palette: {
     mode: 'light',
@@ -26,6 +79,7 @@ export const lightTheme = createTheme({
       main: '#d32f2f',
     },
   },
+  ...commonComponents,
 });
 
 export const darkTheme = createTheme({
@@ -54,6 +108,36 @@ export const darkTheme = createTheme({
     error: {
       main: '#ff9a9a'
     }
+  },
+  components: {
+    ...commonComponents.components,
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 5,
+          boxShadow: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.12)', // Borde más suave para el modo oscuro
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 5,
+          boxShadow: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 5,
+          boxShadow: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+        },
+      },
+    },
   },
 });
 

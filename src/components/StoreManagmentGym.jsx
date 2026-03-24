@@ -503,8 +503,8 @@ const StoreManagmentGym = () => {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (product.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.description || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory = !filterCategory || product.category === filterCategory;
 
@@ -523,7 +523,7 @@ const StoreManagmentGym = () => {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const ProductCard = ({ product }) => (
-    <Card sx={{ mb: 10, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+    <Card sx={{ mb: 10, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
       <Box sx={{ position: 'relative' }}>
         <CardMedia
           component="img"
@@ -543,7 +543,7 @@ const StoreManagmentGym = () => {
         </Typography>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.8rem', lineHeight: 1.3 }}>
-          {product.description.length > 80 ? `${product.description.substring(0, 80)}...` : product.description}
+          {product.description?.length > 80 ? `${product.description.substring(0, 80)}...` : product.description}
         </Typography>
 
         <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>
@@ -720,10 +720,9 @@ const StoreManagmentGym = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 2, display: "flex", gap: "1rem", flexDirection: isMobile ? 'column' : 'row', }}>
-      <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} mb={3} sx={{ flex: 2, height: "20rem" }}>
-
-        <Paper sx={{ p: 4, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 2, display: "flex", gap: "1rem", flexDirection: { xs: 'column', md: 'row' } }}>
+      <Box display="flex" flexDirection="column" gap={2} mb={3} sx={{ flex: { xs: 1, md: 2 }, height: "auto" }}>
+        <Paper sx={{ p: 3, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
           <Typography variant="h6" gutterBottom fontWeight="600">Filtros</Typography>
 
           <TextField
@@ -784,7 +783,7 @@ const StoreManagmentGym = () => {
 
       </Box>
 
-      <Paper sx={{ p: isMobile ? 2 : 3, flex: 5, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+      <Paper sx={{ p: isMobile ? 2 : 3, flex: 8, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 2 : 0}>
           <Typography variant="h6" gutterBottom fontWeight="600">
             Gestión de Tienda
@@ -843,7 +842,7 @@ const StoreManagmentGym = () => {
                             <CircularProgress size={24} />
                           </TableCell>
                         </TableRow>
-                      ) : products.length === 0 ? (
+                      ) : currentProducts.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={6} align="center">
                             No hay productos registrados
@@ -936,7 +935,7 @@ const StoreManagmentGym = () => {
                   <Box display="flex" justifyContent="center" py={4}>
                     <CircularProgress />
                   </Box>
-                ) : products.length === 0 ? (
+                ) : currentProducts.length === 0 ? (
                   <Typography variant="body1" sx={{ textAlign: 'center', py: 4, fontSize: '0.9rem' }}>
                     No hay productos registrados
                   </Typography>

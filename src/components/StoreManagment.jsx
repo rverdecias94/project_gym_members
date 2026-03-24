@@ -488,8 +488,8 @@ const StoreManagment = () => {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (product.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.description || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory = !filterCategory || product.category === filterCategory;
 
@@ -509,7 +509,7 @@ const StoreManagment = () => {
 
 
   const ProductCard = ({ product }) => (
-    <Card sx={{ mb: 10, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+    <Card sx={{ mb: 10, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
       <Box sx={{ position: 'relative' }}>
         <CardMedia component="img" height="120" image={product.image_base64} alt={product.name} sx={{ objectFit: 'cover' }} />
       </Box>
@@ -517,7 +517,7 @@ const StoreManagment = () => {
         <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{product.name}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.8rem' }}><strong>Código:</strong> {product.product_code}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.8rem', lineHeight: 1.3 }}>
-          {product.description.length > 80 ? `${product.description.substring(0, 80)}...` : product.description}
+          {product.description?.length > 80 ? `${product.description.substring(0, 80)}...` : product.description}
         </Typography>
         <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>{product.price} {product.currency}</Typography>
         <Box display="flex" gap={0.5} mb={1} flexWrap="wrap">
@@ -564,11 +564,11 @@ const StoreManagment = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 16, display: "flex", gap: "1rem" }}>
+    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 16, display: "flex", gap: "1rem", flexDirection: { xs: 'column', md: 'row' } }}>
 
       {/* Sidebar de filtros */}
-      <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} gap={2} mb={3} sx={{ flex: 2, height: "20rem" }}>
-        <Paper sx={{ p: 4, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+      <Box display="flex" flexDirection="column" gap={2} mb={3} sx={{ flex: { xs: 1, md: 2 }, height: "auto" }}>
+        <Paper sx={{ p: 4, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
           <Typography variant="h6" gutterBottom fontWeight="600">Filtros</Typography>
 
           <TextField
@@ -629,7 +629,7 @@ const StoreManagment = () => {
 
       </Box>
 
-      <Paper sx={{ p: isMobile ? 2 : 1, flex: 8, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+      <Paper sx={{ p: isMobile ? 2 : 1, flex: 8, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 2 : 0}>
           <Typography variant="h6" gutterBottom fontWeight="600">
             Gestión de Tienda
@@ -675,7 +675,7 @@ const StoreManagment = () => {
                     <TableBody>
                       {loadingProducts ? (
                         <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={24} /></TableCell></TableRow>
-                      ) : products.length === 0 ? (
+                      ) : currentProducts.length === 0 ? (
                         <TableRow><TableCell colSpan={6} align="center">No hay productos registrados</TableCell></TableRow>
                       ) : (
                         currentProducts.map((product) => (
@@ -738,7 +738,7 @@ const StoreManagment = () => {
               <Box sx={{ width: '100%' }}>
                 {loadingProducts ? (
                   <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
-                ) : products.length === 0 ? (
+                ) : currentProducts.length === 0 ? (
                   <Typography variant="body1" sx={{ textAlign: 'center', py: 4, fontSize: '0.9rem' }}>No hay productos registrados</Typography>
                 ) : (
                   <>

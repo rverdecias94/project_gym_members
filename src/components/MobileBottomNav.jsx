@@ -36,7 +36,7 @@ export default function MobileBottomNav({ profile, mode, toggleTheme, logoutUser
     { label: 'Panel', icon: <AssessmentIcon />, path: '/panel' },
     { label: 'Clientes', icon: <GroupsIcon />, path: '/clientes' },
     { label: 'Entrenadores', icon: <FitnessCenterIcon />, path: '/entrenadores' },
-    { label: 'Tienda', icon: <LocalGroceryStoreIcon />, path: '/tienda' },
+    { label: 'Tienda', icon: <LocalGroceryStoreIcon />, path: '/tienda-gym' },
     { label: 'Planes', icon: <TrendingUpIcon />, path: '/planes' },
   ];
 

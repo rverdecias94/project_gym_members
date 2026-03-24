@@ -85,7 +85,7 @@ export const ContextProvider = ({ children }) => {
         .from('info_general_gym')
         .select('*')
         .eq('owner_id', user.id)
-        .single(); // Expecting a single row
+        .maybeSingle(); // Expecting a single row or none
 
       if (error) {
         console.error("Error fetching gym info:", error);
@@ -125,7 +125,7 @@ export const ContextProvider = ({ children }) => {
         .from('info_shops')
         .select('*')
         .eq('owner_id', user.id)
-        .single(); // Expecting a single row
+        .maybeSingle(); // Expecting a single row or none
 
       if (error) {
         console.error("Error fetching shop info:", error);
