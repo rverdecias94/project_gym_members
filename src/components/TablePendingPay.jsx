@@ -1,15 +1,18 @@
-import { Button, Grid, MenuItem, TextField, Tooltip, IconButton } from '@mui/material';
+import { Grid, MenuItem, TextField, Tooltip, IconButton } from '@mui/material';
+import { Button } from "@/components/ui/button";
+import { FileText } from 'lucide-react';
 import { DataGrid } from '@mui/x-data-grid';
 import { useState, useEffect } from 'react';
 import { useMembers } from '../context/Context';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import "./css/styles.css"
 import ViewDetails from './ViewDetails';
 import ContactPageIcon from '@mui/icons-material/ContactPage';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useTheme } from '@mui/material/styles';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import PaymentModal from './PaymentModal'; // Importar el nuevo modal
 import PaymentIcon from '@mui/icons-material/Payment';
 
@@ -184,46 +187,40 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   }
 
   return (
-    <Grid style={{ height: 400, width: '100%', marginBottom: 40 }}>
+    <div className="w-full mb-10">
       <br />
-      <Grid container style={{ display: "flex", justifyContent: "start", gap: 10 }}>
-        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
+      <div className="flex justify-between items-center w-full gap-4">
+        {/* Lado izquierdo: Select (Filtro) */}
+        <div className="w-full max-w-[200px]">
+          <Select value={trainer_name || "Todos"} onValueChange={(val) => setTrainerName(val)}>
+            <SelectTrigger disabled={membersPending.length === 0} className="w-full bg-transparent">
+              <SelectValue placeholder="Entrenador" />
+            </SelectTrigger>
+            <SelectContent>
+              {trainers.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Lado derecho: Botón Descargar */}
+        <div className="flex-shrink-0">
           <Button
-            variant='contained'
+            variant="outline"
             onClick={downloadPDF}
-            fullWidth
-            color='primary'
-            sx={{ height: "100%" }}
             disabled={membersPending.length === 0}
-            className='btn-pdf'
+            className={cn("transition-opacity", membersPending.length === 0 && "opacity-50 cursor-not-allowed")}
           >
-            <PictureAsPdfIcon /> Descargar
+            <FileText className="mr-2 h-4 w-4" />
+            <span>Descargar</span>
           </Button>
-        </Grid>
-        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
-          <TextField
-            id="outlined-select-currency"
-            select
-            disabled={membersPending.length === 0}
-            label="Entrenador"
-            defaultValue=""
-            placeholder="Entrenador"
-            name="trainer_name"
-            onChange={handlerChange}
-            value={trainer_name}
-            style={{ width: "100%" }}
-            size='small'
-          >
-            {trainers.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       <br />
-      <Grid container style={{ paddingBottom: '5rem' }}>
+      <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">
         <DataGrid
           autoHeight
           rows={membersPending}
@@ -234,8 +231,27 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
             },
           }}
           pageSizeOptions={[5, 10]}
+          sx={{
+            border: 'none',
+            '& .MuiDataGrid-cell': {
+              borderColor: 'hsl(var(--border))',
+              color: 'hsl(var(--foreground))',
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: 'hsl(var(--muted))',
+              color: 'hsl(var(--muted-foreground))',
+              borderBottom: '1px solid hsl(var(--border))',
+            },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--foreground))',
+            },
+            '& .MuiTablePagination-root': {
+              color: 'hsl(var(--foreground))',
+            },
+          }}
         />
-      </Grid>
+      </div>
       <ViewDetails
         handleClose={handleClose}
         open={open}
@@ -246,6 +262,6 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
         handleClose={handleClosePayment}
         member={selectedMember}
       />
-    </Grid>
+    </div>
   );
 }

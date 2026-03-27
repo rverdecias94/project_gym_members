@@ -1,7 +1,10 @@
 import { DataGrid } from '@mui/x-data-grid';
 import { useState } from 'react';
 import ContactPageIcon from '@mui/icons-material/ContactPage';
-import { Checkbox, FormControlLabel, Button, Grid } from '@mui/material';
+import { Checkbox, FormControlLabel, Grid } from '@mui/material';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { UserCheck } from "lucide-react";
 import { useMembers } from '../context/Context';
 import ViewDetails from './ViewDetails';
 
@@ -84,24 +87,24 @@ export const MembersInactive = ({ membersList = [] }) => {
   };
 
   return (
-    <Grid style={{ height: 400, width: '100%' }}>
+    <div className="w-full mb-10">
       <br />
-      <Grid container style={{ display: "flex", gap: 10 }}>
-        <Grid item xl={2} lg={2} md={2} sm={2} xs={12}>
+      <div className="flex justify-end items-center w-full gap-4">
+        {/* Lado derecho: Botón Activar usuarios */}
+        <div className="flex-shrink-0">
           <Button
-            variant='contained'
-            color='primary'
-            fullWidth
+            variant="outline"
             disabled={selectedRows?.length === 0}
             onClick={handlerActivateRows}
-            sx={{ height: "100%" }}
+            className={cn("transition-opacity", selectedRows?.length === 0 && "opacity-50 cursor-not-allowed")}
           >
-            Activar usuarios
+            <UserCheck className="mr-2 h-4 w-4" />
+            <span>Activar usuarios</span>
           </Button>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       <br />
-      <Grid container style={{ paddingBottom: '9rem' }}>
+      <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">
         <DataGrid
           autoHeight
           rows={membersList}
@@ -112,13 +115,32 @@ export const MembersInactive = ({ membersList = [] }) => {
             },
           }}
           pageSizeOptions={[5, 10]}
+          sx={{
+            border: 'none',
+            '& .MuiDataGrid-cell': {
+              borderColor: 'hsl(var(--border))',
+              color: 'hsl(var(--foreground))',
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: 'hsl(var(--muted))',
+              color: 'hsl(var(--muted-foreground))',
+              borderBottom: '1px solid hsl(var(--border))',
+            },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--foreground))',
+            },
+            '& .MuiTablePagination-root': {
+              color: 'hsl(var(--foreground))',
+            },
+          }}
         />
-      </Grid>
+      </div>
       <ViewDetails
         handleClose={handleClose}
         open={open}
         profile={profile}
       />
-    </Grid>
+    </div>
   );
 }

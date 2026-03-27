@@ -1,53 +1,20 @@
 /* eslint-disable react/prop-types */
 
 import { useEffect, useState, useRef } from 'react';
-import { Box, Button, Grid, Tab, Tabs, Typography } from '@mui/material';
-import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
-import "./css/styles.css"
 import Webcam from 'react-webcam';
-import PropTypes from 'prop-types';
-import FlipCameraIosIcon from '@mui/icons-material/FlipCameraIos';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-const IMAGE_DEFAULT = '/CI.png'
+import { Camera, FolderUp, RefreshCcw, Trash2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
-function CustomTabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 1 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-CustomTabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
-  };
-}
+const IMAGE_DEFAULT = '/CI.png';
 
 const ImageUploader = ({ setImageBase64, image }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageFormated, setImageformated] = useState(null);
   const [imageScr, setImageSrc] = useState(null);
   const [facingMode, setFacingMode] = useState("environment");
-  const [value, setValue] = useState(0);
-
+  const [activeTab, setActiveTab] = useState("upload");
 
   const webCamRef = useRef(null);
 
@@ -64,12 +31,6 @@ const ImageUploader = ({ setImageBase64, image }) => {
   useEffect(() => {
     setImageBase64(imageFormated)
   }, [imageFormated, setImageBase64])
-
-
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
 
   const saveImage = async (event) => {
     setImageSrc(null);
@@ -113,7 +74,6 @@ const ImageUploader = ({ setImageBase64, image }) => {
           let quality = 0.7;
           let base64Image = canvas.toDataURL('image/jpeg', quality);
 
-          // Asegúrate de que el tamaño sea menor que maxSizeKB
           while (base64Image.length > maxSizeKB * 1024) {
             base64Image = canvas.toDataURL('image/jpeg', quality);
             quality -= 0.05;
@@ -133,7 +93,6 @@ const ImageUploader = ({ setImageBase64, image }) => {
     });
   };
 
-
   const resizeBase64Image = (base64Str, maxWidth, maxHeight, maxSizeKB) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -149,10 +108,9 @@ const ImageUploader = ({ setImageBase64, image }) => {
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        let quality = 0.7; // Calidad inicial, puedes ajustarla según sea necesario
+        let quality = 0.7;
         let base64Image = canvas.toDataURL('image/jpeg', quality);
 
-        // Asegúrate de que el tamaño sea menor que maxSizeKB
         while (base64Image.length > maxSizeKB * 1024 && quality > 0.1) {
           quality -= 0.05;
           base64Image = canvas.toDataURL('image/jpeg', quality);
@@ -167,108 +125,94 @@ const ImageUploader = ({ setImageBase64, image }) => {
     });
   };
 
-
-
-
-
   return (
-    <div style={{ width: "101%" }}>
-      <Box sx={{ width: '100%' }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={value}
-            onChange={handleChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            aria-label="scrollable auto tabs example"
-          >
-            <Tab label="Subir foto" {...a11yProps(0)} />
-            <Tab label="Capturar Foto" {...a11yProps(1)} />
-          </Tabs>
-          {/* </ScrollableTabs> */}
-        </Box>
-        <CustomTabPanel value={value} index={0}>
-          <input
-            accept="image/*"
-            style={{ display: 'none' }}
-            id="image-upload"
-            type="file"
-            onChange={saveImage}
-          />
+    <div className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full grid grid-cols-2 mb-4">
+          <TabsTrigger value="upload" className="text-xs sm:text-sm">Subir foto</TabsTrigger>
+          <TabsTrigger value="capture" className="text-xs sm:text-sm">Cámara</TabsTrigger>
+        </TabsList>
 
-          <div className='containerProfileImage'>
-            <img src={imageScr ? imageScr : selectedImage ? selectedImage : IMAGE_DEFAULT}
-              alt="Imagen de Perfil"
-              className='imgProfile' />
+        <TabsContent value="upload" className="space-y-4 m-0">
+          <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-dashed border-border bg-muted/20 flex items-center justify-center">
+            <img 
+              src={imageScr ? imageScr : selectedImage ? selectedImage : IMAGE_DEFAULT}
+              alt="Perfil"
+              className={cn(
+                "w-full h-full object-contain",
+                !imageScr && !selectedImage && "opacity-50 p-4"
+              )}
+            />
           </div>
 
-          <Grid item lg={12} xl={12} md={12} sm={12} xs={12} style={{ display: "flex", gap: 10 }}>
-            <Button variant="contained" component="span" style={{ width: "100%", padding: 10, margin: "-3px 0px 4% 0" }}>
-              <DriveFolderUploadIcon />
-              <label htmlFor="image-upload">
-                <span style={{ marginLeft: 5, fontSize: 12 }}>
-                  Subir foto
-                </span>
-              </label>
+          <div className="relative">
+            <input
+              accept="image/*"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              id="image-upload"
+              type="file"
+              onChange={saveImage}
+            />
+            <Button variant="outline" className="w-full flex items-center justify-center gap-2 pointer-events-none">
+              <FolderUp className="w-4 h-4" />
+              <span>Seleccionar desde el equipo</span>
             </Button>
+          </div>
+        </TabsContent>
 
-          </Grid>
-        </CustomTabPanel>
-        <CustomTabPanel value={value} index={1}>
-          <Grid item lg={12} xl={12} md={12} sm={12} xs={12}>
-            <Grid item style={{ display: "flex", gap: 10 }}>
-              <Button
-                variant="contained"
-                color='success'
-                style={{ width: "fit-content", padding: 10, margin: "4% 0px 0px 0px", backgroundColor: "#6164c7" }}
-                onClick={() => setFacingMode(facingMode === 'user' ? 'environment' : 'user')}
-              >
-                <FlipCameraIosIcon />
-              </Button>
-              <Button
-                variant="contained"
-                color='error'
-                style={{ width: "fit-content", padding: 10, margin: "4% 0px 0px 0px", backgroundColor: "#e74c60" }}
-                onClick={() => setImageSrc(null)}
-              >
-                <DeleteForeverIcon />
-              </Button>
-            </Grid>
-            {
-              imageScr ? <img src={imageScr}
-                alt="Imagen de Perfil"
-                className='imgProfile' />
-                :
-                <Grid style={{ border: "2px dashed rgb(89 120 177 / 54%)", margin: "1rem 0", borderRadius: 10 }}>
-                  <Webcam
-                    audio={false}
-                    height={250}
-                    width={"100%"}
-                    screenshotFormat='image/png'
-                    ref={webCamRef}
-                    videoConstraints={{
-                      height: 250,
-                      width: 400,
-                      facingMode: facingMode
-                    }}
-                  />
-                </Grid>
-
-            }
-
-            <Button variant="contained" component="span" style={{ width: "100%", padding: 10, margin: "-3px 0px 4% 0" }}
-              onClick={capture}
+        <TabsContent value="capture" className="space-y-4 m-0">
+          <div className="flex gap-2 justify-end mb-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="lg:hidden bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 hover:text-primary"
+              onClick={() => setFacingMode(facingMode === 'user' ? 'environment' : 'user')}
+              title="Cambiar cámara"
             >
-              <DriveFolderUploadIcon />
-              <span style={{ marginLeft: 5, fontSize: 12 }}>
-                Capturar foto
-              </span>
+              <RefreshCcw className="w-4 h-4" />
             </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 hover:text-destructive"
+              onClick={() => setImageSrc(null)}
+              title="Borrar foto actual"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
 
-          </Grid>
-        </CustomTabPanel>
-      </Box >
-    </div >
+          <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-border bg-muted/20">
+            {imageScr ? (
+              <img 
+                src={imageScr}
+                alt="Captura"
+                className="w-full h-full object-cover" 
+              />
+            ) : (
+              <Webcam
+                audio={false}
+                className="w-full h-full object-cover"
+                screenshotFormat='image/png'
+                ref={webCamRef}
+                videoConstraints={{
+                  facingMode: facingMode
+                }}
+              />
+            )}
+          </div>
+
+          <Button 
+            variant="default" 
+            className="w-full flex items-center justify-center gap-2"
+            onClick={capture}
+          >
+            <Camera className="w-4 h-4" />
+            <span>Capturar foto</span>
+          </Button>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

@@ -1,87 +1,33 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import * as React from 'react';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import { Grid, TextField, Typography } from '@mui/material';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../supabase/client';
-import { useState } from 'react';
-import { styled } from '@mui/material/styles';
-import Switch from '@mui/material/Switch';
-import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { provincias } from "./Provincias";
-import { LocalizationProvider, MobileTimePicker } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
 import { useSnackbar } from '../context/Snackbar';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Trash2, Plus } from "lucide-react";
 
-
-const CustomSwitch = styled(Switch)(({ theme }) => ({
-  width: 62,
-  height: 34,
-  padding: 7,
-  '& .MuiSwitch-switchBase': {
-    margin: 1,
-    padding: 0,
-    transform: 'translateX(6px)',
-    '&.Mui-checked': {
-      color: '#fff',
-      transform: 'translateX(22px)',
-      '& .MuiSwitch-thumb:before': {
-        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-          '#fff',
-        )}" d="M4.2 2.5l-.7 1.8-1.8.7 1.8.7.7 1.8.6-1.8L6.7 5l-1.9-.7-.6-1.8zm15 8.3a6.7 6.7 0 11-6.6-6.6 5.8 5.8 0 006.6 6.6z"/></svg>')`,
-      },
-      '& + .MuiSwitch-track': {
-        opacity: 1,
-        backgroundColor: '#aab4be',
-        ...theme.applyStyles('dark', {
-          backgroundColor: '#8796A5',
-        }),
-      },
-    },
-  },
-  '& .MuiSwitch-thumb': {
-    backgroundColor: '#e49c10',
-    width: 32,
-    height: 32,
-    '&::before': {
-      content: "''",
-      position: 'absolute',
-      width: '100%',
-      height: '100%',
-      left: 0,
-      top: 0,
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-        '#fff',
-      )}" d="M9.305 1.667V3.75h1.389V1.667h-1.39zm-4.707 1.95l-.982.982L5.09 6.072l.982-.982-1.473-1.473zm10.802 0L13.927 5.09l.982.982 1.473-1.473-.982-.982zM10 5.139a4.872 4.872 0 00-4.862 4.86A4.872 4.872 0 0010 14.862 4.872 4.872 0 0014.86 10 4.872 4.872 0 0010 5.139zm0 1.389A3.462 3.462 0 0113.471 10a3.462 3.462 0 01-3.473 3.472A3.462 3.462 0 016.527 10 3.462 3.462 0 0110 6.528zM1.665 9.305v1.39h2.083v-1.39H1.666zm14.583 0v1.39h2.084v-1.39h-2.084zM5.09 13.928L3.616 15.4l.982.982 1.473-1.473-.982-.982zm9.82 0l-.982.982 1.473 1.473.982-.982-1.473-1.473zM9.305 16.25v2.083h1.389V16.25h-1.39z"/></svg>')`,
-    },
-    ...theme.applyStyles('dark', {
-      backgroundColor: '#6164c7',
-    }),
-  },
-  '& .MuiSwitch-track': {
-    opacity: 1,
-    backgroundColor: '#aab4be',
-    borderRadius: 20 / 2,
-    ...theme.applyStyles('dark', {
-      backgroundColor: '#8796A5',
-    }),
-  },
-}));
-
-export default function SettingsAccountGym({
-  handleClose, open, profile }) {
-
+export default function SettingsAccountGym({ handleClose, open, profile }) {
   const { showMessage } = useSnackbar();
-  const [modeDark, setModeDark] = useState(null)
   const [gymInfo, setGymInfo] = useState({
     owner_id: "",
     gym_name: "",
@@ -118,10 +64,8 @@ export default function SettingsAccountGym({
         const futureDate = new Date(gymInfo.next_payment_date);
         const timeDifference = futureDate - today;
         const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
         setDaysRemaining(daysDifference);
       };
-
       calculateDays();
     }
   }, [gymInfo]);
@@ -135,113 +79,42 @@ export default function SettingsAccountGym({
         .eq('owner_id', profile.id)
 
       if (data?.length > 0) {
-        let {
-          owner_id,
-          gym_name,
-          owner_name,
-          owner_phone,
-          public_phone,
-          address,
-          state,
-          city,
-          next_payment_date,
-          schedules,
-          monthly_payment,
-          daily_payment,
-          trainers_cost,
-          monthly_currency,
-          daily_currency,
-          trainer_currency
-        } = data[0];
-
-        let obj = {
-          owner_id,
-          gym_name,
-          owner_name,
-          owner_phone,
-          public_phone,
-          address,
-          state,
-          city,
-          next_payment_date,
-          schedules,
-          monthly_payment,
-          daily_payment,
-          trainers_cost,
-          monthly_currency,
-          daily_currency,
-          trainer_currency
-        }
-        setGymInfo(obj)
+        let obj = { ...data[0] };
+        setGymInfo(obj);
       }
-
     }
-
     existsUser();
-  }, [open, profile])
+  }, [open, profile]);
 
-
-  const switchStatusChange = () => {
-    setModeDark(!modeDark)
-  }
-  const handleProvinciaChange = (event) => {
-    let { value } = event.target;
+  const handleProvinciaChange = (value) => {
     setGymInfo(prev => ({
       ...prev,
       state: value,
       city: ""
-    })); // Reinicia city cuando cambia state
+    }));
   };
 
-  const handleMunicipioChange = (event) => {
-    let { value } = event.target;
+  const handleMunicipioChange = (value) => {
     setGymInfo(prev => ({
       ...prev,
       city: value
     }));
   };
 
-  const saveGymInfo = () => {
-
-    if (!validateForm()) return;
-
-    const { owner_id, ...infoToSave } = gymInfo;
-
-    setTimeout(async () => {
-      try {
-        const result = await supabase
-          .from("info_general_gym")
-          .update(infoToSave)
-          .eq("owner_id", owner_id);
-
-        if (result) {
-          showMessage("¡Información actualizada con éxito!", "success");
-          handleClose();
-        }
-      } catch (error) {
-        console.error(error)
-      }
-    }, 500);
-  };
-
   const handlerChange = (e) => {
-    let { name, value } = e.target
+    let { name, value } = e.target;
     setGymInfo(prev => ({
       ...prev,
       [name]: value
     }));
   };
-
-
-  const handleDownload = () => {
-    const fileUrl = `/files/Listado_clientes.xlsx`;
-
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = 'Listado_clientes.xlsx';
-    link.click();
-  };
-
+  
+  const handleSelectChange = (name, value) => {
+    setGymInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }
 
   const handleScheduleChange = (day, index, field, value) => {
     setGymInfo(prev => {
@@ -285,12 +158,11 @@ export default function SettingsAccountGym({
       schedules
     } = gymInfo;
 
-    // Validación de campos vacíos
     if (
-      !gym_name.trim() ||
-      !owner_name.trim() ||
-      !owner_phone.trim() ||
-      !address.trim() ||
+      !gym_name?.trim() ||
+      !owner_name?.trim() ||
+      !owner_phone?.trim() ||
+      !address?.trim() ||
       !state ||
       !city
     ) {
@@ -298,7 +170,6 @@ export default function SettingsAccountGym({
       return false;
     }
 
-    // Validación de pagos
     const hasValidPayment =
       (!isNaN(monthly_payment) && Number(monthly_payment) > 0) ||
       (!isNaN(daily_payment) && Number(daily_payment) > 0);
@@ -308,7 +179,6 @@ export default function SettingsAccountGym({
       return false;
     }
 
-    // Validación de horarios
     const hasSchedule = Object.values(schedules).some(day => day.length > 0);
     if (!hasSchedule) {
       showMessage("Debe configurar al menos un horario.", "error");
@@ -318,295 +188,221 @@ export default function SettingsAccountGym({
     return true;
   };
 
+  const saveGymInfo = () => {
+    if (!validateForm()) return;
+    const { owner_id, ...infoToSave } = gymInfo;
+
+    setTimeout(async () => {
+      try {
+        const result = await supabase
+          .from("info_general_gym")
+          .update(infoToSave)
+          .eq("owner_id", owner_id);
+
+        if (result) {
+          showMessage("¡Información actualizada con éxito!", "success");
+          handleClose();
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }, 500);
+  };
+
+  const DAYS = [
+    { key: "monday", label: "Lunes" },
+    { key: "tuesday", label: "Martes" },
+    { key: "wednesday", label: "Miércoles" },
+    { key: "thursday", label: "Jueves" },
+    { key: "friday", label: "Viernes" },
+    { key: "saturday", label: "Sábado" },
+    { key: "sunday", label: "Domingo" }
+  ];
 
   return (
-    <>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth={"lg"}
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Configuración de la cuenta"}: {profile.email || "correo@gmail.com"}
-        </DialogTitle>
-        <DialogContent>
-          <Grid container sx={{ mt: 3 }}>
-            <Grid item xl={6} lg={6} md={6} sm={6} xs={12}>
-              <TextField
-                id="outlined-read-only-input"
-                label="Nombre de gimnasio"
-                defaultValue="-"
-                name='gym_name'
-                required
-                sx={{ mb: 3, width: "98%" }}
-                value={gymInfo?.gym_name}
-                onChange={handlerChange}
-              />
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle className="text-xl">
+            Configuración de la cuenta: <span className="font-normal text-muted-foreground">{profile.email || "correo@gmail.com"}</span>
+          </DialogTitle>
+        </DialogHeader>
 
-              <TextField
-                id="outlined-read-only-input"
-                label="Propietario"
-                defaultValue="-"
-                sx={{ mb: 3, width: "98%" }}
-                required
-                name='owner_name'
-                value={gymInfo?.owner_name}
-                onChange={handlerChange}
-              />
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="gym_name">Nombre de gimnasio <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Input id="gym_name" name="gym_name" value={gymInfo?.gym_name} onChange={handlerChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="owner_name">Propietario <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Input id="owner_name" name="owner_name" value={gymInfo?.owner_name} onChange={handlerChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Dirección <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Input id="address" name="address" value={gymInfo?.address} onChange={handlerChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="owner_phone">Teléfono operacional <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Input id="owner_phone" name="owner_phone" value={gymInfo?.owner_phone} onChange={handlerChange} required />
+              </div>
+            </div>
 
-              <TextField
-                id="outlined-read-only-input"
-                label="Dirección"
-                defaultValue="-"
-                required
-                sx={{ mb: 3, width: "98%" }}
-                name='address'
-                value={gymInfo?.address}
-                onChange={handlerChange}
-              />
-              <TextField
-                id="outlined-read-only-input"
-                label="Teléfono operacional"
-                defaultValue="-"
-                sx={{ mb: 3, width: "98%" }}
-                name='owner_phone'
-                required
-                value={gymInfo?.owner_phone}
-                onChange={handlerChange}
-              />
-            </Grid>
-            <Grid item xl={6} lg={6} md={6} sm={6} xs={12}>
-              <TextField
-                id="outlined-read-only-input"
-                label="Cuenta inactiva en"
-                defaultValue="-"
-                sx={{ mb: 1, width: "98%" }}
-                value={`${daysRemaining} días`}
-                disabled={true}
-              />
-              <FormControl
-                required
-                fullWidth
-                margin="normal"
-                id="prov-required"
-                sx={{ mb: 1, width: "98%" }}
-              >
-                <InputLabel>Provincia</InputLabel>
-                <Select
-                  value={gymInfo?.state}
-                  onChange={handleProvinciaChange}
-                >
-                  {Object.keys(provincias).map((prov) => (
-                    <MenuItem key={prov} value={prov}>
-                      {prov}
-                    </MenuItem>
-                  ))}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Cuenta inactiva en</Label>
+                <Input value={`${daysRemaining} días`} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>Provincia <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Select value={gymInfo?.state} onValueChange={handleProvinciaChange} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione una provincia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(provincias).map((prov) => (
+                      <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
-
-              <FormControl
-                required
-                fullWidth
-                margin="normal"
-                disabled={!gymInfo?.state}
-                id="mun-required"
-                sx={{ mb: 3, width: "98%" }}
-              >
-                <InputLabel>Municipio</InputLabel>
-                <Select
-                  value={gymInfo?.city}
-                  onChange={handleMunicipioChange}
-                >
-                  {(provincias[gymInfo.state] || []).map((mun) => (
-                    <MenuItem key={mun} value={mun}>
-                      {mun}
-                    </MenuItem>
-                  ))}
+              </div>
+              <div className="space-y-2">
+                <Label>Municipio <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Select value={gymInfo?.city} onValueChange={handleMunicipioChange} disabled={!gymInfo?.state} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un municipio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(provincias[gymInfo.state] || []).map((mun) => (
+                      <SelectItem key={mun} value={mun}>{mun}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="public_phone">Teléfono de contacto <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Input id="public_phone" name="public_phone" value={gymInfo?.public_phone} onChange={handlerChange} required />
+              </div>
+            </div>
+          </div>
 
-              <TextField
-                id="outlined-read-only-input"
-                label="Teléfono de contacto"
-                defaultValue="-"
-                sx={{ mb: 3, width: "98%" }}
-                name='public_phone'
-                required
-                value={gymInfo?.public_phone}
-                onChange={handlerChange}
-              />
-            </Grid>
-            <Grid container sx={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: 2 }}>
-              <Grid item style={{ display: "flex", gap: 15 }}>
-                <TextField
-                  label="Costo mensual"
-                  name="monthly_payment"
-                  type="number"
-                  value={gymInfo.monthly_payment}
-                  onChange={handlerChange}
-                  fullWidth
-                  required
-                />
-                <FormControl required fullWidth id="mun-required">
-                  <InputLabel>Moneda</InputLabel>
-                  <Select
-                    value={gymInfo.monthly_currency}
-                    onChange={handlerChange}
-                    name="monthly_currency"
-                  >
-                    {(["USD", "CUP"]).map((mun) => (
-                      <MenuItem key={mun} value={mun}>
-                        {mun}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item style={{ display: "flex", gap: 15 }}>
-                <TextField
-                  label="Costo diario"
-                  name="daily_payment"
-                  type="number"
-                  value={gymInfo.daily_payment}
-                  onChange={handlerChange}
-                  fullWidth
-                  required
-                />
-                <FormControl required fullWidth id="mun-required">
-                  <InputLabel>Moneda</InputLabel>
-                  <Select
-                    value={gymInfo.daily_currency}
-                    onChange={handlerChange}
-                    name="daily_currency"
-                  >
-                    {(["USD", "CUP"]).map((mun) => (
-                      <MenuItem key={mun} value={mun}>
-                        {mun}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item style={{ display: "flex", gap: 15 }}>
-                <TextField
-                  label="Costo por entrenador"
-                  name="trainers_cost"
-                  type="number"
-                  value={gymInfo.trainers_cost}
-                  onChange={handlerChange}
-                  fullWidth
-                />
-                <FormControl required fullWidth id="mun-required">
-                  <InputLabel>Moneda</InputLabel>
-                  <Select
-                    value={gymInfo.trainer_currency}
-                    onChange={handlerChange}
-                    style={{ width: "100%", }}
-                    name="trainer_currency"
-                  >
-                    {(["USD", "CUP"]).map((mun) => (
-                      <MenuItem key={mun} value={mun}>
-                        {mun}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-            <Grid item xs={12} sx={{ mt: 3 }}>
+          <Separator className="my-6" />
 
-              <Grid item xs={12} sx={{ mt: 3 }}>
-                <h4>Horarios del gimnasio</h4>
-                {gymInfo?.schedules &&
-                  [
-                    { key: "monday", label: "Lunes" },
-                    { key: "tuesday", label: "Martes" },
-                    { key: "wednesday", label: "Miércoles" },
-                    { key: "thursday", label: "Jueves" },
-                    { key: "friday", label: "Viernes" },
-                    { key: "saturday", label: "Sábado" },
-                    { key: "sunday", label: "Domingo" }
-                  ].map(({ key, label }) => (
-                    <div key={key} style={{ marginBottom: 15, marginTop: 20, display: 'grid', flexDirection: 'column' }}>
-                      <strong>{label}</strong>
-                      {Array.isArray(gymInfo.schedules[key]) &&
-                        gymInfo.schedules[key].map((slot, idx) => (
-                          <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                              <MobileTimePicker
-                                label="Inicio"
-                                value={dayjs(slot.start, 'HH:mm')}
-                                onChange={(newValue) => {
-                                  const formatted = dayjs(newValue).format("HH:mm");
-                                  handleScheduleChange(key, idx, "start", formatted);
-                                }}
-                                ampm={false}
-                                touchUi
-                                slotProps={{
-                                  textField: {
-                                    size: "small",
-                                    fullWidth: true,
-                                  },
-                                }}
-                              />
-                            </LocalizationProvider>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex gap-2">
+              <div className="space-y-2 flex-1">
+                <Label htmlFor="monthly_payment">Costo mensual <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Input id="monthly_payment" name="monthly_payment" type="number" value={gymInfo.monthly_payment} onChange={handlerChange} required />
+              </div>
+              <div className="space-y-2 w-24">
+                <Label>Moneda</Label>
+                <Select value={gymInfo.monthly_currency} onValueChange={(val) => handleSelectChange('monthly_currency', val)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUP">CUP</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                              <MobileTimePicker
-                                label="Fin"
-                                value={dayjs(slot.end, 'HH:mm')}
-                                onChange={(newValue) => {
-                                  const formatted = dayjs(newValue).format("HH:mm");
-                                  handleScheduleChange(key, idx, "end", formatted);
-                                }}
-                                ampm={false}
-                                touchUi
-                                slotProps={{
-                                  textField: {
-                                    size: "small",
-                                    fullWidth: true,
-                                  },
-                                }}
-                              />
-                            </LocalizationProvider>
+            <div className="flex gap-2">
+              <div className="space-y-2 flex-1">
+                <Label htmlFor="daily_payment">Costo diario <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                <Input id="daily_payment" name="daily_payment" type="number" value={gymInfo.daily_payment} onChange={handlerChange} required />
+              </div>
+              <div className="space-y-2 w-24">
+                <Label>Moneda</Label>
+                <Select value={gymInfo.daily_currency} onValueChange={(val) => handleSelectChange('daily_currency', val)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUP">CUP</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                            <Button onClick={() => removeTimeSlot(key, idx)} color="error" size="small">Eliminar</Button>
+            <div className="flex gap-2">
+              <div className="space-y-2 flex-1">
+                <Label htmlFor="trainers_cost">Costo por entrenador</Label>
+                <Input id="trainers_cost" name="trainers_cost" type="number" value={gymInfo.trainers_cost} onChange={handlerChange} />
+              </div>
+              <div className="space-y-2 w-24">
+                <Label>Moneda</Label>
+                <Select value={gymInfo.trainer_currency} onValueChange={(val) => handleSelectChange('trainer_currency', val)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUP">CUP</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div>
+            <h4 className="text-lg font-medium mb-4">Horarios del gimnasio</h4>
+            <div className="space-y-6">
+              {DAYS.map(({ key, label }) => (
+                <div key={key} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold">{label}</Label>
+                    <Button variant="outline" size="sm" onClick={() => addTimeSlot(key)}>
+                      <Plus className="h-4 w-4 mr-1" /> Añadir horario
+                    </Button>
+                  </div>
+                  
+                  {Array.isArray(gymInfo.schedules[key]) && gymInfo.schedules[key].length > 0 ? (
+                    <div className="space-y-2">
+                      {gymInfo.schedules[key].map((slot, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                          <div className="space-y-1 flex-1">
+                            <Label className="text-xs text-muted-foreground">Inicio</Label>
+                            <Input 
+                              type="time" 
+                              value={slot.start} 
+                              onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)} 
+                            />
                           </div>
-                        ))}
-                      <Button variant="contained" onClick={() => addTimeSlot(key)} size="small" sx={{ mt: 1, width: "fit-content" }}>
-                        + Añadir horario
-                      </Button>
-                      <hr style={{
-                        marginTop: 20,
-                        color: "#ccc",
-                        borderTop: "1px solid #ccc"
-                      }} />
+                          <div className="space-y-1 flex-1">
+                            <Label className="text-xs text-muted-foreground">Fin</Label>
+                            <Input 
+                              type="time" 
+                              value={slot.end} 
+                              onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)} 
+                            />
+                          </div>
+                          <div className="mt-5">
+                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => removeTimeSlot(key, idx)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))
-                }
-              </Grid>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ marginRight: 4, marginBottom: 5 }}>
-          <Button
-            variant='contained'
-            color='error'
-            size="small"
-            onClick={handleClose}>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No hay horarios configurados para este día.</p>
+                  )}
+                  <Separator className="mt-4" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="px-6 py-4 border-t flex justify-end gap-2">
+          <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={saveGymInfo}
-          >
+          <Button className="bg-[#e49c10] hover:bg-[#e49c10]/90 text-white" onClick={saveGymInfo}>
             Guardar
           </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,17 +1,15 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import * as React from 'react';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import { useMembers } from '../context/Context';
-import { Checkbox, FormControlLabel, MenuItem, TextField } from '@mui/material';
-import { useState } from 'react';
-import { useEffect } from 'react';
-
-
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export default function AddRuleDialog({
   handleClose, selectedRows, setSelectedRows, open, handlerChangeAmount, amountDays }) {
@@ -21,21 +19,21 @@ export default function AddRuleDialog({
   const [addMonth, setAddMonth] = useState(false);
   const [addDays, setAddDays] = useState(false);
   const [new_trainer, setNewTrainer] = useState(false);
-  const [trainers, setTrainers] = useState(trainersList);
-  const [trainer_name, setTrainerName] = useState([]);
+  const [trainers, setTrainers] = useState([]);
+  const [trainer_name, setTrainerName] = useState("");
 
   useEffect(() => {
     if (trainersList?.length > 0) {
-      const trainers = [];
+      const trainersArr = [];
 
-      trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
+      trainersArr.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
 
       trainersList.forEach(element => {
-        trainers.push({ value: element.name, label: element.name });
+        trainersArr.push({ value: element.name, label: element.name });
       });
-      setTrainers(trainers);
+      setTrainers(trainersArr);
     }
-  }, [])
+  }, [trainersList])
 
   const handleApplyRule = () => {
     if (inactivateUsers) {
@@ -99,142 +97,142 @@ export default function AddRuleDialog({
       }
     }
   };
-  const handlerChange = (e) => {
-    setTrainerName(e?.target?.value)
-  }
+
+  const isFormValid = addMonth || inactivateUsers || (addDays && amountDays !== "") || (new_trainer && trainer_name !== "");
 
   return (
-    <React.Fragment>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Seleccione una regla a aplicar a los clientes seleccionados"}
-        </DialogTitle>
-        <DialogContent>
-          <FormControlLabel
-            value={inactivateUsers}
-            onChange={() => {
-              setAddDays(false);
-              setAddMonth(false);
-              setNewTrainer(false);
-              setActivateUsers(!inactivateUsers);
-              handlerChangeAmount("")
-            }}
-            control={
-              <Checkbox
-                name='active'
-                checked={inactivateUsers}
-              />}
-            label={`Desactivar ${selectedRows && selectedRows.length > 1 ? "clientes seleccionados" : "cliente seleccionado"}`}
-          />
-          <FormControlLabel
-            value={addMonth}
-            onChange={() => {
-              setActivateUsers(false);
-              setAddDays(false);
-              setAddMonth(!addMonth);
-              setNewTrainer(false);
-              handlerChangeAmount("")
-            }
-            }
-            control={
-              <Checkbox
-                name='active'
-                checked={addMonth}
-              />}
-            label="Adicionar un mes a la fecha de pago"
-          />
-          <br />
-          <FormControlLabel
-            value={new_trainer}
-            onChange={() => {
-              setActivateUsers(false);
-              setAddMonth(false)
-              setAddDays(false)
-              setNewTrainer(!new_trainer)
-              handlerChangeAmount("")
-            }}
-            control={
-              <Checkbox
-                name='active'
-                checked={new_trainer}
-              />}
-            label="Nuevo entrenador"
-          />
-          {new_trainer &&
-            <TextField
-              id="outlined-select-currency"
-              select
-              label="Entrenador"
-              defaultValue="Todos"
-              fullWidth
-              placeholder="Entrenador"
-              name="trainer_name"
-              onChange={handlerChange}
-              value={trainer_name}
-              size='small'
-              sx={{ height: '100%' }}
-            >
-              {trainers.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          }
-          <br />
-          <FormControlLabel
-            value={addDays}
-            onChange={() => {
-              setActivateUsers(false);
-              setAddMonth(false)
-              setAddDays(!addDays)
-              handlerChangeAmount("")
-              setNewTrainer(false)
-            }}
-            control={
-              <Checkbox
-                name='active'
-                checked={addDays}
-              />}
-            label="Definir cantidad de días a la fecha de pago"
-          />
-          <br />
-          <br />
-          {addDays &&
-            <TextField
-              id="amount"
-              placeholder="7 días"
-              name="amount"
-              onChange={handlerChangeAmount}
-              value={amountDays}
-              sx={{ width: "100%" }}
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Reglas de Clientes</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-2">Seleccione una regla a aplicar a los clientes seleccionados</p>
+        </DialogHeader>
+        
+        <div className="flex flex-col space-y-4 py-4">
+          <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+            <Checkbox
+              id="inactivate"
+              checked={inactivateUsers}
+              onCheckedChange={() => {
+                setAddDays(false);
+                setAddMonth(false);
+                setNewTrainer(false);
+                setActivateUsers(!inactivateUsers);
+                handlerChangeAmount({ target: { value: "" } });
+              }}
             />
-          }
-        </DialogContent>
-        <DialogActions style={{ padding: "1.75rem" }}>
+            <Label htmlFor="inactivate" className="flex-1 cursor-pointer font-normal">
+              {`Desactivar ${selectedRows && selectedRows.length > 1 ? "clientes seleccionados" : "cliente seleccionado"}`}
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+            <Checkbox
+              id="addMonth"
+              checked={addMonth}
+              onCheckedChange={() => {
+                setActivateUsers(false);
+                setAddDays(false);
+                setAddMonth(!addMonth);
+                setNewTrainer(false);
+                handlerChangeAmount({ target: { value: "" } });
+              }}
+            />
+            <Label htmlFor="addMonth" className="flex-1 cursor-pointer font-normal">
+              Adicionar un mes a la fecha de pago
+            </Label>
+          </div>
+
+          <div className="flex flex-col space-y-3 p-3 rounded-lg border border-border transition-colors">
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="newTrainer"
+                checked={new_trainer}
+                onCheckedChange={() => {
+                  setActivateUsers(false);
+                  setAddMonth(false);
+                  setAddDays(false);
+                  setNewTrainer(!new_trainer);
+                  handlerChangeAmount({ target: { value: "" } });
+                }}
+              />
+              <Label htmlFor="newTrainer" className="flex-1 cursor-pointer font-normal">
+                Nuevo entrenador
+              </Label>
+            </div>
+            
+            {new_trainer && (
+              <div className="pl-7 pr-2 pt-2">
+                <Select
+                  value={trainer_name}
+                  onValueChange={setTrainerName}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona un entrenador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {trainers.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col space-y-3 p-3 rounded-lg border border-border transition-colors">
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="addDays"
+                checked={addDays}
+                onCheckedChange={() => {
+                  setActivateUsers(false);
+                  setAddMonth(false);
+                  setAddDays(!addDays);
+                  handlerChangeAmount({ target: { value: "" } });
+                  setNewTrainer(false);
+                }}
+              />
+              <Label htmlFor="addDays" className="flex-1 cursor-pointer font-normal">
+                Definir cantidad de días a la fecha de pago
+              </Label>
+            </div>
+
+            {addDays && (
+              <div className="pl-7 pr-2 pt-2">
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="Ej: 7"
+                  name="amount"
+                  onChange={handlerChangeAmount}
+                  value={amountDays}
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-0 mt-4">
           <Button
+            variant="outline"
             onClick={handleClose}
-            color='error'
-            size='small'
-            variant='contained'>
+            className="w-full sm:w-auto"
+          >
             Cancelar
           </Button>
           <Button
-            variant='contained'
-            size='small'
-            sx={{ color: "white" }}
-            disabled={!addMonth && !inactivateUsers && (!addDays || amountDays === "") && !new_trainer}
+            className="w-full sm:w-auto bg-[#e49c10] hover:bg-[#c9890e] text-white font-semibold"
+            disabled={!isFormValid}
             onClick={handleApplyRule}
-            autoFocus>
-            Aceptar
+          >
+            Aplicar
           </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

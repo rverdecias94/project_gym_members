@@ -1,8 +1,8 @@
 
 
 import { useEffect, useState } from 'react';
-import { Grid, Typography, Checkbox, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { Checkbox } from "@/components/ui/checkbox";
 import GoogleSignIn from './GoogleSignIn';
 
 const SignIn = () => {
@@ -17,8 +17,7 @@ const SignIn = () => {
     }
   }, []);
 
-  const handleTermsChange = (event) => {
-    const checked = event.target.checked;
+  const handleTermsChange = (checked) => {
     setAcceptedTerms(checked);
     if (checked) {
       localStorage.setItem('acceptedTerms', 'true');
@@ -27,62 +26,54 @@ const SignIn = () => {
     }
   };
 
-
-  const handleTermsClick = () => {
-    navigate(window.open('/terms-conditions', '_blank'));
-  }; ('/terms-conditions', '_blank');
-
+  const handleTermsClick = (e) => {
+    e.preventDefault();
+    window.open('/terms-conditions', '_blank');
+  };
 
   return (
-    <Grid container style={{ marginTop: "-6rem", minHeight: '100vh', justifyContent: 'center', alignItems: 'center', background: "url(/login-bg.jpg) no-repeat center fixed", padding: 20, backgroundSize: 'cover' }}>
-      <Grid item lg={3} md={4} sm={6} xs={12} style={{ textAlign: "center", background: "#282b824a", boxShadow: '#4f52b2 0px 0px 5px 1px', height: "auto", borderRadius: "3%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "30px 10px", backdropFilter: 'blur(15px)' }}>
-
-
-        <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <img src="/logo_sign_in.png" alt="logo" style={{ width: 150, height: 150 }} />
+    <div
+      className="flex min-h-screen justify-center items-center p-5 bg-cover bg-center bg-no-repeat fixed inset-0"
+      style={{ backgroundImage: "url(/login-bg.jpg)" }}
+    >
+      <div className="text-center bg-[#282b824a] shadow-[0_0_5px_1px_#4f52b2] h-auto rounded-[3%] flex flex-col justify-between p-8 backdrop-blur-md w-full max-w-md">
+        <span className="flex items-center justify-center">
+          <img src="/logo_sign_in.png" alt="logo" className="w-[150px] h-[150px] object-contain" />
         </span>
 
-
-        <div>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: "white", marginTop: "1rem" }}>
+        <div className="my-6">
+          <h2 className="text-xl font-bold text-white mt-4">
             Nunca fue tan fácil
-          </Typography>
-          <Typography variant="h6" sx={{ marginBottom: '30px', fontWeight: 'bold', color: "white" }}>¡Simplifica la gestión de tu gimnasio!</Typography>
+          </h2>
+          <h2 className="text-xl font-bold text-white mb-8">
+            ¡Simplifica la gestión de tu gimnasio!
+          </h2>
         </div>
 
-
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "2rem" }}>
+        <div className="flex justify-center items-center gap-2 mb-8">
           {!acceptedTerms && (
             <Checkbox
+              id="terms"
               checked={acceptedTerms}
-              onChange={handleTermsChange}
-              sx={{ color: 'white', '&.Mui-checked': { color: "#ffd506" } }}
+              onCheckedChange={handleTermsChange}
+              className="border-white data-[state=checked]:bg-[#ffd506] data-[state=checked]:text-black"
             />
           )}
 
-          <Typography variant="body2" sx={{ color: 'white', fontSize: '14px' }}>
+          <label htmlFor="terms" className="text-white text-sm cursor-pointer">
             {!acceptedTerms ? "Acepto los " : "Aceptaste los "}
-            <Link
-              component="button"
+            <button
               onClick={handleTermsClick}
-              sx={{
-                color: "#ffd506",
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                '&:hover': { color: '#e7c107' }
-              }}
+              className="text-[#ffd506] underline font-bold hover:text-[#e7c107] bg-transparent border-none p-0 cursor-pointer ml-1"
             >
               Términos y Condiciones
-            </Link>
-          </Typography>
-
+            </button>
+          </label>
         </div>
 
-
         <GoogleSignIn acceptedTerms={acceptedTerms} />
-      </Grid>
-    </Grid>
+      </div>
+    </div>
   );
 };
 

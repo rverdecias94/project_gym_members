@@ -1,8 +1,6 @@
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase/client';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { lightTheme, darkTheme } from './components/Theme';  // Importa los temas
 import Login from './components/Login';
 import NotFound from './components/NotFound';
 import Navbar from './components/Navbar';
@@ -26,6 +24,7 @@ import ShopStepper from './components/ShopStepper';
 import SessionManager from './components/SessionManager';
 import StoreManagmentGym from './components/StoreManagmentGym';
 import ProtectedRoute from './components/ProtectedRoute';
+import { Toaster } from "@/components/ui/sonner"
 
 
 function App() {
@@ -57,17 +56,32 @@ function App() {
     fetchTheme(userId);
   }, [userId]);
 
-  // Cambia el tema dependiendo del estado darkMode
-  const theme = useMemo(() => (darkMode ? darkTheme : lightTheme), [darkMode]);
-
   // Alterna entre temas
   const toggleTheme = async () => {
-    setDarkMode((prevMode) => !prevMode);
+    const newTheme = !darkMode;
+    setDarkMode(newTheme);
+
+    // Aplicar clase dark a html para Tailwind
+    if (newTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     await supabase
       .from("info_general_gym")
-      .update({ theme: !darkMode })
+      .update({ theme: newTheme })
       .eq("owner_id", userId);
   };
+
+  useEffect(() => {
+    // Aplicar clase dark al montar si es necesario
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -120,43 +134,41 @@ function App() {
 
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
-        <ContextProvider>
-          <BackdropProvider>
-            {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && !is404 && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
-            {userId && <SessionManager />}
-            <div className='main-content'>
-              <Routes>
-                {/* Rutas Públicas */}
-                <Route path='/login' element={<Login id={userId} />} />
-                <Route path='/terms-conditions' element={<TermsAndConditions />} />
-                <Route path='/redirect' element={<Redirect />} />
+    <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
+      <ContextProvider>
+        <BackdropProvider>
+          {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && !is404 && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+          {userId && <SessionManager />}
+          <div className='main-content'>
+            <Routes>
+              {/* Rutas Públicas */}
+              <Route path='/login' element={<Login id={userId} />} />
+              <Route path='/terms-conditions' element={<TermsAndConditions />} />
+              <Route path='/redirect' element={<Redirect />} />
 
-                {/* Rutas Protegidas */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path='/panel' element={<Dashboard />} />
-                  <Route path='/clientes' element={<MembersList />} />
-                  <Route path='/bienvenido' element={<Welcome />} />
-                  <Route path='/entrenadores' element={<Trainers />} />
-                  <Route path='/general_info' element={<GymStepper id={userId} />} />
-                  <Route path='/new_member' element={<MembersForm />} />
-                  <Route path='/new_trainer' element={<TrainersForm />} />
-                  <Route path='/admin/panel' element={<AdminPanel />} />
-                  <Route path='/tienda-gym' element={<StoreManagmentGym />} />
-                  <Route path='/tienda' element={<StoreManagment />} />
-                  <Route path='/planes' element={<PlansPage />} />
-                  <Route path='/shop-stepper' element={<ShopStepper id={userId} />} />
-                </Route>
+              {/* Rutas Protegidas */}
+              <Route element={<ProtectedRoute />}>
+                <Route path='/panel' element={<Dashboard />} />
+                <Route path='/clientes' element={<MembersList />} />
+                <Route path='/bienvenido' element={<Welcome />} />
+                <Route path='/entrenadores' element={<Trainers />} />
+                <Route path='/general_info' element={<GymStepper id={userId} />} />
+                <Route path='/new_member' element={<MembersForm />} />
+                <Route path='/new_trainer' element={<TrainersForm />} />
+                <Route path='/admin/panel' element={<AdminPanel />} />
+                <Route path='/tienda-gym' element={<StoreManagmentGym />} />
+                <Route path='/tienda' element={<StoreManagment />} />
+                <Route path='/planes' element={<PlansPage />} />
+                <Route path='/shop-stepper' element={<ShopStepper id={userId} />} />
+              </Route>
 
-                <Route path='*' element={<NotFound />} />
-              </Routes>
-            </div>
-          </BackdropProvider>
-        </ContextProvider>
-      </div>
-    </ThemeProvider >
+              <Route path='*' element={<NotFound />} />
+            </Routes>
+          </div>
+          <Toaster position="bottom-right" theme={darkMode ? 'dark' : 'light'} richColors />
+        </BackdropProvider>
+      </ContextProvider>
+    </div>
   )
 }
 

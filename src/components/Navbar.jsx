@@ -1,54 +1,41 @@
 /* eslint-disable react/prop-types */
 import { supabase } from '../supabase/client';
 
-import LogoutIcon from '@mui/icons-material/Logout';
+import { LogOut, Settings, Receipt, Sun, Moon, LayoutDashboard, Users, Dumbbell, Store, TrendingUp } from 'lucide-react';
 import {
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-} from '@mui/material';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import GroupsIcon from '@mui/icons-material/Groups';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import SettingsIcon from '@mui/icons-material/Settings';
-import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
 import { NavButton } from './NavButton';
 import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
-import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MobileBottomNav from './MobileBottomNav';
-import { useSnackbar } from '../context/Snackbar';
-import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import SettingsAccountGym from './SettingsAccountGym';
 import SettingsAccountShop from './SettingsAccountShop';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import PaymentHistoryModal from './PaymentHistoryModal';
 
 const settings = [
-  { name: 'Perfil', action: 'profile', icon: <SettingsIcon /> },
-  { name: 'Historial de pago', action: 'history', icon: <RequestQuoteIcon /> }
+  { name: 'Perfil', action: 'profile', icon: <Settings className="mr-2 h-4 w-4" /> },
+  { name: 'Historial de pago', action: 'history', icon: <Receipt className="mr-2 h-4 w-4" /> }
 ];
 
 export default function Navbar({ profile, mode, toggleTheme }) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const themeClass = theme.palette.mode === 'dark' ? 'navbar-dark' : 'navbar-light';
-  const [anchorElUser, setAnchorElUser] = useState(null);
-  const { navBarOptions, setNavBarOptions, daysRemaining, gymInfo } = useMembers();
+  const isMobile = window.innerWidth <= 768;
+  const themeClass = mode ? 'navbar-dark' : 'navbar-light';
+  const { navBarOptions, setNavBarOptions, daysRemaining, gymInfo, shopInfo } = useMembers();
   const [openSettings, setOpenSettings] = useState(false);
   const [openHistory, setOpenHistory] = useState(false);
   const [showNav, setShowNav] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const { showMessage } = useSnackbar();
-  const accountType = localStorage.getItem("accountType")
+  const accountType = localStorage.getItem("accountType");
+  const hasActiveProfile = (accountType === 'gym' && gymInfo?.active) || (accountType === 'shop' && shopInfo?.active);
 
 
   useEffect(() => {
@@ -68,7 +55,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     try {
       let { error } = await supabase.auth.signOut();
       setNavBarOptions(false);
-      showMessage("Sesión cerrada satisfactoriamente", "success");
+      // alert no mas
       setShowNav(false);
       if (error) throw error;
       navigate('/login');
@@ -77,12 +64,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
     }
   };
 
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
   const handleCloseUserMenu = (action) => {
-    setAnchorElUser(null);
     if (action === 'profile') {
       setOpenSettings(true);
     }
@@ -92,10 +74,9 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   };
 
   const handleClose = () => {
-    setAnchorElUser(null);
     setOpenSettings(false);
   };
-  
+
   const handleCloseHistory = () => {
     setOpenHistory(false);
   };
@@ -110,78 +91,78 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   return (
     <>
       {showNav && (
-        <div className={`${navBarOptions ? isMobile ? "navbar-mobile" : "navbar" : "navbar-links-out"} ${themeClass}`}>
-          <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-            <img src="/logo_platform.png" alt="Logo" style={{ width: 120, height: 30 }} />
+        <div className={`fixed top-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border shadow-sm ${mode ? 'bg-slate-900/80 text-white' : 'bg-primary/90 text-white'} px-4 md:px-8 py-3 flex items-center justify-between grid-cols-2 md:grid-cols-3`}>
+          <div className="flex items-center gap-4">
+            <img src="/logo_platform.png" alt="Logo" className="w-[120px] h-[30px] object-contain" />
           </div>
 
           {
             !isMobile && daysRemaining <= 3 && daysRemaining > 0 &&
-            <span style={{ position: 'absolute', marginLeft: "4rem" }}>
+            <span className="absolute left-1/2 -translate-x-1/2 text-sm font-medium bg-red-500/20 text-red-200 px-3 py-1 rounded-full border border-red-500/30">
               Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
             </span>
           }
 
-
           {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/redirect", "/general_info",
             "/shop-stepper", "/bienvenido"].includes(location.pathname) && (
-              <div className='navbar_mobile' style={{ display: "flex", justifyContent: "space-around" }}>
-                {accountType === "gym" && <NavButton to="/panel" icon={<AssessmentIcon />} text="Panel" />}
-                {accountType === "gym" && <NavButton to="/clientes" icon={<GroupsIcon />} text="Clientes" />}
-                {accountType === "gym" && <NavButton to="/entrenadores" icon={<FitnessCenterIcon />}
+              <div className='hidden md:flex justify-around items-center w-full max-w-2xl mx-auto'>
+                {accountType === "gym" && <NavButton to="/panel" icon={<LayoutDashboard className="h-5 w-5" />} text="Panel" />}
+                {accountType === "gym" && <NavButton to="/clientes" icon={<Users className="h-5 w-5" />} text="Clientes" />}
+                {accountType === "gym" && <NavButton to="/entrenadores" icon={<Dumbbell className="h-5 w-5" />}
                   text="Entrenadores" />}
                 {
                   accountType === "gym" ?
-                    <NavButton to="/tienda-gym" icon={<LocalGroceryStoreIcon />} text="Tienda" />
+                    <NavButton to="/tienda-gym" icon={<Store className="h-5 w-5" />} text="Tienda" />
                     :
-                    <NavButton to="/tienda" icon={<LocalGroceryStoreIcon />} text="Tienda" />
+                    <NavButton to="/tienda" icon={<Store className="h-5 w-5" />} text="Tienda" />
                 }
-                {accountType === "gym" && <NavButton to="/planes" icon={<TrendingUpIcon />} text="Planes" />}
+                {accountType === "gym" && <NavButton to="/planes" icon={<TrendingUp className="h-5 w-5" />} text="Planes" />}
               </div>
             )}
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-            {!isMobile && profile.name && <span className='hide'>{`¡Hola ${getName(profile.name) || "Admin"}!`}</span>}
-            <Box sx={{ flexGrow: 0 }}>
+          <div className="flex items-center justify-end gap-2 md:gap-4 col-start-2 md:col-start-3">
+            {!isMobile && profile.name && <span className='hidden lg:block font-medium'>{`¡Hola ${getName(profile.name) || "Admin"}!`}</span>}
+            <div className="flex-grow-0">
               {!["/admin", "/admin/panel"].includes(location.pathname) && (
-                <>
-                  <Tooltip title="Detalles de la cuenta">
-                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                      <span style={{ width: 35, height: 35, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "white", color: theme.palette.mode !== 'dark' ? "#4f52b2d0" : "#0a1628c8" }}>{profile?.name?.charAt(0).toUpperCase()}</span>
-                    </IconButton>
-                  </Tooltip>
-                  <Menu
-                    sx={{ mt: '45px' }}
-                    anchorEl={anchorElUser}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    keepMounted
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    open={Boolean(anchorElUser)}
-                    onClose={() => setAnchorElUser(null)}
-                  >
-                    {settings.map((setting) => (
-                      <MenuItem key={setting.name} onClick={() => handleCloseUserMenu(setting.action)}>
-                        {setting.icon}
-                        <Typography sx={{ ml: 1 }}>{setting.name}</Typography>
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                </>
-              )
-              }
-            </Box>
+                hasActiveProfile ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-white text-primary font-bold">
+                            {profile?.name?.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                      {settings.map((setting) => (
+                        <DropdownMenuItem key={setting.name} onClick={() => handleCloseUserMenu(setting.action)}>
+                          {setting.icon}
+                          <span>{setting.name}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full cursor-default hover:bg-transparent">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-white text-primary font-bold">
+                        {profile?.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                )
+              )}
+            </div>
 
-            <Tooltip title={!mode ? "Modo Claro" : "Modo Oscuro"}>
-              <IconButton onClick={toggleTheme} sx={{ p: 0, color: "inherit" }}>
-                {!mode ? <LightModeIcon /> : <DarkModeIcon />}
-              </IconButton>
-            </Tooltip>
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white hover:text-white/80 hover:bg-white/10">
+              {!mode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
 
-            <Tooltip title="Cerrar Sesión">
-              <IconButton onClick={logoutUser}>
-                <LogoutIcon className='btn_logout' />
-              </IconButton>
-            </Tooltip>
+            <Button variant="ghost" size="icon" onClick={logoutUser} className="text-white hover:text-white/80 hover:bg-white/10">
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
 
           {accountType === "gym" && <SettingsAccountGym open={openSettings} handleClose={handleClose} profile={profile} />

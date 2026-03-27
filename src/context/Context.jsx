@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useSnackbar } from "./Snackbar";
 import dayjs from "dayjs";
 import { identifyAccountType } from "../services/accountType";
+import { toast } from "sonner";
 
 export const Context = createContext();
 
@@ -28,7 +28,16 @@ export const ContextProvider = ({ children }) => {
   const [needsUpdateTrainer, setNeedsUpdateTrainer] = useState(true);
   const [daysRemaining, setDaysRemaining] = useState(0);
   const navigate = useNavigate();
-  const { showMessage } = useSnackbar();
+
+  // Adaptador de compatibilidad para showMessage hacia sonner
+  const showMessage = (msg, type = "default") => {
+    if (type === "success") toast.success(msg);
+    else if (type === "error") toast.error(msg);
+    else if (type === "warning") toast.warning(msg);
+    else if (type === "info") toast.info(msg);
+    else toast(msg);
+  };
+
   const [productsList, setProductsList] = useState([]);
   const [needsUpdateProducts, setNeedsUpdateProducts] = useState(true);
 
@@ -163,6 +172,13 @@ export const ContextProvider = ({ children }) => {
             setDaysRemaining(daysDifference);
           }
           await checkPaymentAndDisableProducts(data, user.id);
+
+          // Pre-cargar los entrenadores para que estén disponibles en toda la app
+          const res = await supabase.from("trainers").select().eq("gym_id", user.id);
+          if (res?.data) {
+            setTrainersList(res.data);
+            setNeedsUpdateTrainer(false);
+          }
         } else if (type === 'shop') {
           setShopInfo(data);
           await checkPaymentAndDisableProducts(data, user.id);
@@ -221,8 +237,9 @@ export const ContextProvider = ({ children }) => {
         })
 
       const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
-      if (res?.data?.length > 0) {
+      if (res?.data) {
         setTrainersList(res.data);
+        setNeedsUpdateTrainer(false);
         setBackdrop(false)
       } else { setBackdrop(false); }
 
@@ -231,13 +248,13 @@ export const ContextProvider = ({ children }) => {
 
   }
 
-  const getTrainers = async () => {
+  const getTrainers = async (force = false) => {
     setTimeout(async () => {
-      if (needsUpdateTrainer) {
+      if (needsUpdateTrainer || force) {
         setBackdrop(true);
         const { data } = await supabase.auth.getUser();
         const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
-        if (res?.data?.length > 0) {
+        if (res?.data) {
           setTrainersList(res.data);
           setNeedsUpdateTrainer(false)
           setBackdrop(false);
@@ -353,7 +370,7 @@ export const ContextProvider = ({ children }) => {
       navigate('/entrenadores');
       if (result) {
         showMessage("¡Nuevo entrenador resgistrado!", "success");
-        getTrainers();
+        getTrainers(true);
       } else {
         showMessage("¡Falló la creación del entrenador!", "error");
       }
@@ -389,7 +406,7 @@ export const ContextProvider = ({ children }) => {
     setBackdrop(false);
     if (!error) {
       showMessage("Registro eliminado satisfactoriamente", "success");
-      getTrainers();
+      getTrainers(true);
     } else throw new Error(error);
   };
 
@@ -439,7 +456,7 @@ export const ContextProvider = ({ children }) => {
       if (result) {
         showMessage("Registro actualizado satisfactoriamente", "success");
         navigate('/entrenadores');
-        getTrainers();
+        getTrainers(true);
       } else {
         showMessage("A ocurrido un error actualizando la información", "error");
       }

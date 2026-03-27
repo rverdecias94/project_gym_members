@@ -1,15 +1,10 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import * as React from 'react';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 import { useMembers } from '../context/Context';
-
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from 'lucide-react';
 
 export default function DialogMessage({ handleClose, info, open, type, fn, msg, title }) {
   const { deleteMember, deleteTrainer } = useMembers();
@@ -19,37 +14,35 @@ export default function DialogMessage({ handleClose, info, open, type, fn, msg, 
     handleClose();
   };
 
-
   return (
-    <React.Fragment>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {title}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center text-xl font-bold text-destructive">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            {title}
+          </DialogTitle>
+          <DialogDescription className="pt-4 text-base text-foreground">
             {msg}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions style={{ padding: "1.25rem" }}>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0 mt-4">
           <Button
+            variant="outline"
             onClick={handleClose}
-            color='error'
-            variant='contained'
-            size='small'
+            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
-          <Button onClick={fn ? fn : handleDelete} autoFocus size='small' variant='contained'>
+          <Button
+            variant="destructive"
+            onClick={fn ? fn : handleDelete}
+            className="w-full sm:w-auto font-semibold"
+          >
             Aceptar
           </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

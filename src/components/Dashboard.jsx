@@ -1,37 +1,62 @@
 
-import { Divider, Grid, useTheme, Select, MenuItem, Skeleton, useMediaQuery } from '@mui/material';
 import ReactApexChart from 'react-apexcharts';
 import { useMembers } from '../context/Context';
 import { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { supabase } from '../supabase/client';
 import PremiumDashboard from './PremiumDashboard';
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BarChart3 } from 'lucide-react';
 
 export default function Dashboard() {
-  const theme = useTheme();
   const { getDashboardData, membersList, trainersList, setNavBarOptions, daysRemaining, gymInfo } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
   const [elemntsByTrainer, setElemntsByTrainer] = useState([]);
   const [trainersName, setTrainerName] = useState([]);
   const [membersActive, setMembersActive] = useState([]);
   const [membersByMonth, setMembersByMonth] = useState(Array(12).fill(0));
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [membersByYear, setMembersByYear] = useState({});
   const [years, setYears] = useState([]);
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = window.innerWidth <= 768;
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDarkMode(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, []);
+
   const getChartOptions = (categories, isPie = false, customColors = null) => {
+    const textColor = isDarkMode ? 'hsl(215 20.2% 65.1%)' : '#64748b'; // muted-foreground
+    const primaryTextColor = isDarkMode ? 'hsl(210 40% 98%)' : '#0f172a'; // foreground
+
     const baseOptions = {
       chart: {
         toolbar: { show: false },
         background: 'transparent',
         fontFamily: 'Montserrat, sans-serif',
       },
-      colors: customColors || [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.primary.accent],
+      colors: customColors || ['#6164c7', '#e49c10', '#ef74b9'],
       theme: {
-        mode: theme.palette.mode,
+        mode: isDarkMode ? 'dark' : 'light',
       },
       tooltip: {
-        theme: theme.palette.mode,
+        theme: isDarkMode ? 'dark' : 'light',
         style: {
           fontSize: '12px',
           fontFamily: 'Montserrat, sans-serif'
@@ -47,7 +72,7 @@ export default function Dashboard() {
         dataLabels: { enabled: false },
         legend: {
           position: 'bottom',
-          labels: { colors: theme.palette.text.secondary }
+          labels: { colors: textColor }
         },
         plotOptions: {
           pie: {
@@ -55,8 +80,8 @@ export default function Dashboard() {
               size: '70%',
               labels: {
                 show: true,
-                name: { color: theme.palette.text.secondary },
-                value: { color: theme.palette.text.primary, fontSize: '20px', fontWeight: 600 }
+                name: { color: textColor },
+                value: { color: primaryTextColor, fontSize: '20px', fontWeight: 600 }
               }
             }
           }
@@ -69,18 +94,18 @@ export default function Dashboard() {
       xaxis: {
         categories: categories,
         labels: {
-          style: { colors: theme.palette.text.secondary }
+          style: { colors: textColor }
         },
         axisBorder: { show: false },
         axisTicks: { show: false }
       },
       yaxis: {
         labels: {
-          style: { colors: theme.palette.text.secondary }
+          style: { colors: textColor }
         }
       },
       grid: {
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+        borderColor: isDarkMode ? 'hsl(var(--border))' : 'rgba(0,0,0,0.05)',
         strokeDashArray: 4,
         yaxis: { lines: { show: true } },
         xaxis: { lines: { show: false } }
@@ -172,7 +197,7 @@ export default function Dashboard() {
 
           // Establecer el año seleccionado por defecto al año más reciente disponible, o al año actual si no hay datos
           const defaultYear = yearsFounded.length > 0 ? Math.max(...yearsFounded) : new Date().getFullYear();
-          setSelectedYear(defaultYear);
+          setSelectedYear(defaultYear.toString());
           setMembersByMonth(membersTrainers.membersByYear[defaultYear] || Array(12).fill(0));
         }
       }, 1000);
@@ -181,9 +206,9 @@ export default function Dashboard() {
   }, [membersList]);
 
 
-  const handleYearChange = (event) => {
-    const year = parseInt(event.target.value, 10);
-    setSelectedYear(year);
+  const handleYearChange = (value) => {
+    const year = parseInt(value, 10);
+    setSelectedYear(value);
     setMembersByMonth(membersByYear[year] || Array(12).fill(0));
   };
 
@@ -207,179 +232,193 @@ export default function Dashboard() {
   ];
 
   const showDasboard = () => {
-    return <>
-
-      <Grid item xl={12} lg={12} md={12} sm={12} xs={12}
-      >
-        <div style={{ padding: "0 1rem" }}>
-          {
-            isMobile && daysRemaining <= 3 &&
-            <span style={{ position: 'absolute', marginLeft: "4rem" }}>
+    return (
+      <div className="w-full">
+        <div className="px-4 md:px-4 max-w-[1400px] mx-auto">
+          {isMobile && daysRemaining <= 3 && (
+            <span className="absolute ml-16 text-sm font-medium bg-red-500/20 text-red-200 px-3 py-1 rounded-full border border-red-500/30">
               Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
             </span>
-          }
+          )}
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '1.5rem',
-            marginTop: isMobile && daysRemaining <= 3 ? "3rem" : "1rem",
-            padding: '0 10px',
-          }}>
-            <span style={{ fontSize: '1.3rem' }}>📊</span>
-            <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 600, color: theme.palette.text.primary }}>Estadísticas Generales</h2>
+          <div className={`flex items-center gap-2 mb-6 ${isMobile && daysRemaining <= 3 ? "mt-12" : "mt-4"} px-2`}>
+            <span className="text-2xl">📊</span>
+            <h2 className="m-0 text-2xl font-semibold text-foreground">Estadísticas Generales</h2>
           </div>
 
-          <Grid container className='charts-container' spacing={2} sx={{ mb: 2 }}>
-            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden" }}>
-              <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-                {membersActive.length > 0 ?
-                  <div style={{ width: '100%' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <Card className={`col-span-1 ${membersActive.length > 0 ? "visible" : "hidden"} bg-card border-border shadow-sm`}>
+              <CardContent className="p-5 h-full transition-all duration-300">
+                {membersActive.length > 0 ? (
+                  <div className="w-full">
                     <ReactApexChart
                       options={getChartOptions(['Clientes', 'Entrenadores'], false, ['#6157d6', '#f278b6'])}
                       series={[{ name: 'Total', data: [membersActive.length, trainersList.length] }]}
                       type="bar"
                       height={250}
                     />
-                    <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Totales</span>
+                    <span className="block text-center mt-2.5 text-foreground font-semibold">Totales</span>
                   </div>
-                  :
+                ) : (
                   <>
-                    <Skeleton variant="rectangular" animation="wave" width="100%" height={250} sx={{ borderRadius: '12px', bgcolor: 'transparent' }} />
-                    <Skeleton animation="wave" variant="text" width="40%" sx={{ mt: 1, mx: 'auto', bgcolor: 'transparent' }} />
+                    <Skeleton className="w-full h-[250px] rounded-xl" />
+                    <Skeleton className="w-2/5 h-4 mt-2.5 mx-auto" />
                   </>
-                }
-              </div>
-            </Grid>
+                )}
+              </CardContent>
+            </Card>
 
-            <Grid item xl={3} lg={3} md={6} sm={12} xs={12} sx={{ visibility: relationMembersTrainers?.male?.length > 0 || relationMembersTrainers?.female?.length > 0 ? 'visible' : 'hidden' }}>
-              <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-                {relationMembersTrainers?.male?.length > 0 || relationMembersTrainers?.female?.length > 0 ?
-                  <div style={{ width: '100%' }}>
+            <Card className={`col-span-1 ${relationMembersTrainers?.male?.length > 0 || relationMembersTrainers?.female?.length > 0 ? 'visible' : 'hidden'} bg-card border-border shadow-sm`}>
+              <CardContent className="p-5 h-full transition-all duration-300">
+                {relationMembersTrainers?.male?.length > 0 || relationMembersTrainers?.female?.length > 0 ? (
+                  <div className="w-full">
                     <ReactApexChart
                       options={getChartOptions(['Hombres', 'Mujeres'], false, ['#6157d6', '#f278b6'])}
                       series={[{ name: 'Total', data: [relationMembersTrainers?.male?.length || 0, relationMembersTrainers?.female?.length || 0] }]}
                       type="bar"
                       height={250}
                     />
-                    <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Hombres / Mujeres</span>
+                    <span className="block text-center mt-2.5 text-foreground font-semibold">Hombres / Mujeres</span>
                   </div>
-                  :
+                ) : (
                   <>
-                    <Skeleton variant="rectangular" animation="wave" width="100%" height={250} sx={{ borderRadius: '12px', bgcolor: 'transparent' }} />
-                    <Skeleton animation="wave" variant="text" width="40%" sx={{ mt: 1, mx: 'auto', bgcolor: 'transparent' }} />
+                    <Skeleton className="w-full h-[250px] rounded-xl" />
+                    <Skeleton className="w-2/5 h-4 mt-2.5 mx-auto" />
                   </>
-                }
-              </div>
-            </Grid>
+                )}
+              </CardContent>
+            </Card>
 
-            <Grid item xl={6} lg={6} md={6} sm={12} xs={12} sx={{ visibility: relationMembersTrainers?.withoutTrainer?.length > 0 || relationMembersTrainers?.withTrainer?.length > 0 ? "visible" : "hidden" }}>
-              <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-                {relationMembersTrainers?.withoutTrainer?.length > 0 || relationMembersTrainers?.withTrainer?.length > 0 ?
-                  <div style={{ width: '100%' }}>
+            <Card className={`col-span-1 ${relationMembersTrainers?.withoutTrainer?.length > 0 || relationMembersTrainers?.withTrainer?.length > 0 ? "visible" : "hidden"} bg-card border-border shadow-sm`}>
+              <CardContent className="p-5 h-full transition-all duration-300">
+                {relationMembersTrainers?.withoutTrainer?.length > 0 || relationMembersTrainers?.withTrainer?.length > 0 ? (
+                  <div className="w-full">
                     <ReactApexChart
                       options={getChartOptions(['Con Entrenador', 'Sin Entrenador'], true, ['#6157d6', '#f278b6'])}
                       series={[relationMembersTrainers?.withTrainer?.length || 0, relationMembersTrainers?.withoutTrainer?.length || 0]}
                       type="donut"
                       height={250}
                     />
-                    <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Relación Cliente / Entrenador</span>
+                    <span className="block text-center mt-2.5 text-foreground font-semibold">Relación Cliente / Entrenador</span>
                   </div>
-                  :
+                ) : (
                   <>
-                    <Skeleton variant="rectangular" animation="wave" width="100%" height={250} sx={{ borderRadius: '12px', bgcolor: 'transparent' }} />
-                    <Skeleton animation="wave" variant="text" width="40%" sx={{ mt: 1, mx: 'auto', bgcolor: 'transparent' }} />
+                    <Skeleton className="w-full h-[250px] rounded-xl" />
+                    <Skeleton className="w-2/5 h-4 mt-2.5 mx-auto" />
                   </>
-                }
-              </div>
-            </Grid>
-          </Grid>
+                )}
+              </CardContent>
+            </Card>
 
-          <Grid container className='charts-container' spacing={2}>
-            <Grid item xl={6} lg={6} md={6} sm={12} xs={12} sx={{ visibility: membersActive.length > 0 ? "visible" : "hidden" }}>
-              <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', position: 'relative', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-                {membersActive.length > 0 ?
-                  <div style={{ width: '100%' }}>
+            <Card className={`col-span-1 relative ${membersActive.length > 0 ? "visible" : "hidden"} bg-card border-border shadow-sm`}>
+              <CardContent className="p-5 h-full transition-all duration-300">
+                {membersActive.length > 0 ? (
+                  <div className="w-full relative">
                     <ReactApexChart
                       options={getChartOptions(['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'], false, ['#6157d6'])}
                       series={[{ name: 'Nuevos Clientes', data: membersByMonth }]}
                       type="area"
                       height={250}
                     />
-                    <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Nuevos Clientes / Mes</span>
-                    <Select
-                      value={selectedYear}
-                      onChange={handleYearChange}
-                      size="small"
-                      sx={{ position: "absolute", top: 15, right: 20, height: 32, fontSize: '0.8rem', borderRadius: '8px', backgroundColor: theme.palette.background.paper }}
-                    >
-                      {years.length > 0 && years.map(year => (
-                        <MenuItem key={year} value={year} sx={{ fontSize: '0.8rem' }}>{year}</MenuItem>
-                      ))}
-                    </Select>
+                    <span className="block text-center mt-2.5 text-foreground font-semibold">Nuevos Clientes / Mes</span>
+                    <div className="absolute top-0 right-0 w-24">
+                      <Select value={selectedYear} onValueChange={handleYearChange}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Año" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years.length > 0 && years.map(year => (
+                            <SelectItem key={year} value={year.toString()} className="text-xs">
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  :
+                ) : (
                   <>
-                    <Skeleton variant="rectangular" animation="wave" width="100%" height={250} sx={{ borderRadius: '12px', bgcolor: 'transparent' }} />
-                    <Skeleton animation="wave" variant="text" width="40%" sx={{ mt: 1, mx: 'auto', bgcolor: 'transparent' }} />
+                    <Skeleton className="w-full h-[250px] rounded-xl" />
+                    <Skeleton className="w-2/5 h-4 mt-2.5 mx-auto" />
                   </>
-                }
-              </div>
-            </Grid>
+                )}
+              </CardContent>
+            </Card>
 
-            <Grid item xl={6} lg={6} md={6} sm={12} xs={12} sx={{ visibility: elemntsByTrainer.length > 0 ? "visible" : "hidden" }}>
-              <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-                {elemntsByTrainer.length > 0 || trainersName.length > 0 ?
-                  <div style={{ width: '100%' }}>
+            <Card className={`col-span-1 ${elemntsByTrainer.length > 0 ? "visible" : "hidden"} bg-card border-border shadow-sm`}>
+              <CardContent className="p-5 h-full transition-all duration-300">
+                {elemntsByTrainer.length > 0 || trainersName.length > 0 ? (
+                  <div className="w-full">
                     <ReactApexChart
                       options={getChartOptions(trainersName, false, ['#6157d6', '#f278b6'])}
                       series={[{ name: 'Clientes', data: elemntsByTrainer }]}
                       type="bar"
                       height={250}
                     />
-                    <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Entrenador / Cliente</span>
+                    <span className="block text-center mt-2.5 text-foreground font-semibold">Entrenador / Cliente</span>
                   </div>
-                  :
+                ) : (
                   <>
-                    <Skeleton variant="rectangular" animation="wave" width="100%" height={250} sx={{ borderRadius: '12px', bgcolor: 'transparent' }} />
-                    <Skeleton animation="wave" variant="text" width="40%" sx={{ mt: 1, mx: 'auto', bgcolor: 'transparent' }} />
+                    <Skeleton className="w-full h-[250px] rounded-xl" />
+                    <Skeleton className="w-2/5 h-4 mt-2.5 mx-auto" />
                   </>
-                }
-              </div>
-            </Grid>
-          </Grid>
-        </div >
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {gymInfo?.active && gymInfo?.store && (
-          <PremiumDashboard
-            membersList={membersList}
-            gymInfo={gymInfo}
-          />
+          <div className="px-4 md:px-4 max-w-[1400px] mx-auto">
+            <PremiumDashboard
+              membersList={membersList}
+              gymInfo={gymInfo}
+            />
+          </div>
         )}
 
         <br />
-        <div style={{ padding: "1rem 1rem 5rem 1rem" }}>
-          <Divider />
-          <div style={{ marginTop: 20, display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-            <span>Listado de clientes</span>
+        <div className="p-4 pb-20 max-w-[1400px] mx-auto">
+          <Separator className="mb-4" />
+          <div className="mt-5 flex gap-2.5 items-center justify-between">
+            <span className="font-medium">Listado de clientes</span>
           </div>
           <br />
-          <DataGrid
-            rows={membersActive}
-            columns={columns}
-            initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 5 },
-              },
-            }}
-            pageSizeOptions={[5, 10]}
-          />
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            <DataGrid
+              rows={membersActive}
+              columns={columns}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 5 },
+                },
+              }}
+              pageSizeOptions={[5, 10]}
+              disableRowSelectionOnClick
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-cell': {
+                  borderColor: isDarkMode ? 'hsl(var(--border))' : 'rgba(0,0,0,0.1)',
+                  color: isDarkMode ? 'hsl(var(--foreground))' : '#0f172a',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  borderColor: isDarkMode ? 'hsl(var(--border))' : 'rgba(0,0,0,0.1)',
+                  color: isDarkMode ? 'hsl(var(--muted-foreground))' : '#64748b',
+                  backgroundColor: isDarkMode ? 'hsl(var(--muted))' : '#f8fafc',
+                },
+                '& .MuiDataGrid-footerContainer': {
+                  borderColor: isDarkMode ? 'hsl(var(--border))' : 'rgba(0,0,0,0.1)',
+                  color: isDarkMode ? 'hsl(var(--muted-foreground))' : '#64748b',
+                },
+                '& .MuiTablePagination-root': {
+                  color: isDarkMode ? 'hsl(var(--muted-foreground))' : '#64748b',
+                }
+              }}
+            />
+          </div>
         </div>
-
-      </Grid >
-
-    </>
+      </div>
+    );
   }
 
 

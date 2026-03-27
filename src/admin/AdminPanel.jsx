@@ -125,8 +125,24 @@ const AdminPanel = () => {
     totalProducts: 0
   });
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
   useEffect(() => {
     fetchAllData();
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDarkMode(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
   }, []);
 
   const fetchAllData = () => {
@@ -155,13 +171,13 @@ const AdminPanel = () => {
     try {
       // Obtener datos de gimnasios
       const { data: gymsData } = await supabase.from('info_general_gym').select('*');
-      
+
       // Obtener datos de tiendas
       const { data: shopsData } = await supabase.from('info_shops').select('*');
-      
+
       // Obtener productos por tienda
       const { data: productsData } = await supabase.from('products').select('user_store_id');
-      
+
       // Obtener miembros por gimnasio
       const { data: membersData } = await supabase.from('members').select('gym_id');
 
@@ -464,7 +480,7 @@ const AdminPanel = () => {
     if (tabValue === 0) setGymInfo(filteredData);
     else setShopInfo(filteredData);
   };
-  
+
   function calculateDebt(created_at, next_payment_date, paymentAmount) {
     const created = new Date(created_at);
     const now = new Date(next_payment_date);
@@ -504,8 +520,10 @@ const AdminPanel = () => {
     }
     return '';
   };
-  
+
   const getChartOptions = (categories, isPie = false, customColors = null) => {
+    const textColor = isDarkMode ? 'hsl(215 20.2% 65.1%)' : '#64748b';
+
     const baseOptions = {
       chart: {
         toolbar: { show: false },
@@ -514,10 +532,10 @@ const AdminPanel = () => {
       },
       colors: customColors || ['#6157d6', '#f278b6', '#1da274', '#ed6c02'],
       theme: {
-        mode: theme.palette.mode,
+        mode: isDarkMode ? 'dark' : 'light',
       },
       tooltip: {
-        theme: theme.palette.mode,
+        theme: isDarkMode ? 'dark' : 'light',
         style: {
           fontSize: '12px',
           fontFamily: 'Montserrat, sans-serif'
@@ -533,15 +551,22 @@ const AdminPanel = () => {
         dataLabels: { enabled: false },
         legend: {
           position: 'bottom',
-          labels: { colors: theme.palette.text.secondary }
+          labels: { colors: textColor }
         },
       };
     }
 
     return {
       ...baseOptions,
-      xaxis: { categories },
-      yaxis: { show: false },
+      xaxis: {
+        categories,
+        labels: { style: { colors: textColor } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        show: false,
+      },
       grid: { show: false },
       dataLabels: { enabled: false },
       legend: { show: false },
@@ -696,13 +721,43 @@ const AdminPanel = () => {
           <Grid item xs={12} sm={5}>
             {
               tabValue !== 2 && tabValue !== 3 &&
-              <TextField fullWidth label={`Buscar en ${tabValue === 0 ? 'Gimnasios' : 'Tiendas'}`} value={search} onChange={handleSearch} size="small" />
+              <TextField
+                fullWidth
+                label={`Buscar en ${tabValue === 0 ? 'Gimnasios' : 'Tiendas'}`}
+                value={search}
+                onChange={handleSearch}
+                size="small"
+                InputLabelProps={{
+                  style: { color: theme.palette.mode === 'dark' ? '#fff' : 'inherit' },
+                }}
+                InputProps={{
+                  style: { color: theme.palette.mode === 'dark' ? '#fff' : 'inherit' },
+                }}
+              />
             }
           </Grid>
         </Grid>
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 2 }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="admin tabs">
+        <Box sx={{ borderBottom: 1, borderColor: 'var(--border)', mt: 2 }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            aria-label="admin tabs"
+            sx={{
+              '& .MuiTabs-indicator': { display: 'none' },
+              '& .MuiTab-root': {
+                borderBottom: '2px solid transparent',
+                color: 'hsl(var(--muted-foreground))',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                minHeight: 44,
+                px: 2,
+                textTransform: 'uppercase',
+                '&.Mui-selected': { color: 'hsl(var(--foreground))', borderBottomColor: 'hsl(var(--primary))' },
+              }
+            }}
+          >
             <Tab label="Gimnasios" id="tab-0" />
             <Tab label="Tiendas" id="tab-1" />
             <Tab label="Sorteos" id="tab-2" />
@@ -825,25 +880,25 @@ const AdminPanel = () => {
               <Typography variant="h6" gutterBottom>Resumen General</Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                     <Typography variant="h4" color="primary">{statistics.totalGyms}</Typography>
                     <Typography variant="body2">Total Gimnasios</Typography>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                     <Typography variant="h4" color="secondary">{statistics.totalShops}</Typography>
                     <Typography variant="body2">Total Tiendas</Typography>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                     <Typography variant="h4" color="success">{statistics.totalProducts}</Typography>
                     <Typography variant="body2">Total Productos</Typography>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+                  <Card sx={{ textAlign: 'center', p: 2, boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                     <Typography variant="h4" color="warning">{statistics.premiumGyms}</Typography>
                     <Typography variant="body2">Cuentas Premium</Typography>
                   </Card>
@@ -852,37 +907,18 @@ const AdminPanel = () => {
             </Grid>
 
             {/* Gimnasios por Provincia */}
-            <Grid item xs={12} md={6}>
-              <Card sx={{ p: 3, height: '400px', boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, height: '350px', boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                 <Typography variant="h6" gutterBottom>Gimnasios por Provincia</Typography>
                 {Object.keys(statistics.gymsByProvince).length > 0 ? (
                   <ReactApexChart
                     options={getChartOptions(Object.keys(statistics.gymsByProvince))}
                     series={[{ name: 'Gimnasios', data: Object.values(statistics.gymsByProvince) }]}
                     type="bar"
-                    height={300}
+                    height={250}
                   />
                 ) : (
-                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-                    <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
-                  </Box>
-                )}
-              </Card>
-            </Grid>
-
-            {/* Tiendas por Provincia */}
-            <Grid item xs={12} md={6}>
-              <Card sx={{ p: 3, height: '400px', boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
-                <Typography variant="h6" gutterBottom>Tiendas por Provincia</Typography>
-                {Object.keys(statistics.shopsByProvince || {}).length > 0 ? (
-                  <ReactApexChart
-                    options={getChartOptions(Object.keys(statistics.shopsByProvince))}
-                    series={[{ name: 'Tiendas', data: Object.values(statistics.shopsByProvince) }]}
-                    type="bar"
-                    height={300}
-                  />
-                ) : (
-                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                  <Box display="flex" justifyContent="center" alignItems="center" height={250}>
                     <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
                   </Box>
                 )}
@@ -890,18 +926,18 @@ const AdminPanel = () => {
             </Grid>
 
             {/* Miembros por Gimnasio */}
-            <Grid item xs={12}>
-              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, height: '350px', boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                 <Typography variant="h6" gutterBottom>Miembros por Gimnasio</Typography>
                 {Object.keys(statistics.membersByGymName || {}).length > 0 ? (
                   <ReactApexChart
                     options={getChartOptions(Object.keys(statistics.membersByGymName).map(name => name.length > 15 ? name.substring(0, 15) + '...' : name))}
                     series={[{ name: 'Miembros', data: Object.values(statistics.membersByGymName) }]}
                     type="bar"
-                    height={300}
+                    height={250}
                   />
                 ) : (
-                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                  <Box display="flex" justifyContent="center" alignItems="center" height={250}>
                     <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
                   </Box>
                 )}
@@ -909,40 +945,59 @@ const AdminPanel = () => {
             </Grid>
 
             {/* Cuentas Premium vs Estándar */}
-            <Grid item xs={12} md={6}>
-              <Card sx={{ p: 3, height: '400px', boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, height: '350px', boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                 <Typography variant="h6" gutterBottom>Tipos de Cuentas</Typography>
                 <ReactApexChart
                   options={getChartOptions(['Premium', 'Estándar'], true, ['#1da274', '#f278b6'])}
                   series={[statistics.premiumGyms, statistics.standardGyms]}
                   type="donut"
-                  height={300}
+                  height={250}
                 />
               </Card>
             </Grid>
 
+            {/* Tiendas por Provincia */}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, height: '350px', boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
+                <Typography variant="h6" gutterBottom>Tiendas por Provincia</Typography>
+                {Object.keys(statistics.shopsByProvince || {}).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.shopsByProvince))}
+                    series={[{ name: 'Tiendas', data: Object.values(statistics.shopsByProvince) }]}
+                    type="bar"
+                    height={250}
+                  />
+                ) : (
+                  <Box display="flex" justifyContent="center" alignItems="center" height={250}>
+                    <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+
             {/* Productos por Tienda */}
-            <Grid item xs={12}>
-              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, height: '350px', boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px' }}>
                 <Typography variant="h6" gutterBottom>Productos por Tienda</Typography>
                 {Object.keys(statistics.totalProductsByShop).length > 0 ? (
                   <ReactApexChart
                     options={getChartOptions(Object.keys(statistics.totalProductsByShop))}
                     series={[{ name: 'Productos', data: Object.values(statistics.totalProductsByShop) }]}
                     type="bar"
-                    height={300}
+                    height={250}
                   />
                 ) : (
-                  <Box display="flex" justifyContent="center" alignItems="center" height={300}>
+                  <Box display="flex" justifyContent="center" alignItems="center" height={250}>
                     <Typography variant="body2" color="text.secondary">No hay tiendas con productos</Typography>
                   </Box>
                 )}
               </Card>
             </Grid>
 
-            {/* Próximas Cuentas a Pagar */}
-            <Grid item xs={12}>
-              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+            {/* Próximas Cuentas a Pagar y Estadísticas Adicionales */}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 3, height: '350px', boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px', overflowY: 'auto' }}>
                 <Typography variant="h6" gutterBottom>Próximos Pagos (Esta Semana)</Typography>
                 {statistics.upcomingPayments?.length > 0 ? (
                   <Box sx={{ mt: 2 }}>
@@ -964,30 +1019,33 @@ const AdminPanel = () => {
               </Card>
             </Grid>
 
-            {/* Estadísticas Adicionales */}
             <Grid item xs={12}>
-              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
+              <Card sx={{ p: 3, boxShadow: 'none', border: '1px solid var(--border)', borderRadius: '12px', display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" gutterBottom>Información Adicional</Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1">
-                      <strong>Tienda con más productos:</strong> {statistics.shopWithMostProducts ? statistics.shopWithMostProducts : 'Ninguna'}
-                    </Typography>
+                <Grid container spacing={2} sx={{ flexGrow: 1, alignItems: 'center' }}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', boxShadow: 'none' }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>Tienda con más productos</Typography>
+                      <Typography variant="h6" color="primary">{statistics.shopWithMostProducts ? statistics.shopWithMostProducts : 'Ninguna'}</Typography>
+                    </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1">
-                      <strong>Cantidad máxima de productos:</strong> {Math.max(...Object.values(statistics.totalProductsByShop), 0)}
-                    </Typography>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', boxShadow: 'none' }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>Máximo de productos</Typography>
+                      <Typography variant="h6" color="secondary">{Math.max(...Object.values(statistics.totalProductsByShop), 0)}</Typography>
+                    </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1">
-                      <strong>Promedio de productos por tienda:</strong> {statistics.totalShops > 0 ? Math.round(statistics.totalProducts / statistics.totalShops) : 0}
-                    </Typography>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', boxShadow: 'none' }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>Promedio prod/tienda</Typography>
+                      <Typography variant="h6" color="success.main">{statistics.totalShops > 0 ? Math.round(statistics.totalProducts / statistics.totalShops) : 0}</Typography>
+                    </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="body1">
-                      <strong>Porcentaje de cuentas premium:</strong> {statistics.totalGyms > 0 ? Math.round((statistics.premiumGyms / statistics.totalGyms) * 100) : 0}%
-                    </Typography>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', boxShadow: 'none' }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>% Cuentas Premium</Typography>
+                      <Typography variant="h6" color="warning.main">{statistics.totalGyms > 0 ? Math.round((statistics.premiumGyms / statistics.totalGyms) * 100) : 0}%</Typography>
+                    </Card>
                   </Grid>
                 </Grid>
               </Card>

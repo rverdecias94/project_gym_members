@@ -51,7 +51,20 @@ const PlansPage = () => {
   const { showMessage } = useSnackbar();
   const [accountType, setAccountType] = useState('none');
   const [accountData, setAccountData] = useState({});
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   /* const [isLoading, setIsLoading] = useState(true); */
+
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDark(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const checkAccountType = async () => {
@@ -66,6 +79,11 @@ const PlansPage = () => {
     checkAccountType();
   }, []);
 
+  const premiumColor = isDark ? '#ffb777' : '#6164c7';
+  const cardBgDark = 'linear-gradient(135deg, #1a2332 0%, #162131 100%)';
+  const cardBgLight = 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)';
+  const premiumBorderGradient = isDark ? 'linear-gradient(45deg, transparent, #ffb70044)' : 'linear-gradient(45deg, transparent, #6164c744)';
+
   const plans = [
     {
       id: 'estandar',
@@ -73,12 +91,12 @@ const PlansPage = () => {
       description: 'Ideal para gimnasios que desean gestionar sus operaciones de forma simple y eficiente.',
       originalPrice: 15,
       currentPrice: 10.50,
-      discount: 30,
+      discount: 20,
       renewalPrice: 15,
-      renewalMonth: 4,
+      renewalMonth: 3,
       features: [
         'El primer mes Gratis',
-        'El segundo y tercer mes un 30% de descuento',
+        'El segundo mes un 20% de descuento',
       ],
       includes: [
         { text: 'Registro de hasta 100 clientes', icon: <Group /> },
@@ -95,12 +113,12 @@ const PlansPage = () => {
       description: 'Diseñado para tiendas que quieren escalar y vender más fácil.',
       originalPrice: 15,
       currentPrice: 10.50,
-      discount: 30,
+      discount: 20,
       renewalPrice: 15,
-      renewalMonth: 4,
+      renewalMonth: 3,
       features: [
         'El primer mes Gratis',
-        'El segundo y tercer mes un 30% de descuento',
+        'El segundo mes un 20% de descuento',
       ],
       includes: [
         { text: 'Visibilidad directa en la comunidad fitness', icon: <TrendingUp /> },
@@ -136,7 +154,7 @@ const PlansPage = () => {
         { text: 'Catálogo de productos', icon: <Business /> },
         { text: 'Gestión de pedidos', icon: <Support /> },
       ],
-      color: '#6164c7',
+      color: premiumColor,
       popular: true,
       fullFeatures: 'Incluye todas las funciones de los planes Estándar, Tienda Fitness y más.'
     }
@@ -187,14 +205,6 @@ const PlansPage = () => {
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleGoBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = '/';
-    }
-  };
-
   const handleCloseMessage = () => {
     setOpenMessage(false);
   }
@@ -214,16 +224,13 @@ const PlansPage = () => {
     return { label: "Seleccionar", isActive: false };
   };
 
-
-
-
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{
         minHeight: '100vh',
-        background: theme.palette.mode === 'dark'
+        background: isDark
           ? 'linear-gradient(135deg, #162131 0%, #1a2332 100%)'
-          : 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)',
+          : 'linear-gradient(135deg, #fff 0%, #fff 100%)',
         py: 2
       }}>
         <Container maxWidth="lg">
@@ -232,7 +239,7 @@ const PlansPage = () => {
               severity="info"
               sx={{
                 mb: 3,
-                backgroundColor: theme.palette.mode === 'dark' ? '#1a2332' : '#e8f4fd',
+                backgroundColor: isDark ? '#1a2332' : '#e8f4fd',
                 border: '1px solid #32aaf4',
                 borderRadius: '8px'
               }}
@@ -245,35 +252,16 @@ const PlansPage = () => {
               </Typography>
             </Alert>
           )}
-          {/* <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 3,
-            px: { xs: 1, sm: 2 }
-          }}>
-            <IconButton
-              onClick={handleGoBack}
-              sx={{
-                color: '#6164c7',
-                mr: 2,
-                '&:hover': {
-                  backgroundColor: 'rgba(97, 100, 199, 0.1)'
-                }
-              }}
-            >
-              <ArrowBack />
-            </IconButton>
-          </Box> */}
 
-          {/* Hero Section */}
-          <Box sx={{ textAlign: 'center', mb: 4, px: { xs: 1, sm: 2 } }}>
+          <Box sx={{ textAlign: 'center', mb: 6, mt: 1, px: { xs: 1, sm: 2 } }}>
             <Typography
-              variant={isMobile ? "h4" : "h3"}
+              variant={"h4"}
               sx={{
-                fontWeight: 'bold',
-                color: theme.palette.mode === 'dark' ? "white" : theme.palette.primary.main,
+                fontWeight: '900',
+                color: isDark ? '#fff' : '#6164c7',
                 mb: 2,
-                lineHeight: 1.2
+                lineHeight: 1.2,
+                letterSpacing: '-0.5px'
               }}
             >
               Elige el plan perfecto para tu negocio
@@ -281,7 +269,7 @@ const PlansPage = () => {
             <Typography
               variant={isMobile ? "body1" : "h6"}
               sx={{
-                color: theme.palette.mode === 'dark' ? "white" : theme.palette.primary.main,
+                color: isDark ? '#fff' : '#6164c7',
                 opacity: 0.8,
                 maxWidth: '600px',
                 mx: 'auto',
@@ -293,7 +281,7 @@ const PlansPage = () => {
           </Box>
 
           {/* Plans Grid */}
-          <Grid container spacing={3} sx={{ px: { xs: 1, sm: 2 }, mb: 6 }}>
+          <Grid container spacing={3} sx={{ px: { xs: 1, sm: 2 }, mb: 6, display: 'grid', gridTemplateColumns: accountData?.active ? { xs: '1fr', md: '1fr 1fr' } : { xs: '1fr', md: '1fr 1fr 1fr' } }}>
             {plans.map((plan) => {
               const { label, isActive } = getButtonConfig(plan.id);
 
@@ -303,58 +291,76 @@ const PlansPage = () => {
               if (!shouldRender) return null;
               return (
                 (
-                  <Grid item xs={12} md={accountData?.active ? 6 : 4} key={plan.id}>
+                  <Grid item xs={12} md={accountData?.active ? 6 : 4} key={plan.id} sx={{ display: 'flex' }}>
                     <Card
                       sx={{
-                        height: '100%',
+                        width: '100%',
                         display: 'flex',
                         flexDirection: 'column',
                         position: 'relative',
-                        background: theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, #1a2332 0%, #162131 100%)'
-                          : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                        background: isDark ? cardBgDark : cardBgLight,
                         border: plan.popular
-                          ? '2px solid #6164c7'
-                          : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                          ? '2px solid transparent'
+                          : `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                        backgroundClip: plan.popular ? 'padding-box' : 'border-box',
                         borderRadius: 3,
                         transition: 'all 0.3s ease',
                         transform: selectedPlan === plan.id ? 'scale(1.02)' : 'scale(1)',
                         boxShadow: plan.popular
-                          ? '0 8px 32px rgba(97, 100, 199, 0.3)'
+                          ? `0 12px 40px ${isDark ? 'rgba(255, 183, 0, 0.1)' : 'rgba(97, 100, 199, 0.2)'}`
                           : '0 4px 20px rgba(0, 0, 0, 0.1)',
+                        '&::before': plan.popular ? {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0, right: 0, bottom: 0, left: 0,
+                          zIndex: -1,
+                          margin: '-2px',
+                          borderRadius: 'inherit',
+                          background: premiumBorderGradient,
+                        } : {},
                         '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.2)'
+                          transform: 'translateY(-6px)',
+                          boxShadow: plan.popular
+                            ? `0 16px 50px ${isDark ? 'rgba(255, 183, 0, 0.15)' : 'rgba(97, 100, 199, 0.3)'}`
+                            : '0 12px 40px rgba(0, 0, 0, 0.2)'
                         }
                       }}
                     >
-                      {plan.popular && (
+                      {isActive && (
                         <Box
                           sx={{
                             position: 'absolute',
-                            top: -1,
-                            right: 16,
-                            background: 'linear-gradient(45deg, #6164c7, #56d1cb)',
-                            color: 'white',
+                            top: 12,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: isDark ? '#1a2332' : '#ffffff',
+                            border: `2px solid ${plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color}`,
+                            color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color,
                             px: 2,
-                            py: 1,
-                            borderRadius: '0 0 12px 12px',
-                            fontSize: '0.875rem',
-                            fontWeight: 'bold',
-                            zIndex: 1
+                            py: 0.5,
+                            borderRadius: '20px',
+                            fontSize: '0.7rem',
+                            fontWeight: '900',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                            zIndex: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            boxShadow: `0 4px 10px ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)'}`
                           }}
                         >
-                          El más deseado
+                          <Star sx={{ fontSize: '1rem' }} /> PLAN ACTUAL
                         </Box>
                       )}
 
-                      <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                      <CardContent sx={{ flexGrow: 1, p: 3, pb: 1 }}>
                         <Typography
                           variant="h5"
                           sx={{
                             fontWeight: 'bold',
-                            color: plan.color,
-                            mb: 1
+                            color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color,
+                            mb: 0.5
                           }}
                         >
                           {plan.name}
@@ -363,23 +369,24 @@ const PlansPage = () => {
                         <Typography
                           variant="body2"
                           sx={{
-                            color: theme.palette.text.secondary,
+                            color: isDark ? 'rgba(255,255,255,0.7)' : theme.palette.text.secondary,
                             opacity: 0.8,
-                            mb: 3,
-                            lineHeight: 1.5
+                            mb: 2,
+                            lineHeight: 1.4,
+                            minHeight: '40px'
                           }}
                         >
                           {plan.description}
                         </Typography>
 
                         {/* Pricing */}
-                        <Box sx={{ mb: 3 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                        <Box sx={{ mb: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                             <Typography
                               variant="body2"
                               sx={{
                                 textDecoration: 'line-through',
-                                color: theme.palette.text.secondary,
+                                color: isDark ? 'rgba(255,255,255,0.6)' : theme.palette.text.secondary,
                                 opacity: 0.6
                               }}
                             >
@@ -389,10 +396,13 @@ const PlansPage = () => {
                               label={`Ahorras ${plan.discount}%`}
                               size="small"
                               sx={{
-                                background: 'linear-gradient(45deg, #6164c7, #56d1cb)',
-                                color: 'white',
+                                background: 'transparent',
+                                border: `1px solid ${plan.popular ? (isDark ? '#ffb700' : '#6164c7') : (isDark ? '#e49c10' : '#ff416c')}`,
+                                color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : (isDark ? '#e49c10' : '#ff416c'),
                                 fontWeight: 'bold',
-                                fontSize: '0.75rem'
+                                fontSize: '0.65rem',
+                                height: '18px',
+                                letterSpacing: '0.5px'
                               }}
                             />
                           </Box>
@@ -401,17 +411,21 @@ const PlansPage = () => {
                             <Typography
                               variant="h3"
                               sx={{
-                                fontWeight: 'bold',
-                                color: plan.color
+                                fontWeight: '900',
+                                color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color,
+                                fontSize: '2.5rem',
+                                letterSpacing: '-1px'
                               }}
                             >
-                              {plan.currentPrice}
+                              ${plan.currentPrice}
                             </Typography>
                             <Typography
                               variant="h6"
                               sx={{
-                                color: theme.palette.text.secondary,
-                                opacity: 0.8
+                                color: isDark ? 'rgba(255,255,255,0.7)' : theme.palette.text.secondary,
+                                opacity: 0.8,
+                                fontSize: '1rem',
+                                fontWeight: '500'
                               }}
                             >
                               USD/mes
@@ -422,9 +436,9 @@ const PlansPage = () => {
                             variant="caption"
                             sx={{
                               display: 'block',
-                              color: theme.palette.text.secondary,
+                              color: isDark ? 'rgba(255,255,255,0.6)' : theme.palette.text.secondary,
                               opacity: 0.7,
-                              mt: 1
+                              mt: 0.5
                             }}
                           >
                             Se renueva a {plan.renewalPrice} USD/mes a partir del {plan.renewalMonth}to mes
@@ -436,39 +450,40 @@ const PlansPage = () => {
                           variant="subtitle2"
                           sx={{
                             fontWeight: 'bold',
-                            mb: 2,
-                            color: theme.palette.text.primary
+                            mb: 1,
+                            color: isDark ? 'white' : theme.palette.text.primary,
+                            fontSize: '0.85rem'
                           }}
                         >
                           Todo lo que ganas al registrarte
                         </Typography>
 
-                        <List dense sx={{ mb: 3 }}>
+                        <List dense sx={{ mb: 2, p: 0 }}>
                           {plan.features.map((feature, index) => (
-                            <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
-                              <ListItemIcon sx={{ minWidth: 32 }}>
-                                <CheckCircle sx={{ color: '#4caf50', fontSize: 18 }} />
+                            <ListItem key={index} sx={{ px: 0, py: 0.25 }}>
+                              <ListItemIcon sx={{ minWidth: 28 }}>
+                                <CheckCircle sx={{ color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : '#4caf50', fontSize: 16 }} />
                               </ListItemIcon>
                               <ListItemText
                                 primary={feature}
                                 primaryTypographyProps={{
                                   variant: 'body2',
-                                  color: theme.palette.text.secondary,
-                                  sx: { opacity: 0.9, fontSize: '0.875rem' }
+                                  color: isDark ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary,
+                                  sx: { opacity: 0.9, fontSize: '0.8rem', lineHeight: 1.2 }
                                 }}
                               />
                             </ListItem>
                           ))}
-                          <ListItem sx={{ px: 0, py: 0.5 }}>
-                            <ListItemIcon sx={{ minWidth: 32 }}>
-                              <WhatsApp sx={{ color: '#25d366', fontSize: 18 }} />
+                          <ListItem sx={{ px: 0, py: 0.25 }}>
+                            <ListItemIcon sx={{ minWidth: 28 }}>
+                              <WhatsApp sx={{ color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : '#25d366', fontSize: 16 }} />
                             </ListItemIcon>
                             <ListItemText
                               primary="Soporte técnico vía WhatsApp"
                               primaryTypographyProps={{
                                 variant: 'body2',
-                                color: theme.palette.text.secondary,
-                                sx: { opacity: 0.9, fontSize: '0.875rem' }
+                                color: isDark ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary,
+                                sx: { opacity: 0.9, fontSize: '0.8rem', lineHeight: 1.2 }
                               }}
                             />
                           </ListItem>
@@ -479,25 +494,26 @@ const PlansPage = () => {
                           variant="subtitle2"
                           sx={{
                             fontWeight: 'bold',
-                            mb: 2,
-                            color: theme.palette.text.primary
+                            mb: 1,
+                            color: isDark ? 'white' : theme.palette.text.primary,
+                            fontSize: '0.85rem'
                           }}
                         >
                           {plan.fullFeatures || 'Incluye:'}
                         </Typography>
 
-                        <List dense>
+                        <List dense sx={{ p: 0 }}>
                           {plan.includes.map((item, index) => (
                             <ListItem key={index} sx={{ px: 0, py: 0.25 }}>
                               <ListItemIcon sx={{ minWidth: 28 }}>
-                                {React.cloneElement(item.icon, { sx: { color: '#4caf50', fontSize: 16 } })}
+                                {React.cloneElement(item.icon, { sx: { color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : '#4caf50', fontSize: 16 } })}
                               </ListItemIcon>
                               <ListItemText
                                 primary={item.text}
                                 primaryTypographyProps={{
                                   variant: 'caption',
-                                  color: theme.palette.text.secondary,
-                                  sx: { opacity: 0.8, fontSize: '0.8rem' }
+                                  color: isDark ? 'rgba(255,255,255,0.7)' : theme.palette.text.secondary,
+                                  sx: { opacity: 0.8, fontSize: '0.75rem', lineHeight: 1.2 }
                                 }}
                               />
                             </ListItem>
@@ -506,7 +522,6 @@ const PlansPage = () => {
                       </CardContent>
 
                       <Box sx={{ p: 3, pt: 0 }}>
-
                         <Button
                           fullWidth
                           variant={plan.popular ? "contained" : "outlined"}
@@ -519,30 +534,32 @@ const PlansPage = () => {
                               : handlePlanSelect(plan.id))
                           }
                           sx={{
-                            py: 2,
+                            py: 1.5,
                             background: plan.popular
-                              ? `linear-gradient(45deg, ${plan.color}, #56d1cb)`
+                              ? 'transparent'
                               : 'transparent',
-                            border: `2px solid ${plan.color}`,
-                            color: plan.popular ? 'white' : plan.color,
-                            fontWeight: 'bold',
+                            border: `2px solid ${plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color}`,
+                            color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color,
+                            fontWeight: '900',
                             borderRadius: 2,
-                            fontSize: '1rem',
+                            fontSize: '1.1rem',
                             textTransform: 'none',
                             opacity: isActive ? 0.6 : 1,
                             cursor: isActive ? 'not-allowed' : 'pointer',
+                            boxShadow: plan.popular && !isActive ? `0 8px 20px ${isDark ? 'rgba(255, 183, 0, 0.15)' : 'rgba(97, 100, 199, 0.15)'}` : 'none',
+                            transition: 'all 0.2s',
                             '&:hover': !isActive && {
                               background: plan.popular
-                                ? `linear-gradient(45deg, ${plan.color}dd, #56d1cbdd)`
-                                : `${plan.color}10`,
-                              transform: 'translateY(-1px)',
-                              border: `2px solid ${plan.color}`
+                                ? (isDark ? 'rgba(255, 183, 0, 0.1)' : 'rgba(97, 100, 199, 0.1)')
+                                : (isDark ? `${plan.color}20` : `${plan.color}10`),
+                              transform: 'translateY(-2px)',
+                              border: `2px solid ${plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color}`,
+                              boxShadow: plan.popular ? `0 12px 24px ${isDark ? 'rgba(255, 183, 0, 0.25)' : 'rgba(97, 100, 199, 0.25)'}` : 'none'
                             }
                           }}
                         >
                           {label}
                         </Button>
-
                       </Box>
                     </Card>
                   </Grid>

@@ -2,56 +2,30 @@
 import { DataGrid } from '@mui/x-data-grid';
 import DialogMessage from './DialogMessage';
 import EditMember from './EditMember';
-import { useState } from 'react';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import {
-  Checkbox,
-  FormControlLabel,
-  Button,
-  TextField,
-  MenuItem,
-  Grid,
-  Tooltip,
-  Alert,
-  List,
-  ListItem,
-  Typography,
-  Divider,
-  Dialog,
-  DialogTitle,
-  useMediaQuery,
-  useTheme,
-  ButtonGroup,
-  Card,
-  CardContent,
-  CardActions,
-  Pagination,
-  Box,
-} from '@mui/material';
+import { useState, useEffect } from 'react';
 import { useMembers } from '../context/Context';
 import AddRuleDialog from './AddRuleDialog';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import jsPDF from 'jspdf';
-import { useEffect } from 'react';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { supabase } from '../supabase/client';
-import CancelIcon from '@mui/icons-material/Cancel';
-import IconButton from '@mui/material/IconButton';
-import RuleIcon from '@mui/icons-material/Rule';
-import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import MembersForm from './MembersForm';
-import { useSnackbar } from '../context/Snackbar';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import QrReader from './QrReader'; // Importar el nuevo componente
-import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import QrReader from './QrReader';
 import PaymentRecords from './PaymentRecords';
+import { toast } from 'sonner';
+
+import { Edit, Trash2, FileText, CheckSquare, XCircle, Search, QrCode, Receipt, UserPlus, CalendarDays, CheckSquare as CheckSquareIcon, Square } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
   const { adding, trainersList, setBackdrop, gymInfo } = useMembers();
-  const { showMessage } = useSnackbar();
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openRule, setOpenRule] = useState(false);
@@ -84,7 +58,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       if (members.length < 100) {
         setOpenMemberForm(true);
       } else {
-        showMessage("Has alcanzado el límite de clientes para tu plan actual. Por favor, actualiza tu plan para agregar más clientes.", "error");
+        toast.error("Has alcanzado el límite de clientes para tu plan actual. Por favor, actualiza tu plan para agregar más clientes.");
         return;
       }
     } else
@@ -95,8 +69,8 @@ export const TableMembersList = ({ membersList = [] }) => {
     setOpenMemberForm(false);
   };
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = window.innerWidth <= 768;
+  const isDark = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -252,16 +226,13 @@ export const TableMembersList = ({ membersList = [] }) => {
       sortable: false,
       width: 80,
       renderCell: (params) => (
-        <div style={{ display: "flex", alignItems: "center", cursor: "pointer", height: "100%" }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={selectedRows?.includes(params.row)}
-                onChange={(e) => handlerChangeStatus(e, params.row)}
-                name='active'
-              />
-            }
-            style={{ marginRight: 0 }}
+        <div className="flex items-center justify-center h-full cursor-pointer">
+          <input
+            type="checkbox"
+            className="w-4 h-4 cursor-pointer"
+            checked={selectedRows?.includes(params.row)}
+            onChange={(e) => handlerChangeStatus(e, params.row)}
+            name='active'
           />
         </div>
       ),
@@ -294,30 +265,56 @@ export const TableMembersList = ({ membersList = [] }) => {
       ),
     },
     {
+      field: 'status',
+      headerName: 'Estado',
+      width: 150,
+      renderCell: (params) => {
+        const isPaid = params.row.pay_status;
+        return (
+          <Badge variant={isPaid ? "default" : "destructive"}>
+            {isPaid ? 'Pagado' : 'Pendiente'}
+          </Badge>
+        );
+      },
+    },
+    {
       field: 'options',
       headerName: "Opciones",
       width: 150,
       renderCell: (params) => (
-        <div style={{ display: "flex", alignItems: "center", height: "100%", gap: 8 }}>
-          <Tooltip title="Editar" placement="top">
-            <EditIcon
-              color="primary"
-              onClick={() => handleOpenEdit(params?.row)}
-              style={{ cursor: 'pointer' }}
-            />
-          </Tooltip>
-          <Tooltip title="Eliminar" placement="top">
-            <DeleteIcon
-              sx={{ color: "#e7657e", cursor: 'pointer' }}
-              onClick={() => handleOpenDelete(params?.row)}
-            />
-          </Tooltip>
-          <Tooltip title="Historial de pago" placement="top">
-            <RequestQuoteIcon
-              sx={{ color: "#22b189ff", cursor: 'pointer' }}
-              onClick={() => handleOpenPaymentRecords(params?.row)}
-            />
-          </Tooltip>
+        <div className="flex gap-2 items-center h-full">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleOpenEdit(params.row)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Editar Cliente</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleOpenDelete(params.row)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Dar de Baja</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-secondary" onClick={() => handleOpenPaymentRecords(params.row)}>
+                  <Receipt className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Historial de Pagos</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )
     }
@@ -349,245 +346,248 @@ export const TableMembersList = ({ membersList = [] }) => {
 
   // Componente para mostrar tarjetas en móvil
   const MemberCard = ({ member }) => (
-    <Card sx={{ mb: 2, boxShadow: 2 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
+    <Card className="mb-4 shadow-sm">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="font-bold text-lg">
             {member.first_name} {member.last_name}
-          </Typography>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={selectedRows?.includes(member)}
-                onChange={(e) => handlerChangeStatus(e, member)}
-                name='active'
-              />
-            }
-            label=""
-            sx={{ m: 0 }}
+          </h3>
+          <input
+            type="checkbox"
+            className="w-5 h-5 cursor-pointer accent-primary"
+            checked={selectedRows?.includes(member)}
+            onChange={(e) => handlerChangeStatus(e, member)}
+            name='active'
           />
-        </Box>
+        </div>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          <strong>Teléfono:</strong> {member.phone || '-'}
-        </Typography>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          <strong>CI:</strong> {member.ci}
-        </Typography>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          <strong>Dirección:</strong> {member.address}
-        </Typography>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          <strong>Entrenador:</strong> {member.trainer_name || '-'}
-        </Typography>
+        <div className="space-y-2 text-sm text-muted-foreground mb-4">
+          <p><strong>Teléfono:</strong> {member.phone || '-'}</p>
+          <p><strong>CI:</strong> {member.ci}</p>
+          <p><strong>Dirección:</strong> {member.address}</p>
+          <p><strong>Entrenador:</strong> {member.trainer_name || '-'}</p>
+          <p className="flex items-center gap-2">
+            <strong>Estado:</strong>
+            <Badge variant={member.pay_status ? "default" : "destructive"}>
+              {member.pay_status ? 'Pagado' : 'Pendiente'}
+            </Badge>
+          </p>
+        </div>
       </CardContent>
 
-      <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
-        <Tooltip title="Editar">
-          <IconButton
-            color="primary"
-            onClick={() => handleOpenEdit(member)}
-            size="small"
-          >
-            <EditIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Eliminar">
-          <IconButton
-            sx={{ color: "#e7657e" }}
-            onClick={() => handleOpenDelete(member)}
-            size="small"
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Historial de pago" placement="top">
-          <RequestQuoteIcon
-            sx={{ color: "#22b189ff", cursor: 'pointer' }}
-            onClick={() => handleOpenPaymentRecords(member)}
-          />
-        </Tooltip>
-      </CardActions>
+      <CardFooter className="flex justify-end gap-2 p-4 pt-0">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleOpenEdit(member)}>
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleOpenDelete(member)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-secondary" onClick={() => handleOpenPaymentRecords(member)}>
+          <Receipt className="h-4 w-4" />
+        </Button>
+      </CardFooter>
     </Card>
   );
 
   return (
-    <Grid item xl={12} lg={12} md={12} sm={12} xs={12} style={{ height: 400, width: '100%', marginBottom: 40 }}>
+    <div className="w-full h-[400px] mb-10">
       <br />
-      <Grid container className='container-options'>
-        <Grid item xl={12} lg={12} md={12} sm={12} xs={12}>
+      <div className="flex flex-col gap-4">
+        <div className="w-full">
           {membersList.length !== 0 && (
-            <Grid sx={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: 15, width: isMobile ? "100%" : "20%" }}>
-              <TextField
-                id="outlined-select-currency"
-                select
-                label="Filtro por entrenador"
-                defaultValue="Todos"
-                fullWidth
-                placeholder="Entrenador"
-                name="trainer_name"
-                onChange={handlerChange}
-                value={trainer_name}
-                size='small'
-                sx={{ mr: 1.2, height: '100%' }}
-              >
-                {trainers.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+            <div className={`w-full ${!isMobile ? "max-w-xs" : ""}`}>
+              <Select value={trainer_name || "Todos"} onValueChange={setTrainerName}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtro por entrenador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {trainers.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
-        </Grid>
+        </div>
 
-        <Divider />
+        <hr className="my-2 border-border" />
 
-        <Grid className='container-options-sec_2' sx={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: 2, position: "relative" }}>
+        <div className="flex flex-col md:flex-row w-full justify-between items-start md:items-center mt-2 relative gap-4">
 
-          <div>
-
+          <div className="w-full md:w-auto">
             <Button
-              variant="contained"
-              size='small'
-              className='btn-add-client'
-              fullWidth
+              className="w-full bg-[#e49c10] hover:bg-[#c9890e] text-white"
               onClick={() => {
                 setOpen(true);
                 setShowQrScanner(false); // Asegura que se vea el formulario por defecto
               }}
-              style={{ color: "white", background: "#e49c10" }}
-              sx={{ height: '100%' }}
             >
-              <QrCodeScannerIcon />
-              <span className='text-add-client' style={{ marginLeft: 10 }}>
-                Asociar Cliente
-              </span>
+              <QrCode className="mr-2 h-4 w-4" />
+              <span>Asociar Cliente</span>
             </Button>
 
-            {!gymInfo?.store && members.length >= 95 && members.length <= 100 && <p style={{ fontSize: 16, marginTop: 16 }}>
-              Recuerda que puedes agregar hasta 100 clientes para tu plan.
-            </p>}
+            {!gymInfo?.store && members.length >= 95 && members.length <= 100 && (
+              <p className="text-sm mt-4">
+                Recuerda que puedes agregar hasta 100 clientes para tu plan.
+              </p>
+            )}
           </div>
 
-
-
           {!isMobile && (
-            <Grid container style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 15, width: "50%" }}>
+            <div className="grid grid-cols-4 gap-4 w-1/2">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleOpenMember} // Aquí manejamos la apertura del formulario
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                <span>Cliente</span>
+              </Button>
 
-              <Grid item>
-                <Button
-                  variant="outlined"
-                  size='small'
-                  fullWidth
-                  onClick={handleOpenMember} // Aquí manejamos la apertura del formulario
-                  sx={{ mr: 1.2, height: '100%' }}
-                >
-                  <PersonAddIcon sx={{ fontSize: 22, height: "100%" }} />
-                  <span style={{ marginLeft: 5 }}>
-                    Cliente
-                  </span>
-                </Button>
-              </Grid>
-              <Grid item>
-                <Button
-                  variant='outlined'
-                  disabled={selectedRows.length === 0}
-                  fullWidth
-                  size='small'
-                  onClick={handleOpenRule}
-                  sx={{ mr: 1.2, height: '100%' }}
-                >
-                  Aplicar regla
-                </Button>
-              </Grid>
-              <Grid>
-                <Button
-                  variant='outlined'
-                  className='btn-check'
-                  onClick={handlerCheckBox}
-                  disabled={membersList.length === 0}
-                  sx={{ flexGrow: .1, float: 'right', width: "fit-context" }}
-                >
-                  <CheckBoxIcon /> {membersList.length !== selectedRows.length ? "Sel. Todos" : "Desel. Todos"}
-                </Button>
-              </Grid>
-              <Grid>
-                <Button
-                  variant='outlined'
-                  onClick={downloadPDF}
-                  disabled={membersList.length === 0}
-                  fullWidth
-                  sx={{ flexGrow: .1, float: 'right', width: "fit-context" }}
-                >
-                  <PictureAsPdfIcon /> <span className='text-dw-pdf'>Descargar</span>
-                </Button>
-              </Grid>
-            </Grid>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="outline"
+                        disabled={selectedRows.length === 0}
+                        className={cn("w-full transition-opacity", selectedRows.length === 0 && "opacity-50 cursor-not-allowed")}
+                        onClick={handleOpenRule}
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        <span>Aplicar regla</span>
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {selectedRows.length === 0 && <TooltipContent>Selecciona al menos un cliente</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
+
+              <Button
+                variant="outline"
+                className={cn("w-full transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
+                onClick={handlerCheckBox}
+                disabled={membersList.length === 0}
+              >
+                {membersList.length !== selectedRows.length ? (
+                  <Square className="mr-2 h-4 w-4" />
+                ) : (
+                  <CheckSquareIcon className="mr-2 h-4 w-4" />
+                )}
+                <span>
+                  {membersList.length !== selectedRows.length ? "Sel. Todos" : "Desel. Todos"}
+                </span>
+              </Button>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="outline"
+                        className={cn("w-full transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
+                        onClick={downloadPDF}
+                        disabled={membersList.length === 0}
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Descargar</span>
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {membersList.length === 0 && <TooltipContent>No hay datos para descargar</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           )}
-
 
           {isMobile && (
-            <ButtonGroup
-              variant="outlined"
-              size="large"
-              sx={{
-                '& .MuiButton-root': {
-                  minWidth: 'auto',
-                  padding: '6px 8px'
-                }
-              }}
-            >
-              <Tooltip title="Añadir Cliente">
-                <Button
-                  onClick={handleOpenMember}
-                  sx={{ height: '100%' }}
-                >
-                  <PersonAddIcon />
-                </Button>
-              </Tooltip>
+            <div className="flex gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleOpenMember}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Añadir Cliente</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-              <Tooltip title="Aplicar Regla">
-                <Button
-                  disabled={selectedRows.length === 0}
-                  onClick={handleOpenRule}
-                >
-                  <RuleIcon />
-                </Button>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        disabled={selectedRows.length === 0}
+                        className={cn("transition-opacity", selectedRows.length === 0 && "opacity-50 cursor-not-allowed")}
+                        onClick={handleOpenRule}
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>{selectedRows.length === 0 ? "Selecciona al menos un cliente" : "Aplicar Regla"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-              <Tooltip title={membersList.length !== selectedRows.length ? "Seleccionar Todos" : "Deseleccionar Todos"}>
-                <Button
-                  onClick={handlerCheckBox}
-                  disabled={membersList.length === 0}
-                >
-                  {membersList.length !== selectedRows.length ? <CheckBoxOutlineBlankIcon /> : <CheckBoxIcon />}
-                </Button>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handlerCheckBox}
+                        disabled={membersList.length === 0}
+                        className={cn("transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
+                      >
+                        {membersList.length !== selectedRows.length ? <Square className="h-4 w-4" /> : <CheckSquareIcon className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>{membersList.length !== selectedRows.length ? "Seleccionar Todos" : "Deseleccionar Todos"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-              <Tooltip title="Descargar PDF">
-                <Button
-                  onClick={downloadPDF}
-                  disabled={membersList.length === 0}
-                >
-                  <PictureAsPdfIcon />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={downloadPDF}
+                        disabled={membersList.length === 0}
+                        className={cn("transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>{membersList.length === 0 ? "No hay datos para descargar" : "Descargar PDF"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           )}
-        </Grid>
-      </Grid>
+        </div>
+      </div>
       <br />
 
-      {adding && <span>Aplicando reglas a clientes seleccionados...</span>}
-
-      <Grid container style={{ paddingBottom: '9rem' }}>
-        {!isMobile && (
+      {!isMobile ? (
+        <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">
           <DataGrid
-            rows={members}
+            autoHeight
+            rows={trainer_name !== 'Todos' && trainer_name !== ''
+              ? membersList.filter(row => row.trainer_name === trainer_name)
+              : membersList}
             columns={columns}
             initialState={{
               pagination: {
@@ -595,41 +595,122 @@ export const TableMembersList = ({ membersList = [] }) => {
               },
             }}
             pageSizeOptions={[5, 10]}
+            sx={{
+              border: 'none',
+              color: 'inherit',
+              '& .MuiDataGrid-cell': {
+                borderColor: 'var(--border)',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                borderColor: 'var(--border)',
+                backgroundColor: 'hsl(var(--muted))',
+                color: 'hsl(var(--muted-foreground))',
+              },
+              '& .MuiDataGrid-footerContainer': {
+                borderColor: 'var(--border)',
+                color: 'inherit',
+              },
+              '& .MuiTablePagination-root': {
+                color: 'inherit',
+              },
+              '& .MuiSvgIcon-root': {
+                color: 'inherit',
+              }
+            }}
           />
-        )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {(trainer_name !== 'Todos' && trainer_name !== ''
+            ? membersList.filter(row => row.trainer_name === trainer_name)
+            : membersList).map((member) => (
+              <MemberCard key={member.id} member={member} />
+            ))}
+        </div>
+      )}
 
+      {adding && <span className="text-sm text-muted-foreground mt-2 block">Aplicando reglas a clientes seleccionados...</span>}
 
-        {isMobile && (
-          <Box sx={{ width: '100%' }}>
-            {currentMembers.length > 0 ? (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex justify-between items-center">
+              <span>Asociar cliente al sistema</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-4">
+            {!showQrScanner ? (
               <>
-                {currentMembers.map((member) => (
-                  <MemberCard key={member.id} member={member} />
-                ))}
+                <Input
+                  placeholder="Escribe el ID"
+                  value={id}
+                  onChange={e => setId(e.target.value)}
+                  className="w-full"
+                />
 
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={() => {
+                    setShowQrScanner(true);
+                    setId('');
+                    setResultados([]);
+                    setError(null);
+                  }}
+                >
+                  <QrCode className="mr-2 h-4 w-4" />
+                  Escanear QR
+                </Button>
 
-                {totalPages > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                    <Pagination
-                      count={totalPages}
-                      page={currentPage}
-                      onChange={handlePageChange}
-                      color="primary"
-                      size="small"
-                      showFirstButton
-                      showLastButton
-                    />
-                  </Box>
+                {id.length === 36 && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => buscarRegistro(id ?? null)}
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Buscar
+                  </Button>
+                )}
+
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
               </>
             ) : (
-              <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }}>
-                No hay miembros para mostrar
-              </Typography>
+              <QrReader
+                onScanSuccess={handleQrScanSuccess}
+                onToggleMode={() => setShowQrScanner(false)}
+              />
             )}
-          </Box>
-        )}
-      </Grid>
+
+            <div className="flex flex-col gap-2 mt-4">
+              {resultados.map(registro => (
+                <Card key={registro.id}>
+                  <CardContent className="p-4 flex flex-col gap-2">
+                    <p><strong>Nombre:</strong> {registro.first_name}</p>
+                    <p><strong>Apellido:</strong> {registro.last_name}</p>
+                    <Button
+                      className="mt-2 bg-[#e49c10] hover:bg-[#c9890e] text-white w-full"
+                      onClick={() => handleOpenEdit(registro)}
+                    >
+                      Detalles de Cliente
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <MembersForm
+        open={openMemberForm}
+        handleClose={handleCloseMemberForm}
+      />
 
       <DialogMessage
         handleClose={handleClose}
@@ -640,6 +721,19 @@ export const TableMembersList = ({ membersList = [] }) => {
         type={1}
       />
 
+      <EditMember
+        handleClose={handleClose}
+        memberInfo={memberInfo}
+        open={openEdit}
+        virifiedAcount={verifiedAcount}
+      />
+
+      <PaymentRecords
+        open={paymentRecordsOpen}
+        handleClose={handleClosePaymentRecords}
+        memberInfo={selectedMemberForRecords}
+      />
+
       <AddRuleDialog
         handlerChangeAmount={handlerChangeAmount}
         handleClose={handleClose}
@@ -648,121 +742,6 @@ export const TableMembersList = ({ membersList = [] }) => {
         amountDays={amountDays}
         setSelectedRows={setSelectedRows}
       />
-
-
-
-      {/* MODAL ASOCIAR CLIENTE */}
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="xs"
-        fullWidth
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {"Asociar cliente al sistema"}
-          <IconButton aria-label="cancel" size="large" onClick={handleClose}>
-            <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
-          </IconButton>
-        </DialogTitle>
-        <Grid container style={{ display: "grid", gridTemplateColumns: "1fr ", gap: 15, padding: "2rem" }}>
-          {!showQrScanner ? (
-            <>
-              <TextField
-                label="Escribe el ID"
-                variant="outlined"
-                value={id}
-                onChange={e => setId(e.target.value)}
-                fullWidth
-                margin="normal"
-                size='small'
-              />
-              <Tooltip title="Escanear QR">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  fullWidth
-                  onClick={() => {
-                    setShowQrScanner(true);
-                    setId('');
-                    setResultados([]);
-                    setError(null);
-                  }}
-                >
-                  <QrCodeScannerIcon /> <span style={{ marginLeft: '5px' }}>Escanear QR</span>
-                </Button>
-              </Tooltip>
-              {
-                id.length === 36 &&
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => buscarRegistro(id ?? null)}
-                  fullWidth
-                  size='small'
-                >
-                  Buscar
-                </Button>
-              }
-              {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {error}
-                </Alert>
-              )}
-            </>
-          ) : (
-            <QrReader
-              onScanSuccess={handleQrScanSuccess}
-              onToggleMode={() => setShowQrScanner(false)}
-            />
-          )}
-
-          <List>
-            {resultados.map(registro => (
-              <ListItem
-                key={registro.id}
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 2,
-                  mb: 2,
-                  p: 2,
-                }}
-              >
-                <Typography variant="body1">
-                  <strong>Nombre:</strong> {registro.first_name}
-                </Typography>
-                <Typography variant="body1">
-                  <strong>Apellido:</strong> {registro.last_name}
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{ mt: 1, bgcolor: "#e49c10" }}
-                  onClick={() => handleOpenEdit(registro)}
-                >
-                  Detalles de Cliente
-                </Button>
-              </ListItem>
-            ))}
-          </List>
-        </Grid>
-      </Dialog>
-      <MembersForm
-        open={openMemberForm}
-        handleClose={handleCloseMemberForm}
-      />
-      <EditMember handleClose={handleClose} memberInfo={memberInfo} open={openEdit} virifiedAcount={verifiedAcount} />
-
-      <PaymentRecords
-        open={paymentRecordsOpen}
-        handleClose={handleClosePaymentRecords}
-        memberInfo={selectedMemberForRecords}
-      />
-    </Grid>
+    </div>
   );
 }

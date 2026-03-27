@@ -2,6 +2,7 @@
 import { Divider, useTheme } from "@mui/material";
 import ReactApexChart from 'react-apexcharts';
 import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function PremiumDashboard({
   membersList,
@@ -16,23 +17,46 @@ export default function PremiumDashboard({
   const [paymentsByMonth, setPaymentsByMonth] = useState(Array(12).fill(0));
   const [last7DaysData, setLast7DaysData] = useState([]);
   const [dayLabels, setDayLabels] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check if html has dark class
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+
+    // Setup an observer to watch for class changes on html
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDarkMode(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, []);
 
   const getChartOptions = (categories, isPie = false, customColors = null, isLine = false) => {
+    const textColor = isDarkMode ? 'hsl(215 20.2% 65.1%)' : '#64748b'; // muted-foreground
+    const primaryTextColor = isDarkMode ? 'hsl(210 40% 98%)' : '#0f172a'; // foreground
+
     const baseOptions = {
       chart: {
         toolbar: { show: false },
         background: 'transparent',
-        fontFamily: 'Montserrat, sans-serif',
+        fontFamily: 'Winky Rough, Montserrat, sans-serif',
       },
-      colors: customColors || [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.primary.accent],
+      colors: customColors || ['#6164c7', '#32aaf4', '#e49c10'],
       theme: {
-        mode: theme.palette.mode,
+        mode: isDarkMode ? 'dark' : 'light',
       },
       tooltip: {
-        theme: theme.palette.mode,
+        theme: isDarkMode ? 'dark' : 'light',
         style: {
           fontSize: '12px',
-          fontFamily: 'Montserrat, sans-serif'
+          fontFamily: 'Winky Rough, Montserrat, sans-serif'
         },
       },
     };
@@ -45,7 +69,7 @@ export default function PremiumDashboard({
         dataLabels: { enabled: false },
         legend: {
           position: 'bottom',
-          labels: { colors: theme.palette.text.secondary }
+          labels: { colors: textColor }
         },
         plotOptions: {
           pie: {
@@ -53,8 +77,8 @@ export default function PremiumDashboard({
               size: '70%',
               labels: {
                 show: true,
-                name: { color: theme.palette.text.secondary },
-                value: { color: theme.palette.text.primary, fontSize: '20px', fontWeight: 600 }
+                name: { color: textColor },
+                value: { color: primaryTextColor, fontSize: '20px', fontWeight: 600 }
               }
             }
           }
@@ -63,7 +87,7 @@ export default function PremiumDashboard({
     }
 
     const gridOptions = {
-      borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+      borderColor: isDarkMode ? 'hsl(var(--border))' : 'rgba(0,0,0,0.05)',
       strokeDashArray: 4,
       yaxis: { lines: { show: true } },
       xaxis: { lines: { show: false } }
@@ -72,12 +96,12 @@ export default function PremiumDashboard({
     const axisOptions = {
       xaxis: {
         categories: categories,
-        labels: { style: { colors: theme.palette.text.secondary } },
+        labels: { style: { colors: textColor } },
         axisBorder: { show: false },
         axisTicks: { show: false }
       },
       yaxis: {
-        labels: { style: { colors: theme.palette.text.secondary } }
+        labels: { style: { colors: textColor } }
       }
     };
 
@@ -227,129 +251,100 @@ export default function PremiumDashboard({
   }, [membersList, gymInfo]);
 
   return (
-    <div style={{ marginTop: "3rem", padding: "1rem" }}>
-      <Divider sx={{ mb: 3 }} />
-      
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px', 
-        marginBottom: '1.5rem',
-        padding: '0 10px'
-      }}>
-        <span style={{ fontSize: '1.3rem' }}>💎</span>
-        <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 600, color: theme.palette.text.primary }}>Estadísticas Premium</h2>
-        <div style={{
-          marginLeft: '10px',
-          padding: '2px 8px',
-          borderRadius: '12px',
-          backgroundColor: 'rgba(97, 87, 214, 0.1)',
-          border: '1px solid rgba(97, 87, 214, 0.2)',
-          fontSize: '0.75rem',
-          fontWeight: 600,
-          color: '#6157d6'
-        }}>
+    <div className="w-full">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-xl">💎</span>
+        <h2 className="m-0 text-[1.4rem] font-semibold text-foreground">Estadísticas Premium</h2>
+        <div className="ml-2 px-2 py-0.5 rounded-xl bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
           PRO
         </div>
       </div>
 
-      <div className="stats-grid">
-        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-          <div style={{ width: '100%' }}>
-            <ReactApexChart 
-              options={getChartOptions(dayLabels, false, ['#6157d6', '#f278b6'])} 
-              series={[{ name: 'Nuevos Clientes', data: last7DaysData }]} 
-              type="bar" 
-              height={250} 
-            />
-            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Nuevos Clientes - Últimos 7 Días</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="col-span-1 bg-card border-border shadow-sm">
+          <CardContent className="p-5 h-full transition-all duration-300">
+            <div className="w-full">
+              <ReactApexChart
+                options={getChartOptions(dayLabels, false, ['#6157d6', '#f278b6'])}
+                series={[{ name: 'Nuevos Clientes', data: last7DaysData }]}
+                type="bar"
+                height={250}
+              />
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Nuevos Clientes - Últimos 7 Días</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-          <div style={{ width: '100%' }}>
-            <ReactApexChart 
-              options={getChartOptions(Object.keys(ageRanges), false, ['#6157d6', '#f278b6', '#3b82f6', '#10b981'])} 
-              series={[{ name: 'Clientes', data: Object.values(ageRanges) }]} 
-              type="bar" 
-              height={250} 
-            />
-            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Distribución de clientes por rango de edad</span>
-          </div>
-        </div>
+        <Card className="col-span-1 bg-card border-border shadow-sm">
+          <CardContent className="p-5 h-full transition-all duration-300">
+            <div className="w-full">
+              <ReactApexChart
+                options={getChartOptions(Object.keys(ageRanges), false, ['#6157d6', '#f278b6', '#3b82f6', '#10b981'])}
+                series={[{ name: 'Clientes', data: Object.values(ageRanges) }]}
+                type="bar"
+                height={250}
+              />
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Distribución de clientes por rango de edad</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-          <div style={{ width: '100%' }}>
-            <ReactApexChart 
-              options={getChartOptions(["Meses promedio", "Referencia (12 meses)"], true, ['#6157d6', '#f278b6'])} 
-              series={[Number(avgStay) || 0, 12]} 
-              type="donut" 
-              height={250} 
-            />
-            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Permanencia promedio de clientes</span>
-          </div>
-        </div>
+        <Card className="col-span-1 bg-card border-border shadow-sm">
+          <CardContent className="p-5 h-full transition-all duration-300">
+            <div className="w-full">
+              <ReactApexChart
+                options={getChartOptions(["Meses promedio", "Referencia (12 meses)"], true, ['#6157d6', '#f278b6'])}
+                series={[Number(avgStay) || 0, 12]}
+                type="donut"
+                height={250}
+              />
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Permanencia promedio de clientes</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-          <div style={{ width: '100%' }}>
-            <ReactApexChart 
-              options={getChartOptions(["Mes anterior", "Mes actual"], false, ['#f278b6', '#6157d6'])} 
-              series={[{ name: 'Ingresos', data: [lastMonthIncome, monthlyIncome] }]} 
-              type="bar" 
-              height={250} 
-            />
-            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Ingresos proyectados ({gymInfo?.monthly_currency || "CUP"})</span>
-          </div>
-        </div>
+        <Card className="col-span-1 bg-card border-border shadow-sm">
+          <CardContent className="p-5 h-full transition-all duration-300">
+            <div className="w-full">
+              <ReactApexChart
+                options={getChartOptions(["Mes anterior", "Mes actual"], false, ['#f278b6', '#6157d6'])}
+                series={[{ name: 'Ingresos', data: [lastMonthIncome, monthlyIncome] }]}
+                type="bar"
+                height={250}
+              />
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Ingresos proyectados ({gymInfo?.monthly_currency || "CUP"})</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-          <div style={{ width: '100%' }}>
-            <ReactApexChart 
-              options={getChartOptions(["Con pago", "Sin pago"], true, ['#10b981', '#ef4444'])} 
-              series={[weeklyPayers, membersList.length - weeklyPayers]} 
-              type="donut" 
-              height={250} 
-            />
-            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Clientes con pago en la semana actual</span>
-          </div>
-        </div>
+        <Card className="col-span-1 bg-card border-border shadow-sm">
+          <CardContent className="p-5 h-full transition-all duration-300">
+            <div className="w-full">
+              <ReactApexChart
+                options={getChartOptions(["Con pago", "Sin pago"], true, ['#10b981', '#ef4444'])}
+                series={[weeklyPayers, membersList.length - weeklyPayers]}
+                type="donut"
+                height={250}
+              />
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Clientes con pago en la semana actual</span>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="custom-chart-card" style={{ padding: '20px', borderRadius: '16px', height: '100%', transition: 'all 0.3s ease', backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : '#f3f4fa', border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(97, 87, 214, 0.2)'}` }}>
-          <div style={{ width: '100%' }}>
-            <ReactApexChart 
-              options={getChartOptions(["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"], false, ['#6157d6'], true)} 
-              series={[{ name: 'Pagos', data: paymentsByMonth }]} 
-              type="line" 
-              height={250} 
-            />
-            <span style={{ display: 'block', textAlign: 'center', marginTop: '10px', color: theme.palette.text.primary, fontWeight: 600 }}>Tendencia de pagos mensuales</span>
-          </div>
-        </div>
+        <Card className="col-span-1 bg-card border-border shadow-sm">
+          <CardContent className="p-5 h-full transition-all duration-300">
+            <div className="w-full">
+              <ReactApexChart
+                options={getChartOptions(["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"], false, ['#6157d6'], true)}
+                series={[{ name: 'Pagos', data: paymentsByMonth }]}
+                type="line"
+                height={250}
+              />
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Tendencia de pagos mensuales</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      <style>
-        {`
-      .stats-grid{
-      display: grid;
-      grid-template-columns: 1fr; /* por defecto: 1 columna (móvil) */
-      gap: 1rem;
-    }
-
-    @media (min-width: 600px){ /* en pantallas >= 600px ponemos 2 columnas */
-      .stats-grid{
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    /* estilos de las cajas para separarlas mejor */
-    .chart-box-light, .chart-box-dark {
-      padding: 0.8rem;
-      border-radius: 8px;
-      min-height: 120px;
-    }
-    `}
-      </style>
     </div>
-
   );
 }

@@ -55,6 +55,7 @@ import {
 } from "@mui/icons-material";
 import { useSnackbar } from "../context/Snackbar";
 import moment from "moment";
+import DialogMessage from './DialogMessage';
 
 const StoreManagment = () => {
   const { getShopInfo } = useMembers();
@@ -105,6 +106,8 @@ const StoreManagment = () => {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterDelivery, setFilterDelivery] = useState("");
 
+  const [deleteDialogOpen, setDeleteDialog] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const now = new Date();
 
@@ -142,7 +145,7 @@ const StoreManagment = () => {
 
   useEffect(() => {
     if (openDialog) {
-      validateForm();
+      validateForm(formData, false); // Do not update errors initially
     }
   }, [formData, openDialog, showDiscount]);
 
@@ -322,8 +325,8 @@ const StoreManagment = () => {
 
     if (updateErrors) {
       setFormErrors(errors);
-      setFormIsValid(Object.keys(errors).length === 0);
     }
+    setFormIsValid(Object.keys(errors).length === 0);
     return Object.keys(errors).length === 0;
   };
 
@@ -444,15 +447,23 @@ const StoreManagment = () => {
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
+  const handleDeleteClick = (id) => {
+    setProductToDelete(id);
+    setDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
+      const { error } = await supabase.from('products').delete().eq('id', productToDelete);
       if (error) throw error;
       showMessage("Producto eliminado exitosamente", "success");
       await getProducts();
     } catch (error) {
       showMessage("Error al eliminar el producto: " + (error.message || 'Error desconocido'), "error");
+    } finally {
+      setDeleteDialog(false);
+      setProductToDelete(null);
     }
   };
 
@@ -550,25 +561,31 @@ const StoreManagment = () => {
       </CardContent>
       <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 1 }}>
         <IconButton color="primary" onClick={() => handleEdit(product)} size="small"><EditIcon sx={{ fontSize: '1.1rem' }} /></IconButton>
-        <IconButton color="error" onClick={() => handleDelete(product.id)} size="small"><DeleteIcon sx={{ fontSize: '1.1rem' }} /></IconButton>
+        <IconButton color="error" onClick={() => handleDeleteClick(product.id)} size="small"><DeleteIcon sx={{ fontSize: '1.1rem' }} /></IconButton>
       </CardActions>
     </Card>
   );
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div className="loader"></div>
-      </div>
-    );
-  }
+  // Removed global loading block
+  // if (loading) {
+  //   return (
+  //     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+  //       <div className="loader"></div>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 16, display: "flex", gap: "1rem", flexDirection: { xs: 'column', md: 'row' } }}>
+    <Container maxWidth="xl" sx={{ marginTop: "6rem", mb: 16, display: "flex", gap: "1rem", flexDirection: { xs: 'column', md: 'row' } }}>
 
       {/* Sidebar de filtros */}
       <Box display="flex" flexDirection="column" gap={2} mb={3} sx={{ flex: { xs: 1, md: 2 }, height: "auto" }}>
-        <Paper sx={{ p: 4, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
+        <Paper sx={{ p: 4, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px', position: 'relative' }}>
+          {loading && (
+            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.7)', zIndex: 10, display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '5px' }}>
+              <CircularProgress size={24} />
+            </Box>
+          )}
           <Typography variant="h6" gutterBottom fontWeight="600">Filtros</Typography>
 
           <TextField
@@ -639,7 +656,31 @@ const StoreManagment = () => {
             disableElevation
             startIcon={<AddIcon
               sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
-            onClick={() => setOpenDialog(true)}
+            onClick={() => {
+              setEditingProduct(null);
+              setFormData({
+                name: '',
+                description: '',
+                price: '',
+                currency: 'USD',
+                image: null,
+                image_base64: '',
+                has_delivery: false,
+                has_pickup: false,
+                free_delivery: false,
+                discount: '',
+                discount_start_date: '',
+                discount_end_date: '',
+                product_code: '',
+                category: '',
+                city: 'El cerro',
+                state: 'La Habana',
+                enable: true,
+              });
+              setFormErrors({});
+              setFormIsValid(false);
+              setOpenDialog(true);
+            }}
             size={isMobile ? "medium" : "small"}
             fullWidth={isMobile}
             sx={{ fontSize: isMobile ? '0.85rem' : '1rem', borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>
@@ -673,7 +714,7 @@ const StoreManagment = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {loadingProducts ? (
+                      {loading || loadingProducts ? (
                         <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={24} /></TableCell></TableRow>
                       ) : currentProducts.length === 0 ? (
                         <TableRow><TableCell colSpan={6} align="center">No hay productos registrados</TableCell></TableRow>
@@ -696,12 +737,17 @@ const StoreManagment = () => {
                                 }
                               </Box>
                             </TableCell>
-                            {
-                              product.discount !== null ?
-                                <TableCell>{moment(product.discount_start_date).format("DD-MM-YYYY")} / {moment(product.discount_end_date).format("DD-MM-YYYY")}</TableCell>
-                                :
-                                <TableCell>-</TableCell>
-                            }
+                            <TableCell>
+                              {product.discount !== null ? (
+                                <Box display="flex" flexDirection="column" alignItems="center" whiteSpace="nowrap">
+                                  <Typography variant="caption">{moment(product.discount_start_date).format("DD-MM-YYYY - HH:mm")}</Typography>
+                                  <Box sx={{ width: '100%', height: '1px', bgcolor: 'divider', my: 0.5 }} />
+                                  <Typography variant="caption">{moment(product.discount_end_date).format("DD-MM-YYYY - HH:mm")}</Typography>
+                                </Box>
+                              ) : (
+                                <Typography variant="body2" align="center">-</Typography>
+                              )}
+                            </TableCell>
                             <TableCell>
                               {product.views}
                             </TableCell>
@@ -719,7 +765,7 @@ const StoreManagment = () => {
                                 )}
                               </Box>
                             </TableCell>
-                            <TableCell><IconButton onClick={() => handleEdit(product)} color="primary"><EditIcon /></IconButton><IconButton onClick={() => handleDelete(product.id)} color="error"><DeleteIcon /></IconButton></TableCell>
+                            <TableCell><IconButton onClick={() => handleEdit(product)} color="primary"><EditIcon /></IconButton><IconButton onClick={() => handleDeleteClick(product.id)} color="error"><DeleteIcon /></IconButton></TableCell>
                           </TableRow>
                         ))
                       )}
@@ -736,7 +782,7 @@ const StoreManagment = () => {
             )}
             {isMobile && (
               <Box sx={{ width: '100%' }}>
-                {loadingProducts ? (
+                {loading || loadingProducts ? (
                   <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
                 ) : currentProducts.length === 0 ? (
                   <Typography variant="body1" sx={{ textAlign: 'center', py: 4, fontSize: '0.9rem' }}>No hay productos registrados</Typography>
@@ -760,6 +806,7 @@ const StoreManagment = () => {
                     <Table>
                       <TableHead>
                         <TableRow>
+                          <TableCell>Pedido ID</TableCell>
                           <TableCell>Fecha</TableCell>
                           <TableCell>Cliente</TableCell>
                           <TableCell>Productos</TableCell>
@@ -775,11 +822,11 @@ const StoreManagment = () => {
                       <TableBody>
                         {loadingOrders ? (
                           <TableRow>
-                            <TableCell colSpan={10} align="center"><CircularProgress size={24} /></TableCell>
+                            <TableCell colSpan={11} align="center"><CircularProgress size={24} /></TableCell>
                           </TableRow>
                         ) : orders.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={10} align="center">No hay órdenes registradas</TableCell>
+                            <TableCell colSpan={11} align="center">No hay órdenes registradas</TableCell>
                           </TableRow>
                         ) : (
                           (() => {
@@ -788,6 +835,9 @@ const StoreManagment = () => {
                             const currentOrders = orders.slice(startIndex, endIndex);
                             return currentOrders.map(order => (
                               <TableRow key={order.id}>
+                                <TableCell>
+                                  <Chip label={`No-${order.id_products}`} size="small" variant="outlined" sx={{ fontWeight: 'bold' }} />
+                                </TableCell>
                                 <TableCell>{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</TableCell>
                                 <TableCell>{order.member_name}</TableCell>
                                 <TableCell>{order.name_products}</TableCell>
@@ -849,16 +899,21 @@ const StoreManagment = () => {
                           {currentOrders.map(order => (
                             <Card key={order.id} sx={{ mb: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
                               <CardContent>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{order.member_name}</Typography>
+                                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                                  <Box>
+                                    <Chip label={`No-${order.id_products}`} size="small" variant="outlined" sx={{ mb: 1, fontSize: '0.7rem', fontWeight: 'bold' }} />
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>{order.member_name}</Typography>
+                                  </Box>
+                                  <Chip label={mapStatus(order.status)} size="small" color={order.status === 3 ? 'error' : (order.status === 2 ? 'success' : 'default')} />
+                                </Box>
                                 <Typography variant="body2">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</Typography>
                                 <Typography variant="body2"><strong>Productos:</strong> {order.name_products}</Typography>
                                 <Typography variant="body2"><strong>Monto:</strong> {order.price_total} {order.currency}</Typography>
                                 <Typography variant="body2"><strong>Cantidad:</strong> {order.amount ?? '-'}</Typography>
                                 <Typography variant="body2"><strong>Tipo:</strong> {mapPurchaseType(order.purchase_type)}</Typography>
                                 <Typography variant="body2"><strong>Dirección:</strong> {order.delivery_address ? order.delivery_address : '-'}</Typography>
-                                <Box mt={1}><Chip label={mapStatus(order.status)} size="small" color={order.status === 3 ? 'error' : (order.status === 2 ? 'success' : 'default')} /></Box>
                               </CardContent>
-                              <CardActions sx={{ justifyContent: 'flex-end' }}>
+                              <CardActions sx={{ justifyContent: 'flex-end', borderTop: '1px solid #eaeaea', pt: 1, pb: 2, px: 2 }}>
                                 <FormControl size="small" sx={{ minWidth: 150 }}>
                                   <Select
                                     value={order.status}
@@ -944,7 +999,7 @@ const StoreManagment = () => {
                   />
                 </Grid>
               )}
-              <Grid item xs={12} sm={4}>
+              <Grid item xs={12} sm={4} sx={{ display: 'flex', alignItems: 'flex-end' }}>
                 <TextField
                   fullWidth
                   label="Nombre del producto"
@@ -956,8 +1011,8 @@ const StoreManagment = () => {
                   required
                   size={isMobile ? "small" : "medium"} />
               </Grid>
-              <Grid item xs={12} sm={4}><TextField fullWidth label="Código de producto (Opcional)" name="product_code" value={formData.product_code} onChange={handleInputChange} error={!!formErrors.product_code} helperText={formErrors.product_code} size={isMobile ? "small" : "medium"} /></Grid>
-              <Grid item xs={12} sm={4}><FormControl fullWidth size={isMobile ? "small" : "medium"}><InputLabel>Categoría</InputLabel><Select name="category" value={formData.category} onChange={handleInputChange} label="Categoría">{categories.map((category) => (<MenuItem key={category.id} value={category.category}>{category.category}</MenuItem>))}</Select></FormControl></Grid>
+              <Grid item xs={12} sm={4} sx={{ display: 'flex', alignItems: 'flex-end' }}><TextField fullWidth label="Código de producto (Opcional)" name="product_code" value={formData.product_code} onChange={handleInputChange} error={!!formErrors.product_code} helperText={formErrors.product_code} size={isMobile ? "small" : "medium"} /></Grid>
+              <Grid item xs={12} sm={4} sx={{ display: 'flex', alignItems: 'flex-end' }}><FormControl fullWidth size={isMobile ? "small" : "medium"}><InputLabel>Categoría *</InputLabel><Select name="category" value={formData.category} onChange={handleInputChange} label="Categoría *">{categories.map((category) => (<MenuItem key={category.id} value={category.category}>{category.category}</MenuItem>))}</Select></FormControl></Grid>
               <Grid item xs={12}><TextField fullWidth label="Descripción" name="description" multiline rows={isMobile ? 2 : 3} value={formData.description} onChange={handleInputChange} error={!!formErrors.description} helperText={formErrors.description} required size={isMobile ? "small" : "medium"} /></Grid>
               <Grid item xs={12} sm={8}><TextField fullWidth label="Precio" name="price" type="number" value={formData.price} onChange={handleInputChange} error={!!formErrors.price} helperText={formErrors.price} required inputProps={{ min: 0, step: 0.01 }} size={isMobile ? "small" : "medium"} /></Grid>
               <Grid item xs={12} sm={4}><FormControl fullWidth size={isMobile ? "small" : "medium"}><InputLabel>Moneda</InputLabel><Select name="currency" value={formData.currency} onChange={handleInputChange} label="Moneda"><MenuItem value="USD">USD</MenuItem><MenuItem value="CUP">CUP</MenuItem></Select></FormControl></Grid>
@@ -1064,6 +1119,16 @@ const StoreManagment = () => {
           <Button onClick={confirmCancelOrder} color='error' variant='contained' disableElevation size={isMobile ? "small" : "medium"} disabled={!cancelReason || statusUpdatingId === (cancelOrder?.id || null)} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>Cancelar orden</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal de confirmación para eliminar producto */}
+      <DialogMessage
+        open={deleteDialogOpen}
+        handleClose={() => { setDeleteDialog(false); setProductToDelete(null); }}
+        fn={handleConfirmDelete}
+        title="Eliminar Producto"
+        msg="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+      />
+
     </Container >
   );
 };

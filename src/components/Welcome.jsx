@@ -1,139 +1,51 @@
-import { Button, Grid, Typography, useTheme, Box, Paper } from '@mui/material'
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { useState } from 'react';
+import { UserPlus } from 'lucide-react';
 import MembersForm from './MembersForm';
+import { Button } from "@/components/ui/button";
 
 const Welcome = () => {
+  const [open, setOpen] = useState(false);
 
-  const [open, setOpen] = useState(false)
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const theme = useTheme();
-  
   return (
-    <Grid 
-      item 
-      xl={12} lg={12} md={12} sm={12} xs={12} 
-      className='dashboard-container'
-      sx={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        alignItems: "center", 
-        justifyContent: "center", 
-        height: "100%", 
-        overflowY: "hidden",
-        textAlign: "center", 
-        padding: { xs: 3, md: 6 } 
-      }}
-    >
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          padding: { xs: 4, md: 8 }, 
-          borderRadius: 4, 
-          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-          maxWidth: '800px',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 3
-        }}
-      >
-        <Typography 
-          variant="h3" 
-          component="h1" 
-          sx={{ 
-            fontWeight: 800, 
-            color: theme.palette.mode === 'dark' ? '#fff' : '#1a1a1a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-            mb: 2,
-            fontSize: { xs: '2rem', md: '3rem' }
-          }}
-        >
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-6rem)] p-6 md:p-12 text-center">
+      <div className="max-w-3xl w-full flex flex-col items-center gap-6 p-8 md:p-16 rounded-2xl bg-black/5 dark:bg-white/5">
+        <h1 className="flex items-center justify-center gap-4 text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
           🎉 ¡Bienvenido a TRONOSS!
-        </Typography>
+        </h1>
 
-        <Typography 
-          variant="h6" 
-          color="text.secondary" 
-          sx={{ 
-            lineHeight: 1.6, 
-            fontWeight: 400,
-            fontSize: { xs: '1.1rem', md: '1.25rem' }
-          }}
-        >
+        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
           Nos alegra tenerte con nosotros. Desde aquí podrás gestionar tu gimnasio de forma fácil y rápida: registra a tus miembros y entrenadores.
-        </Typography>
+        </p>
 
-        <Typography 
-          variant="h6" 
-          color="text.secondary" 
-          sx={{ 
-            lineHeight: 1.6, 
-            fontWeight: 400,
-            fontSize: { xs: '1.1rem', md: '1.25rem' }
-          }}
-        >
+        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
           También podrás ver estadísticas de tu gimnasio, como la cantidad de clientes activos, entrenadores, la relación de clientes y entrenadores y más.
-        </Typography>
+        </p>
 
-        <Box sx={{ mt: 4, mb: 2 }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 700, 
-              mb: 4,
-              color: theme.palette.mode === 'dark' ? '#fff' : '#1a1a1a',
-              fontSize: { xs: '1.5rem', md: '2rem' }
-            }}
-          >
+        <div className="mt-8 mb-4 w-full flex flex-col items-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-8">
             ¡Vamos a hacerlo juntos!
-          </Typography>
+          </h2>
 
           <Button
-            variant="contained"
-            size="large"
-            className={theme.palette.mode === 'dark' ? "client-btn-dark" : "client-btn-light"}
+            size="lg"
             onClick={handleOpen}
-            sx={{ 
-              px: 5, 
-              py: 1.5, 
-              fontSize: '1.1rem',
-              fontWeight: 600,
-              borderRadius: '8px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              boxShadow: 'none',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: 'none',
-              }
-            }}
-            startIcon={<PersonAddIcon sx={{ mr: 1, fontSize: '1.5rem !important' }} />}
+            className="px-8 py-6 text-lg font-semibold uppercase tracking-wide transition-all hover:-translate-y-0.5"
           >
+            <UserPlus className="mr-3 h-6 w-6" />
             Agregar Cliente
           </Button>
-        </Box>
-      </Paper>
+        </div>
+      </div>
 
       <MembersForm
         open={open}
         handleClose={handleClose}
       />
-    </Grid>
-  )
-}
+    </div>
+  );
+};
 
-export default Welcome
+export default Welcome;

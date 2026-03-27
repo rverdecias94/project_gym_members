@@ -183,7 +183,7 @@ const AdminRaffle = () => {
     setRaffleToDelete(null);
     setOpenConfirm(false);
   };
-  
+
   const handleDeleteConfirm = async () => {
     if (!raffleToDelete) return;
     try {
@@ -283,7 +283,15 @@ const AdminRaffle = () => {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => handleOpenModal()}
-            sx={{ whiteSpace: 'nowrap' }}
+            sx={{
+              whiteSpace: 'nowrap',
+              backgroundColor: theme.palette.mode === 'dark' ? 'hsl(var(--complementary))' : 'hsl(var(--primary))',
+              color: theme.palette.mode === 'dark' ? 'hsl(var(--complementary-foreground))' : 'hsl(var(--primary-foreground))',
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'dark' ? 'hsl(var(--complementary))' : 'hsl(var(--primary))',
+                opacity: 0.9
+              }
+            }}
           >
             Nuevo Sorteo
           </Button>
@@ -355,9 +363,20 @@ const AdminRaffle = () => {
                   disabled={raffle.state_lottery === '2'}
                   size="small"
                   variant="contained"
-                  color="primary"
                   startIcon={<PlayArrowIcon />}
                   onClick={() => handleRunRaffle(raffle)}
+                  sx={{
+                    backgroundColor: theme.palette.mode === 'dark' ? 'hsl(var(--complementary))' : 'hsl(var(--primary))',
+                    color: theme.palette.mode === 'dark' ? 'hsl(var(--complementary-foreground))' : 'hsl(var(--primary-foreground))',
+                    '&:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'hsl(var(--complementary))' : 'hsl(var(--primary))',
+                      opacity: 0.9
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: theme.palette.action.disabledBackground,
+                      color: theme.palette.action.disabled
+                    }
+                  }}
                 >
                   Correr Sorteo
                 </Button>
@@ -456,7 +475,18 @@ const AdminRaffle = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal} color="inherit">Cancelar</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            sx={{
+              backgroundColor: theme.palette.mode === 'dark' ? 'hsl(var(--complementary))' : 'hsl(var(--primary))',
+              color: theme.palette.mode === 'dark' ? 'hsl(var(--complementary-foreground))' : 'hsl(var(--primary-foreground))',
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'dark' ? 'hsl(var(--complementary))' : 'hsl(var(--primary))',
+                opacity: 0.9
+              }
+            }}
+          >
             Guardar
           </Button>
         </DialogActions>

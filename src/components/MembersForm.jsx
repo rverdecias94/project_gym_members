@@ -1,24 +1,19 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState } from 'react'
-import { Button, FormControlLabel, FormLabel, Grid, MenuItem, Radio, RadioGroup, TextField } from "@mui/material"
-import { Box, Checkbox } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { useMembers } from '../context/Context';
-import { useEffect } from 'react';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import dayjs from 'dayjs';
 import ImageUploader from './ImageUploader';
-import IconButton from '@mui/material/IconButton';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import CancelIcon from '@mui/icons-material/Cancel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { X, UserPlus, Save } from 'lucide-react';
 import "dayjs/locale/es";
-
 
 function MembersForm({ member = {}, open, handleClose, virifiedAcount = false }) {
   const { createNewMember, adding, updateClient, trainersList } = useMembers();
@@ -31,7 +26,7 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
     phone: '',
     has_trainer: false,
     trainer_name: null,
-  })
+  });
   const [errors, setErrors] = useState({
     first_name: false,
     last_name: false,
@@ -51,7 +46,6 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
 
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
-      // Asegurar que phone sea string para evitar problemas en los inputs
       const normalizedMember = {
         ...member,
         phone: member?.phone !== undefined && member?.phone !== null ? String(member.phone) : '',
@@ -62,57 +56,49 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
     }
   }, [member]);
 
-
   useEffect(() => {
     if (trainersList?.length > 0) {
-      const trainers = [];
-      trainersList.forEach(element => {
-        trainers.push({ value: element.name, label: element.name });
-      });
+      const trainers = trainersList.map(element => ({
+        value: element.name,
+        label: element.name
+      }));
       setTrainers(trainers);
     }
-  }, [])
+  }, [trainersList]);
 
   const handlerSubmit = async (e) => {
     e.preventDefault();
-    let member = { ...memberData }
+    let updatedMember = { ...memberData };
 
-    member.image_profile = imageBase64;
+    updatedMember.image_profile = imageBase64;
 
     if (virifiedAcount) {
-      member.active = true;
+      updatedMember.active = true;
     }
 
-    editing ? await updateClient(member, virifiedAcount) : await createNewMember(member);
+    editing ? await updateClient(updatedMember, virifiedAcount) : await createNewMember(updatedMember);
+
     setMemberData({
       first_name: '',
       last_name: '',
-      gender: '',
+      gender: 'M',
       ci: '',
       address: '',
       phone: '',
       has_trainer: false,
       trainer_name: null,
-    })
-    setImageBase64(null)
+    });
+    setImageBase64(null);
     handleClose();
-    if (editing) {
-      setEditing(false);
-    } else {
-      setEditing(false);
-      setMemberData({});
-    }
+    setEditing(false);
     navigate(from, { replace: true });
-
-  }
+  };
 
   const handlerChange = (e) => {
     const { name, value, checked, type } = e.target;
-
     let newValue = type === 'checkbox' ? checked : value;
     let isValid = true;
 
-    // Validaciones
     if (name === 'first_name' || name === 'last_name') {
       isValid = !/\d/.test(value);
       newValue = value.replace(/\d/g, '');
@@ -142,56 +128,36 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
     }
   };
 
-  const isFormValid = () => {
-    if (memberData.has_trainer) {
-      return (
-        !errors.first_name && //campo requerido
-        !errors.last_name && //campo requerido
-        !errors.ci && //campo requerido
-        memberData?.address !== '' && //campo requerido
-        memberData?.ci?.length === 11 &&
-        memberData?.first_name !== '' &&
-        memberData?.last_name !== '' &&
-        !errors.phone &&
-        memberData?.phone?.length === 8 &&
-        memberData?.trainer_name !== '' &&
-        (memberData?.pay_date !== undefined)
-      );
+  const handleSelectChange = (name, value) => {
+    setMemberData(prev => ({ ...prev, [name]: value }));
+  };
 
-    }
+  const handleDateChange = (e) => {
+    setMemberData(prev => ({ ...prev, pay_date: e.target.value }));
+  };
+
+  const isFormValid = () => {
+    const hasTrainerValid = memberData.has_trainer ? memberData.trainer_name : true;
     return (
-      !errors?.first_name && //campo requerido
-      !errors?.last_name && //campo requerido
-      !errors?.ci && //campo requerido
-      memberData?.address !== '' && //campo requerido
-      memberData?.phone?.length === 8 && //campo requerido
+      !errors.first_name &&
+      !errors.last_name &&
+      !errors.ci &&
+      memberData?.address?.trim() !== '' &&
       memberData?.ci?.length === 11 &&
-      memberData?.first_name !== '' &&
-      memberData?.last_name !== '' &&
-      memberData?.trainer_name !== '' &&
-      (memberData?.pay_date !== undefined)
+      memberData?.first_name?.trim() !== '' &&
+      memberData?.last_name?.trim() !== '' &&
+      !errors.phone &&
+      memberData?.phone?.length === 8 &&
+      hasTrainerValid &&
+      memberData?.pay_date
     );
   };
-
-
-  const handlerDatePaymentChange = (value) => {
-    if (!value) return;
-
-    // guardamos la fecha seleccionada exactamente como el usuario la escogió
-    const new_payment_date = dayjs(value).format("YYYY-MM-DD");
-
-    setMemberData((prev) => ({
-      ...prev,
-      pay_date: new_payment_date,
-    }));
-  };
-
 
   const clearAndClose = () => {
     setMemberData({
       first_name: '',
       last_name: '',
-      gender: '',
+      gender: 'M',
       ci: '',
       address: '',
       phone: '',
@@ -201,248 +167,239 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
     setImageBase64(null);
     setEditing(false);
     handleClose();
-  }
+  };
+
+  // Get max date for native date input (only for creation)
+  const today = dayjs().format('YYYY-MM-DD');
+  const minDate = dayjs().subtract(2, 'months').format('YYYY-MM-DD');
 
   return (
-    <>
-      <Dialog
-        open={open}
-        onClose={() => clearAndClose()}
-        maxWidth={"xl"}
-      >
-        <DialogTitle id="alert-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {editing ? "Editar Cliente" : "Nuevo Cliente"}
-          <IconButton aria-label="cancel" size="large" onClick={() => clearAndClose()}>
-            <CancelIcon sx={{ color: "#6164c7" }}></CancelIcon>
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Box
-            component="form"
-            sx={{
-              '& .MuiTextField-root': { m: 1, width: '100%', padding: .5 },
-              '& .MuiMobileDatePicker-root': { m: 1, width: '100%' },
-              '& .MuiFormControlLabel-root': { m: 1, width: '100%' },
-              '& .MuiFormLabel-root': { width: '100%' },
-              '& .MuiButton-root': { width: 'fit-context', float: "right" },
-              '& .MuiRadioGroup-root': { display: 'flex' },
-              '& .MuiIconButton-root': { padding: "0px 0px 15px !important", color: "#f00" },
-              padding: editing ? null : 2,
-            }}
-            noValidate
-            autoComplete="off"
-          >
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && clearAndClose()}>
+      <DialogContent className="sm:max-w-[900px] md:max-w-[1000px] w-[95vw] max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="p-4 md:p-6 border-b border-border sticky top-0 bg-card z-10 flex flex-row items-center justify-between">
+          <DialogTitle className="flex items-center text-xl font-bold">
+            <UserPlus className="w-5 h-5 mr-2 text-primary" />
+            {editing ? "Editar Cliente" : "Nuevo Cliente"}
+          </DialogTitle>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={clearAndClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </DialogHeader>
 
-            <form style={{ width: "100%", paddingRight: "1rem" }}>
-              <Grid container>
-                <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
+        <div className="p-4 md:p-6">
+          <form className="space-y-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Image Column */}
+              <div className="w-full lg:w-[400px] flex flex-col items-center gap-4 shrink-0">
+                <div className="w-full bg-card rounded-xl">
                   <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
-                  {editing &&
-                    <Grid container>
-                      <Grid item lg={4} xl={4} md={4} sm={12} xs={12}>
-                        <FormControlLabel
-                          value={memberData?.active}
-                          onChange={handlerChange}
-                          control={
-                            <Checkbox
-                              name='active'
-                              checked={memberData?.active === true ? true : virifiedAcount}
-                            />}
-                          label="Cliente Activo"
-                        />
-                      </Grid>
-                    </Grid>
-                  }
-                </Grid>
+                </div>
 
-                <Grid item lg={8} xl={8} md={8} sm={12} xs={12}
-                  style={{ marginTop: "2.3rem" }}>
-                  {/* Fila 1 */}
-                  <Grid container style={{ display: "flex" }}>
-                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                      <TextField
-                        required
-                        id="outlined-required"
-                        label="Nombre"
-                        size='small'
-                        name="first_name"
-                        value={memberData?.first_name}
-                        placeholder='Ej: Jhon'
-                        onChange={handlerChange}
-                      />
-                    </Grid>
-                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                      <TextField
-                        required
-                        id="outlined-required"
-                        label="Apellidos"
-                        size='small'
-                        name="last_name"
-                        value={memberData?.last_name}
-                        placeholder='Ej: Doe Smitt'
-                        onChange={handlerChange}
-                      />
-                    </Grid>
-                  </Grid>
-                  {/* Fila 2 */}
-                  <Grid container>
-                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                      <TextField
-                        required
-                        id="outlined-required"
-                        label="CI"
-                        name="ci"
-                        size='small'
-                        value={memberData?.ci}
-                        placeholder='CI: 35123145685'
-                        onChange={handlerChange}
-                      />
-                    </Grid>
-                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                      <TextField
-                        required
-                        id="outlined-required"
-                        label="Direccion"
-                        size='small'
-                        name="address"
-                        value={memberData?.address}
-                        placeholder='S.T Village nº 9827'
-                        onChange={handlerChange}
-                      />
-                    </Grid>
-                  </Grid>
-
-                  {/* FIla 3 */}
-                  <Grid container>
-                    {trainers.length > 0 &&
-                      <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                        <FormControlLabel
-                          value={memberData?.has_trainer}
-                          onChange={handlerChange}
-                          size='small'
-                          control={
-                            <Checkbox
-                              name='has_trainer'
-                              checked={memberData?.has_trainer}
-                            />}
-                          label="Solicita entrenador"
-                        />
-                      </Grid>
-                    }
-
-                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                      <FormLabel style={{ marginLeft: "20px" }} id="demo-row-radio-buttons-group-label">Género</FormLabel>
-                      <RadioGroup
-                        row
-                        aria-labelledby="demo-row-radio-buttons-group-label"
-                        name='gender'
-                        onChange={handlerChange}
-                        value={memberData?.gender}
-                      >
-                        <FormControlLabel
-                          value="M"
-                          control={<Radio />}
-                          label="Masculino"
-                          style={{ width: "fit-content" }}
-                        />
-                        <FormControlLabel
-                          value="F"
-                          control={<Radio />}
-                          label="Femenino"
-                          style={{ width: "fit-content" }}
-                        />
-                      </RadioGroup>
-                    </Grid>
-                  </Grid>
-
-                  {/* FILA 4 */}
-                  <Grid container>
-                    {memberData?.has_trainer &&
-                      <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                        <TextField
-                          id="outlined-select-currency"
-                          select
-                          disabled={!memberData?.has_trainer}
-                          label="Entrenador"
-                          defaultValue=""
-                          size='small'
-                          placeholder="Selecciona entrenador"
-                          name="trainer_name"
-                          onChange={handlerChange}
-                          value={memberData?.trainer_name}
-                        >
-                          {trainers.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
-                    }
-                    <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-                      <TextField
-                        required
-                        id="outlined-required"
-                        label="Tel. Cliente"
-                        name="phone"
-                        size='small'
-                        value={memberData?.phone}
-                        placeholder='55565758'
-                        onChange={handlerChange}
-                      />
-                    </Grid>
-                  </Grid>
-
-
-
-                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-                    <MobileDatePicker
-                      label={editing ? "Próxima fecha de pago *" : "Fecha de pago inicial *"}
-                      size="small"
-                      value={memberData?.pay_date ? dayjs(memberData.pay_date) : null}
-                      onChange={handlerDatePaymentChange}
-                      maxDate={editing ? null : dayjs()} // solo crear restringe
-                      minDate={editing ? null : dayjs().subtract(2, "months")}
+                {editing && (
+                  <div className="flex items-center space-x-2 bg-muted/50 p-3 rounded-lg w-full border border-border">
+                    <Checkbox
+                      id="active"
+                      name="active"
+                      checked={memberData?.active === true ? true : virifiedAcount}
+                      onCheckedChange={(checked) => handlerChange({ target: { name: 'active', type: 'checkbox', checked } })}
                     />
-                  </LocalizationProvider>
+                    <Label htmlFor="active" className="font-medium cursor-pointer">
+                      Cliente Activo
+                    </Label>
+                  </div>
+                )}
+              </div>
 
-                  {!editing &&
-                    <div style={{ marginLeft: "1rem", marginTop: "10px", marginBottom: "10px", fontSize: "1rem", }}>
-                      <ul style={{ listStyle: 'none' }}>
-                        <li>
-                          Si el cliente es nuevo, selecciona la <b>fecha de hoy</b> como fecha de pago.
-                        </li>
-                        <li>
-                          Si ya tenía un pago previo, usa esa <b>última fecha real de pago</b>.
-                        </li>
-                        <li>
-                          El sistema sumará <b>automáticamente un mes</b> a la fecha ingresada para calcular el próximo pago.
-                        </li>
-                      </ul>
+              {/* Fields Column */}
+              <div className="w-full space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first_name">Nombre <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                    <Input
+                      id="first_name"
+                      name="first_name"
+                      value={memberData?.first_name}
+                      onChange={handlerChange}
+                      placeholder="Ej: John"
+                      className={errors.first_name ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last_name">Apellidos <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                    <Input
+                      id="last_name"
+                      name="last_name"
+                      value={memberData?.last_name}
+                      onChange={handlerChange}
+                      placeholder="Ej: Doe Smith"
+                      className={errors.last_name ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ci">CI <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                    <Input
+                      id="ci"
+                      name="ci"
+                      value={memberData?.ci}
+                      onChange={handlerChange}
+                      placeholder="11 dígitos"
+                      maxLength={11}
+                      className={errors.ci || (memberData?.ci?.length > 0 && memberData?.ci?.length < 11) ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={memberData?.phone}
+                      onChange={handlerChange}
+                      placeholder="8 dígitos"
+                      maxLength={8}
+                      className={errors.phone || (memberData?.phone?.length > 0 && memberData?.phone?.length < 8) ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Dirección <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={memberData?.address}
+                    onChange={handlerChange}
+                    placeholder="Ej: Calle Principal #123"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Género</Label>
+                    <div className="flex items-center gap-4 h-10">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="gender_m"
+                          name="gender"
+                          value="M"
+                          checked={memberData?.gender === 'M'}
+                          onChange={handlerChange}
+                          className="w-4 h-4 text-primary border-border focus:ring-primary accent-primary"
+                        />
+                        <Label htmlFor="gender_m" className="font-normal cursor-pointer">Masculino</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="gender_f"
+                          name="gender"
+                          value="F"
+                          checked={memberData?.gender === 'F'}
+                          onChange={handlerChange}
+                          className="w-4 h-4 text-primary border-border focus:ring-primary accent-primary"
+                        />
+                        <Label htmlFor="gender_f" className="font-normal cursor-pointer">Femenino</Label>
+                      </div>
                     </div>
-                  }
+                  </div>
 
+                  {trainers.length > 0 && (
+                    <div className="space-y-2 flex flex-col justify-center">
+                      <div className="flex items-center space-x-2 mt-6">
+                        <Checkbox
+                          id="has_trainer"
+                          name="has_trainer"
+                          checked={memberData?.has_trainer}
+                          onCheckedChange={(checked) => handlerChange({ target: { name: 'has_trainer', type: 'checkbox', checked } })}
+                        />
+                        <Label htmlFor="has_trainer" className="font-normal cursor-pointer">Solicita entrenador</Label>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                </Grid>
-              </Grid>
-            </form>
-            <Grid style={{ position: "relative", top: -5, padding: "20px 12px" }}>
-              <Button
-                onClick={handlerSubmit}
-                variant="contained"
-                disabled={!isFormValid()}
-                sx={{
-                  color: "white", backgroundColor: "#e49c10"
-                }}
-              >
-                {adding ? "Guardando..." : "Guardar"}
-              </Button>
-            </Grid>
-          </Box >
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+                {memberData?.has_trainer && (
+                  <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <Label>Seleccionar Entrenador <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+                    <Select
+                      value={memberData?.trainer_name || ""}
+                      onValueChange={(val) => handleSelectChange('trainer_name', val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona entrenador" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {trainers.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="pay_date">
+                    {editing ? "Próxima fecha de pago" : "Fecha de pago inicial"} <span className="text-red-600 font-extrabold text-lg ml-1">*</span>
+                  </Label>
+                  <Input
+                    type="date"
+                    id="pay_date"
+                    name="pay_date"
+                    value={memberData?.pay_date ? dayjs(memberData.pay_date).format('YYYY-MM-DD') : ''}
+                    onChange={handleDateChange}
+                    max={!editing ? today : undefined}
+                    min={!editing ? minDate : undefined}
+                    className="w-full flex-1"
+                  />
+
+                  {!editing && (
+                    <div className="text-xs text-muted-foreground bg-muted/40 p-3 rounded-lg mt-2 space-y-1 border border-border">
+                      <p>• Si es nuevo, selecciona la <strong>fecha de hoy</strong>.</p>
+                      <p>• Si ya tenía pago previo, usa la <strong>última fecha real</strong>.</p>
+                      <p>• El sistema sumará <strong>1 mes automáticamente</strong> para el próximo pago.</p>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <DialogFooter className="p-4 md:p-6 border-t border-border sticky bottom-0 bg-card z-10 flex-row justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={clearAndClose}
+            className="w-full sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handlerSubmit}
+            disabled={!isFormValid() || adding}
+            className="w-full sm:w-auto bg-[#e49c10] hover:bg-[#c9890e] text-white font-semibold"
+          >
+            {adding ? (
+              <span className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Guardando...
+              </span>
+            ) : (
+              <span className="flex items-center">
+                <Save className="w-4 h-4 mr-2" />
+                Guardar Cliente
+              </span>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
-export default MembersForm
+export default MembersForm;

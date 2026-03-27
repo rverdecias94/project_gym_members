@@ -3,62 +3,23 @@
 import { useEffect, useState } from "react";
 import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Checkbox,
-  Grid,
-  Card,
-  CardContent,
-  CardMedia,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Chip,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Alert,
-  useMediaQuery,
-  useTheme,
-  CardActions,
-  Pagination,
-  FormHelperText,
-  Switch,
-} from "@mui/material";
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Image as ImageIcon,
-  LocalShipping as DeliveryIcon,
-  Store as PickupIcon,
-  WhatsApp as WhatsAppIcon,
-  CheckCircle as CheckIcon,
-  StorefrontOutlined as StoreIcon
-} from "@mui/icons-material";
 import moment from "moment/moment";
-import { useSnackbar } from "../context/Snackbar";
+import { toast } from "sonner";
+import { Plus, Edit, Trash2, Image as ImageIcon, Truck, Store as PickupIcon, CheckCircle, Store as StoreIcon } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import DialogMessage from './DialogMessage';
 
 const StoreManagmentGym = () => {
   const { getGymInfo } = useMembers();
@@ -101,9 +62,7 @@ const StoreManagmentGym = () => {
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [formIsValid, setFormIsValid] = useState(false);
-  const { showMessage } = useSnackbar();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = window.innerWidth <= 768;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -119,6 +78,9 @@ const StoreManagmentGym = () => {
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [cancelOrder, setCancelOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
+
+  const [deleteDialogOpen, setDeleteDialog] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   useEffect(() => {
     const getData = async () => {
@@ -146,7 +108,7 @@ const StoreManagmentGym = () => {
 
   useEffect(() => {
     if (openDialog) {
-      validateForm();
+      validateForm(formData, false); // Do not update errors initially
     }
   }, [formData, openDialog, showDiscount]);
 
@@ -164,7 +126,7 @@ const StoreManagmentGym = () => {
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
-      showMessage('Error al cargar productos', 'error');
+      toast.error('Error al cargar productos');
     } finally {
       setLoadingProducts(false);
     }
@@ -213,7 +175,7 @@ const StoreManagmentGym = () => {
       setOrders(enriched);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      showMessage('Error al cargar órdenes', 'error');
+      toast.error('Error al cargar órdenes');
     } finally {
       setLoadingOrders(false);
     }
@@ -234,10 +196,10 @@ const StoreManagmentGym = () => {
         .eq('id', order.id);
       if (error) throw error;
       await getOrders();
-      showMessage('Estado actualizado', 'success');
+      toast.success('Estado actualizado');
     } catch (err) {
       console.error(err);
-      showMessage('No se pudo actualizar el estado', 'error');
+      toast.error('No se pudo actualizar el estado');
     } finally {
       setStatusUpdatingId(null);
     }
@@ -256,10 +218,10 @@ const StoreManagmentGym = () => {
       setCancelOrder(null);
       setCancelReason('');
       await getOrders();
-      showMessage('Orden cancelada', 'success');
+      toast.success('Orden cancelada');
     } catch (err) {
       console.error(err);
-      showMessage('No se pudo cancelar la orden', 'error');
+      toast.error('No se pudo cancelar la orden');
     } finally {
       setStatusUpdatingId(null);
     }
@@ -327,8 +289,8 @@ const StoreManagmentGym = () => {
 
     if (updateErrors) {
       setFormErrors(errors);
-      setFormIsValid(Object.keys(errors).length === 0);
     }
+    setFormIsValid(Object.keys(errors).length === 0);
     return Object.keys(errors).length === 0;
   };
 
@@ -403,20 +365,20 @@ const StoreManagmentGym = () => {
         productData.enable = formData.enable;
         const { error } = await supabase.from('products').update(productData).eq('id', editingProduct.id);
         if (error) throw error;
-        showMessage('Producto actualizado exitosamente', 'success');
+        toast.success('Producto actualizado exitosamente');
       } else {
         productData.enable = true;
         const { error } = await supabase.from('products').insert([productData]);
         if (error) throw error;
-        showMessage('Producto creado exitosamente', 'success');
+        toast.success('Producto creado exitosamente');
       }
       handleCloseDialog();
       await getProducts();
     } catch (error) {
       if (error.code === '23505') {
-        showMessage('Ya existe un producto con ese código. Por favor, use un código diferente o déjelo vacío.', 'error');
+        toast.error('Ya existe un producto con ese código. Por favor, use un código diferente o déjelo vacío.');
       } else {
-        showMessage('Error al guardar el producto: ' + (error.message || 'Error desconocido'), 'error');
+        toast.error('Error al guardar el producto: ' + (error.message || 'Error desconocido'));
       }
     } finally {
       setSubmitting(false);
@@ -448,17 +410,25 @@ const StoreManagmentGym = () => {
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
+  const handleDeleteClick = (id) => {
+    setProductToDelete(id);
+    setDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
 
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
+      const { error } = await supabase.from('products').delete().eq('id', productToDelete);
       if (error) throw error;
-      showMessage('Producto eliminado exitosamente', 'success');
+      toast.success('Producto eliminado exitosamente');
       await getProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
-      showMessage('Error al eliminar el producto', 'error');
+      toast.error('Error al eliminar el producto');
+    } finally {
+      setDeleteDialog(false);
+      setProductToDelete(null);
     }
   };
 
@@ -523,535 +493,547 @@ const StoreManagmentGym = () => {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const ProductCard = ({ product }) => (
-    <Card sx={{ mb: 10, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
-      <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="120"
-          image={product.image_base64}
+    <Card className="mb-4 shadow-sm">
+      <div className="relative">
+        <img
+          src={product.image_base64}
           alt={product.name}
-          sx={{ objectFit: 'cover' }}
+          className="w-full h-[120px] object-cover rounded-t-lg"
         />
-      </Box>
-      <CardContent sx={{ pb: 1 }}>
-        <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+      </div>
+      <CardContent className="pb-2 pt-4">
+        <h3 className="font-bold text-base mb-1">
           {product.name}
-        </Typography>
+        </h3>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.8rem' }}>
-          <strong>Código:</strong> {product.product_code}
-        </Typography>
+        <p className="text-xs text-muted-foreground mb-2">
+          <strong>Código:</strong> {product.product_code || '-'}
+        </p>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.8rem', lineHeight: 1.3 }}>
+        <p className="text-xs text-muted-foreground mb-2 leading-tight">
           {product.description?.length > 80 ? `${product.description.substring(0, 80)}...` : product.description}
-        </Typography>
+        </p>
 
-        <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>
+        <h4 className="font-bold text-primary text-base mb-2">
           {product.price} {product.currency}
-        </Typography>
+        </h4>
 
-        <Box display="flex" gap={0.5} mb={1} flexWrap="wrap">
+        <div className="flex gap-1 mb-2 flex-wrap">
           {product.has_delivery && (
-            <Chip
-              icon={<DeliveryIcon sx={{ fontSize: '0.7rem' }} />}
-              label="Mensajería"
-              size="small"
-              sx={{ fontSize: '0.65rem', height: 20 }}
-            />
+            <Badge variant="outline" className="text-[10px] h-5 py-0">
+              <Truck className="h-3 w-3 mr-1" /> Mensajería
+            </Badge>
           )}
           {product.has_pickup && (
-            <Chip
-              icon={<PickupIcon sx={{ fontSize: '0.7rem' }} />}
-              label="Recogida"
-              size="small"
-              sx={{ fontSize: '0.65rem', height: 20 }}
-            />
+            <Badge variant="outline" className="text-[10px] h-5 py-0">
+              <PickupIcon className="h-3 w-3 mr-1" /> Recogida
+            </Badge>
           )}
           {product.free_delivery && (
-            <Chip
-              icon={<DeliveryIcon sx={{ fontSize: '0.7rem' }} />}
-              label="Entrega Gratis"
-              size="small"
-              color="success"
-              sx={{ fontSize: '0.65rem', height: 20 }}
-            />
+            <Badge variant="default" className="text-[10px] h-5 py-0 bg-green-500 hover:bg-green-600">
+              <Truck className="h-3 w-3 mr-1" /> Gratis
+            </Badge>
           )}
-        </Box>
+        </div>
       </CardContent>
 
-      <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 1 }}>
-        <IconButton
-          color="primary"
-          onClick={() => handleEdit(product)}
-          size="small"
-        >
-          <EditIcon sx={{ fontSize: '1.1rem' }} />
-        </IconButton>
-        <IconButton
-          color="error"
-          onClick={() => handleDelete(product.id)}
-          size="small"
-        >
-          <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-        </IconButton>
-      </CardActions>
+      <CardFooter className="justify-end pb-2 pt-0 gap-2">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(product)}>
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteClick(product.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </CardFooter>
     </Card>
   );
 
-  if (loading) {
+  if (!store && !loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div className="loader"></div>
+      <div className="max-w-5xl mx-auto mt-[6rem] mb-12 px-4">
+        <Card className="border border-border shadow-sm rounded-xl p-4 md:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div className="md:col-span-5 text-center md:text-left">
+              <StoreIcon className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto md:mx-0 mb-4" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Tienda no habilitada</h2>
+              <p className="text-muted-foreground mb-6">
+                Tu gimnasio no tiene habilitada la funcionalidad de tienda.
+              </p>
+
+              <Button
+                className="w-full bg-[#25d366] hover:bg-[#20b358] text-white py-6 mb-4"
+                onClick={handleWhatsAppRequest}
+              >
+                Solicitar servicio por WhatsApp
+              </Button>
+
+              <p className="text-xs text-muted-foreground">
+                Te contactaremos para procesar tu solicitud y activar tu tienda
+              </p>
+            </div>
+
+            <div className="md:col-span-7">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-purple-900 mb-2">
+                  🛍️ Habilita tu tienda virtual
+                </h3>
+                <p className="text-purple-800 mb-6">
+                  Vende productos directamente desde tu plataforma de gimnasio con nuestra funcionalidad de tienda integrada.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-6">
+                  <div className="sm:col-span-4">
+                    <div className="bg-white rounded-xl p-4 text-center border border-border">
+                      <span className="text-3xl font-bold text-green-600 block">$5</span>
+                      <span className="text-sm text-muted-foreground">USD/mes</span>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-8 grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="text-sm">Catálogo ilimitado</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="text-sm">Gestión de inventario</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="text-sm">Entregas flexibles</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="text-sm">Múltiples monedas</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
     );
   }
 
-  if (!store) {
-    return (
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
-        <Paper sx={{ p: isMobile ? 2 : 4, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={5}>
-              <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                <StoreIcon sx={{ fontSize: isMobile ? 40 : 48, color: 'grey.400', mb: 2 }} />
-                <Typography variant={isMobile ? "h5" : "h4"} gutterBottom color="text.primary">
-                  Tienda no habilitada
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: isMobile ? '0.9rem' : '1rem' }}>
-                  Tu gimnasio no tiene habilitada la funcionalidad de tienda.
-                </Typography>
-
-                <Button
-                  variant="contained"
-                  disableElevation
-                  size={isMobile ? "medium" : "large"}
-                  startIcon={<WhatsAppIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
-                  onClick={handleWhatsAppRequest}
-                  sx={{
-                    backgroundColor: '#25d366',
-                    '&:hover': {
-                      backgroundColor: '#20b358',
-                    },
-                    py: isMobile ? 1 : 1.5,
-                    px: isMobile ? 2 : 4,
-                    fontSize: isMobile ? '0.9rem' : '1.1rem',
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    mb: 2
-                  }}
-                  fullWidth={isMobile}
-                >
-                  Solicitar servicio por WhatsApp
-                </Button>
-
-                <Typography variant="caption" color="text.secondary" display="block" fontSize={isMobile ? '0.7rem' : '0.75rem'}>
-                  Te contactaremos para procesar tu solicitud y activar tu tienda
-                </Typography>
-              </Box>
-            </Grid>
-
-
-            <Grid item xs={12} md={7}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: isMobile ? 2 : 3,
-                  background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
-                  border: '1px solid #e1bee7',
-                  borderRadius: '12px'
-                }}
-              >
-                <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: '#7b1fa2', fontWeight: 'bold' }}>
-                  🛍️ Habilita tu tienda virtual
-                </Typography>
-                <Typography variant="body1" sx={{ color: '#4a148c', mb: 3, fontSize: isMobile ? '0.85rem' : '1rem' }}>
-                  Vende productos directamente desde tu plataforma de gimnasio con nuestra funcionalidad de tienda integrada.
-                </Typography>
-
-                <Grid container spacing={3}>
-
-                  <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: 'white', borderRadius: '12px', boxShadow: 'none', border: '1px solid #eaeaea' }}>
-                      <Typography variant={isMobile ? "h5" : "h4"} color="success.main" sx={{ fontWeight: 'bold' }}>
-                        $5
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" fontSize={isMobile ? '0.7rem' : '0.875rem'}>
-                        USD/mes
-                      </Typography>
-                    </Paper>
-                  </Grid>
-
-                  <Grid item xs={12} sm={8}>
-                    <Grid container spacing={1}>
-                      <Grid item xs={6}>
-                        <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
-                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Catálogo ilimitado</Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
-                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Gestión de inventario</Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
-                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Entregas flexibles</Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Box display="flex" alignItems="center">
-                          <CheckIcon color="success" sx={{ mr: 1, fontSize: isMobile ? 16 : 20 }} />
-                          <Typography variant="body2" fontSize={isMobile ? '0.7rem' : '0.875rem'}>Múltiples monedas</Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
-          </Grid>
-        </Paper>
-      </Container>
-    );
-  }
-
   return (
-    <Container maxWidth="xl" sx={{ marginTop: "8rem", mb: 2, display: "flex", gap: "1rem", flexDirection: { xs: 'column', md: 'row' } }}>
-      <Box display="flex" flexDirection="column" gap={2} mb={3} sx={{ flex: { xs: 1, md: 2 }, height: "auto" }}>
-        <Paper sx={{ p: 3, width: "100%", boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
-          <Typography variant="h6" gutterBottom fontWeight="600">Filtros</Typography>
+    <div className="max-w-[1400px] mx-auto mt-[8rem] mb-8 px-4 flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col gap-4 mb-6 md:w-1/4 h-auto">
+        <Card className="p-6 w-full shadow-sm border-border relative">
+          {loading && (
+            <div className="absolute inset-0 bg-background/50 z-10 flex justify-center items-center rounded-lg">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
+          <h2 className="text-lg font-semibold mb-4">Filtros</h2>
 
-          <TextField
-            label="Buscar producto"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            fullWidth
-            size="small"
-            sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
-          />
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="search">Buscar producto</Label>
+              <Input
+                id="search"
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mt-1.5"
+              />
+            </div>
 
-          <FormControl fullWidth size="small" sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
-            <InputLabel>Categoría</InputLabel>
-            <Select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              label="Categoría"
-              sx={{ borderRadius: '8px' }}
+            <div>
+              <Label>Categoría</Label>
+              <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.category}>
+                      {cat.category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Entrega</Label>
+              <Select value={filterDelivery || "all"} onValueChange={(v) => setFilterDelivery(v === "all" ? "" : v)}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="delivery">Mensajería</SelectItem>
+                  <SelectItem value="pickup">Recogida</SelectItem>
+                  <SelectItem value="free">Entrega Gratis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full mt-2"
+              onClick={() => {
+                setSearchTerm("");
+                setFilterCategory("");
+                setFilterDelivery("");
+              }}
             >
-              <MenuItem value="">Todas</MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.category}>
-                  {cat.category}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              Limpiar filtros
+            </Button>
+          </div>
+        </Card>
+      </div>
 
-          <FormControl fullWidth size="small" sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
-            <InputLabel>Entrega</InputLabel>
-            <Select
-              value={filterDelivery}
-              onChange={(e) => setFilterDelivery(e.target.value)}
-              label="Entrega"
-              sx={{ borderRadius: '8px' }}
-            >
-              <MenuItem value="">Todas</MenuItem>
-              <MenuItem value="delivery">Mensajería</MenuItem>
-              <MenuItem value="pickup">Recogida</MenuItem>
-              <MenuItem value="free">Entrega Gratis</MenuItem>
-            </Select>
-          </FormControl>
-
+      <Card className="p-4 md:p-6 md:w-3/4 shadow-sm border-border">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h2 className="text-xl font-semibold">
+            Gestión de Tienda
+          </h2>
           <Button
-            variant="outlined"
-            color="secondary"
-            fullWidth
-            sx={{ mt: 2, borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
+            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white"
             onClick={() => {
-              setSearchTerm("");
-              setFilterCategory("");
-              setFilterDelivery("");
+              setEditingProduct(null);
+              setFormData({
+                name: '',
+                description: '',
+                price: '',
+                currency: 'USD',
+                image: null,
+                image_base64: '',
+                has_delivery: false,
+                has_pickup: false,
+                free_delivery: false,
+                discount: '',
+                discount_start_date: '',
+                discount_end_date: '',
+                product_code: '',
+                category: '',
+                city: 'El cerro',
+                state: 'La Habana',
+                enable: true,
+              });
+              setFormErrors({});
+              setFormIsValid(false);
+              setOpenDialog(true);
             }}
           >
-            Limpiar filtros
-          </Button>
-        </Paper>
-
-      </Box>
-
-      <Paper sx={{ p: isMobile ? 2 : 3, flex: 8, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '5px' }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 2 : 0}>
-          <Typography variant="h6" gutterBottom fontWeight="600">
-            Gestión de Tienda
-          </Typography>
-          <Button
-            variant="contained"
-            disableElevation
-            startIcon={<AddIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />}
-            onClick={() => setOpenDialog(true)}
-            size={isMobile ? "medium" : "small"}
-            fullWidth={isMobile}
-            sx={{ fontSize: isMobile ? '0.85rem' : '1rem', borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-          >
+            <Plus className="mr-2 h-4 w-4" />
             Nuevo Producto
           </Button>
-        </Box>
+        </div>
 
         <Tabs
-          value={tabValue}
-          onChange={(e, newValue) => setTabValue(newValue)}
-          sx={{
-            mb: 3,
-            '& .MuiTab-root': {
-              fontSize: isMobile ? '0.8rem' : '0.875rem',
-              minWidth: isMobile ? 'auto' : 160
-            }
-          }}
-          variant={isMobile ? "fullWidth" : "standard"}
+          value={tabValue.toString()}
+          onValueChange={(v) => setTabValue(parseInt(v))}
+          className="w-full mb-6"
         >
-          <Tab label="Lista de Productos" />
-          <Tab label="Órdenes" />
-          <Tab label="Catálogo" />
-        </Tabs>
+          <TabsList className="w-full justify-start h-auto bg-transparent border-b border-border rounded-none p-0 overflow-x-auto flex">
+            <TabsTrigger
+              value="0"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              Lista de Productos
+            </TabsTrigger>
+            <TabsTrigger
+              value="1"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              Órdenes
+            </TabsTrigger>
+            <TabsTrigger
+              value="2"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            >
+              Catálogo
+            </TabsTrigger>
+          </TabsList>
 
-        {tabValue === 0 && (
-          <>
-            {!isMobile ? (
-              <>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Imagen</TableCell>
-                        <TableCell>Nombre</TableCell>
-                        <TableCell>Precio</TableCell>
-                        <TableCell>F. Descuento</TableCell>
-                        <TableCell>Vistas</TableCell>
-                        <TableCell>Entrega</TableCell>
-                        <TableCell>Acciones</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {loadingProducts ? (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center">
-                            <CircularProgress size={24} />
-                          </TableCell>
-                        </TableRow>
-                      ) : currentProducts.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center">
-                            No hay productos registrados
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        currentProducts.map((product) => (
-                          <TableRow key={product.id}>
-                            <TableCell>
-                              <Box sx={{ width: 50, height: 50 }}>
-                                <img
-                                  src={product.image_base64}
-                                  alt={product.name}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    borderRadius: 4
-                                  }}
-                                />
-                              </Box>
-                            </TableCell>
-                            <TableCell>{product.name}</TableCell>
-                            <TableCell>
-                              <Box display="flex" gap={1}>
-                                <span style={{ textDecoration: product.discount !== null ? "line-through" : "none", color: product.discount !== null ? "#ff9a9a" : "inherit" }}>
-                                  {product.price} {product.currency} {" "}
-                                </span>
-                                {
-                                  product.discount !== null && (
-                                    <span style={{ fontWeight: 600, color: "green" }}>
-                                      / {product.discount} {product.currency}
-                                    </span>
-                                  )
-                                }
-                              </Box>
-                            </TableCell>
-                            {
-                              product.discount !== null ?
-                                <TableCell>{moment(product.discount_start_date).format("DD-MM-YYYY")} / {moment(product.discount_end_date).format("DD-MM-YYYY")}</TableCell>
-                                :
-                                <TableCell>-</TableCell>
-                            }
-                            <TableCell>
-                              {product.views}
-                            </TableCell>
-                            <TableCell>
-                              <Box display="flex" gap={1} flexWrap="wrap">
-                                {product.has_delivery && (
-                                  <Chip icon={<DeliveryIcon />} label="Mensajería" size="small" />
-                                )}
-                                {product.has_pickup && (
-                                  <Chip icon={<PickupIcon />} label="Recogida" size="small" />
-                                )}
-                                {product.free_delivery && (
-                                  <Chip icon={<DeliveryIcon />} label="Entrega Gratis" size="small" color="success" />
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <IconButton onClick={() => handleEdit(product)} color="primary">
-                                <EditIcon />
-                              </IconButton>
-                              <IconButton onClick={() => handleDelete(product.id)} color="error">
-                                <DeleteIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                {totalPages > 1 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                    <Pagination
-                      count={totalPages}
-                      page={currentPage}
-                      onChange={handlePageChange}
-                      color="primary"
-                      showFirstButton
-                      showLastButton
-                    />
-                  </Box>
-                )}
-              </>
-            ) : (
-              <Box sx={{ width: '100%' }}>
-                {loadingProducts ? (
-                  <Box display="flex" justifyContent="center" py={4}>
-                    <CircularProgress />
-                  </Box>
-                ) : currentProducts.length === 0 ? (
-                  <Typography variant="body1" sx={{ textAlign: 'center', py: 4, fontSize: '0.9rem' }}>
-                    No hay productos registrados
-                  </Typography>
-                ) : (
-                  <>
-                    {currentProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                    {totalPages > 1 && (
-                      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                        <Pagination
-                          count={totalPages}
-                          page={currentPage}
-                          onChange={handlePageChange}
-                          color="primary"
-                          size="small"
-                          showFirstButton
-                          showLastButton
-                        />
-                      </Box>
-                    )}
-                  </>
-                )}
-              </Box>
-            )}
-          </>
-        )}
-
-        {
-          tabValue === 1 && (
-            <>
+          <TabsContent value="0" className="mt-4">
+            <div className="w-full">
               {!isMobile ? (
-                <>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Fecha</TableCell>
-                          <TableCell>Cliente</TableCell>
-                          <TableCell>Productos</TableCell>
-                          <TableCell>Precio</TableCell>
-                          <TableCell>Total</TableCell>
-                          <TableCell>Cantidad</TableCell>
-                          <TableCell>Tipo de entrega</TableCell>
-                          <TableCell>Dirección</TableCell>
-                          <TableCell>Estado</TableCell>
-                          <TableCell>Acciones</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
+                <div className="bg-card rounded-lg border border-border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted/50 text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Imagen</th>
+                          <th className="px-4 py-3 font-medium">Nombre</th>
+                          <th className="px-4 py-3 font-medium">Precio</th>
+                          <th className="px-4 py-3 font-medium">F. Descuento</th>
+                          <th className="px-4 py-3 font-medium">Vistas</th>
+                          <th className="px-4 py-3 font-medium">Entrega</th>
+                          <th className="px-4 py-3 font-medium">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border relative">
+                        {loading || loadingProducts ? (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-8 text-center">
+                              <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
+                            </td>
+                          </tr>
+                        ) : currentProducts.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                              No hay productos registrados
+                            </td>
+                          </tr>
+                        ) : (
+                          currentProducts.map((product) => (
+                            <tr key={product.id} className="hover:bg-muted/30">
+                              <td className="px-4 py-3">
+                                <div className="w-12 h-12 rounded-md overflow-hidden bg-muted/20">
+                                  <img
+                                    src={product.image_base64}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 font-medium">{product.name}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <span className={product.discount !== null ? "line-through text-muted-foreground" : ""}>
+                                    {product.price} {product.currency}
+                                  </span>
+                                  {product.discount !== null && (
+                                    <span className="font-bold text-green-600 dark:text-green-500">
+                                      {product.discount} {product.currency}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground text-xs">
+                                {product.discount !== null ? (
+                                  <div className="flex flex-col items-center justify-center whitespace-nowrap">
+                                    <span>{moment(product.discount_start_date).format("DD-MM-YYYY - HH:mm")}</span>
+                                    <hr className="w-full my-1 border-border" />
+                                    <span>{moment(product.discount_end_date).format("DD-MM-YYYY - HH:mm")}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-center block">-</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-center">{product.views}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {product.has_delivery && (
+                                    <Badge variant="outline" className="text-[10px] h-5 py-0">
+                                      <Truck className="h-3 w-3 mr-1" /> Mensajería
+                                    </Badge>
+                                  )}
+                                  {product.has_pickup && (
+                                    <Badge variant="outline" className="text-[10px] h-5 py-0">
+                                      <PickupIcon className="h-3 w-3 mr-1" /> Recogida
+                                    </Badge>
+                                  )}
+                                  {product.free_delivery && (
+                                    <Badge variant="default" className="text-[10px] h-5 py-0 bg-green-500 hover:bg-green-600">
+                                      <Truck className="h-3 w-3 mr-1" /> Gratis
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex gap-2">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(product)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteClick(product.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="flex justify-center p-4 border-t border-border">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(null, Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Anterior
+                        </Button>
+                        <span className="flex items-center text-sm px-2">
+                          Página {currentPage} de {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(null, Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Siguiente
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 relative">
+                  {loading || loadingProducts ? (
+                    <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+                  ) : currentProducts.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No hay productos registrados
+                    </div>
+                  ) : (
+                    <>
+                      {currentProducts.map((product) => (
+                        <ProductCard key={product.id} product={product} />
+                      ))}
+                      {totalPages > 1 && (
+                        <div className="flex justify-center gap-2 mt-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(null, Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Anterior
+                          </Button>
+                          <span className="flex items-center text-sm px-2">
+                            {currentPage} / {totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(null, Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage === totalPages}
+                          >
+                            Siguiente
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="1" className="mt-4">
+            <div className="w-full">
+              {!isMobile ? (
+                <div className="bg-card rounded-lg border border-border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted/50 text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Pedido ID</th>
+                          <th className="px-4 py-3 font-medium">Fecha</th>
+                          <th className="px-4 py-3 font-medium">Cliente</th>
+                          <th className="px-4 py-3 font-medium">Productos</th>
+                          <th className="px-4 py-3 font-medium">Precio</th>
+                          <th className="px-4 py-3 font-medium">Total</th>
+                          <th className="px-4 py-3 font-medium">Cantidad</th>
+                          <th className="px-4 py-3 font-medium">Tipo de entrega</th>
+                          <th className="px-4 py-3 font-medium">Dirección</th>
+                          <th className="px-4 py-3 font-medium">Estado</th>
+                          <th className="px-4 py-3 font-medium">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
                         {loadingOrders ? (
-                          <TableRow>
-                            <TableCell colSpan={10} align="center"><CircularProgress size={24} /></TableCell>
-                          </TableRow>
+                          <tr>
+                            <td colSpan={11} className="px-4 py-8 text-center">
+                              <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
+                            </td>
+                          </tr>
                         ) : orders.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={10} align="center">No hay órdenes registradas</TableCell>
-                          </TableRow>
+                          <tr>
+                            <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
+                              No hay órdenes registradas
+                            </td>
+                          </tr>
                         ) : (
                           (() => {
                             const startIndex = (ordersPage - 1) * ordersItemsPerPage;
                             const endIndex = startIndex + ordersItemsPerPage;
                             const currentOrders = orders.slice(startIndex, endIndex);
                             return currentOrders.map(order => (
-                              <TableRow key={order.id}>
-                                <TableCell>{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</TableCell>
-                                <TableCell>{order.member_name}</TableCell>
-                                <TableCell>{order.name_products}</TableCell>
-                                <TableCell>{order.price} {order.currency}</TableCell>
-                                <TableCell>{order.price_total} {order.currency}</TableCell>
-                                <TableCell>{order.amount ?? '-'}</TableCell>
-                                <TableCell>{mapPurchaseType(order.purchase_type)}</TableCell>
-                                <TableCell>{order.delivery_address ? order.delivery_address : '-'}</TableCell>
-                                <TableCell>
-                                  <Chip label={mapStatus(order.status)} size="small" color={order.status === 3 ? 'error' : (order.status === 2 ? 'success' : 'default')} />
-                                </TableCell>
-                                <TableCell>
-                                  <FormControl size="small" sx={{ minWidth: 150 }}>
-                                    <Select
-                                      value={order.status}
-                                      onChange={(e) => handleChangeOrderStatus(order, parseInt(e.target.value))}
-                                      disabled={statusUpdatingId === order.id}
-                                    >
-                                      <MenuItem value={0}>Recibida</MenuItem>
-                                      <MenuItem value={1}>Procesada</MenuItem>
-                                      <MenuItem value={2}>Entregada</MenuItem>
-                                      <MenuItem value={3}>Cancelada</MenuItem>
-                                    </Select>
-                                  </FormControl>
-                                </TableCell>
-                              </TableRow>
+                              <tr key={order.id} className="hover:bg-muted/30">
+                                <td className="px-4 py-3 font-medium whitespace-nowrap">
+                                  <Badge variant="outline" className="bg-primary/5">No-{order.id_products}</Badge>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</td>
+                                <td className="px-4 py-3 font-medium">{order.member_name}</td>
+                                <td className="px-4 py-3 max-w-[200px] truncate" title={order.name_products}>{order.name_products}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">{order.price} {order.currency}</td>
+                                <td className="px-4 py-3 whitespace-nowrap font-medium">{order.price_total} {order.currency}</td>
+                                <td className="px-4 py-3 text-center">{order.amount ?? '-'}</td>
+                                <td className="px-4 py-3">{mapPurchaseType(order.purchase_type)}</td>
+                                <td className="px-4 py-3 max-w-[150px] truncate" title={order.delivery_address}>{order.delivery_address ? order.delivery_address : '-'}</td>
+                                <td className="px-4 py-3">
+                                  <Badge variant={order.status === 3 ? "destructive" : (order.status === 2 ? "default" : "secondary")} className={order.status === 2 ? "bg-green-500 hover:bg-green-600" : ""}>
+                                    {mapStatus(order.status)}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Select
+                                    value={order.status.toString()}
+                                    onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
+                                    disabled={statusUpdatingId === order.id}
+                                  >
+                                    <SelectTrigger className="w-[130px] h-8 text-xs">
+                                      <SelectValue placeholder="Estado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="0">Recibida</SelectItem>
+                                      <SelectItem value="1">Procesada</SelectItem>
+                                      <SelectItem value="2">Entregada</SelectItem>
+                                      <SelectItem value="3">Cancelada</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </td>
+                              </tr>
                             ));
                           })()
                         )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                      </tbody>
+                    </table>
+                  </div>
                   {Math.ceil(orders.length / ordersItemsPerPage) > 1 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                      <Pagination
-                        count={Math.ceil(orders.length / ordersItemsPerPage)}
-                        page={ordersPage}
-                        onChange={(e, v) => setOrdersPage(v)}
-                        color="primary"
-                        showFirstButton
-                        showLastButton
-                      />
-                    </Box>
+                    <div className="flex justify-center p-4 border-t border-border">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
+                          disabled={ordersPage === 1}
+                        >
+                          Anterior
+                        </Button>
+                        <span className="flex items-center text-sm px-2">
+                          Página {ordersPage} de {Math.ceil(orders.length / ordersItemsPerPage)}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setOrdersPage(Math.min(Math.ceil(orders.length / ordersItemsPerPage), ordersPage + 1))}
+                          disabled={ordersPage === Math.ceil(orders.length / ordersItemsPerPage)}
+                        >
+                          Siguiente
+                        </Button>
+                      </div>
+                    </div>
                   )}
-                </>
+                </div>
               ) : (
-                <Box sx={{ width: '100%' }}>
+                <div className="flex flex-col gap-4">
                   {loadingOrders ? (
-                    <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
+                    <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
                   ) : orders.length === 0 ? (
-                    <Typography variant="body1" sx={{ textAlign: 'center', py: 4, fontSize: '0.9rem' }}>No hay órdenes registradas</Typography>
+                    <div className="text-center py-8 text-muted-foreground">No hay órdenes registradas</div>
                   ) : (
                     (() => {
                       const startIndex = (ordersPage - 1) * ordersItemsPerPage;
@@ -1060,346 +1042,465 @@ const StoreManagmentGym = () => {
                       return (
                         <>
                           {currentOrders.map(order => (
-                            <Card key={order.id} sx={{ mb: 2, boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px' }}>
-                              <CardContent>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{order.member_name}</Typography>
-                                <Typography variant="body2">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</Typography>
-                                <Typography variant="body2"><strong>Productos:</strong> {order.name_products}</Typography>
-                                <Typography variant="body2"><strong>Monto:</strong> {order.price_total} {order.currency}</Typography>
-                                <Typography variant="body2"><strong>Cantidad:</strong> {order.amount ?? '-'}</Typography>
-                                <Typography variant="body2"><strong>Tipo:</strong> {mapPurchaseType(order.purchase_type)}</Typography>
-                                <Typography variant="body2"><strong>Dirección:</strong> {order.delivery_address ? order.delivery_address : '-'}</Typography>
-                                <Box mt={1}><Chip label={mapStatus(order.status)} size="small" color={order.status === 3 ? 'error' : (order.status === 2 ? 'success' : 'default')} /></Box>
-                              </CardContent>
-                              <CardActions sx={{ justifyContent: 'flex-end' }}>
-                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                            <Card key={order.id} className="shadow-sm border-border">
+                              <CardContent className="p-4 space-y-2">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex flex-col">
+                                    <Badge variant="outline" className="w-fit mb-1 bg-primary/5 text-xs text-muted-foreground border-muted">No-{order.id_products}</Badge>
+                                    <h3 className="font-bold">{order.member_name}</h3>
+                                  </div>
+                                  <Badge variant={order.status === 3 ? "destructive" : (order.status === 2 ? "default" : "secondary")} className={order.status === 2 ? "bg-green-500 hover:bg-green-600" : ""}>
+                                    {mapStatus(order.status)}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</p>
+
+                                <Separator className="my-2" />
+
+                                <div className="text-sm space-y-1">
+                                  <p><span className="font-medium">Productos:</span> {order.name_products}</p>
+                                  <p><span className="font-medium">Monto:</span> <span className="text-primary font-bold">{order.price_total} {order.currency}</span></p>
+                                  <p><span className="font-medium">Cantidad:</span> {order.amount ?? '-'}</p>
+                                  <p><span className="font-medium">Tipo:</span> {mapPurchaseType(order.purchase_type)}</p>
+                                  <p><span className="font-medium">Dirección:</span> {order.delivery_address ? order.delivery_address : '-'}</p>
+                                </div>
+
+                                <div className="pt-2 mt-2 border-t border-border flex justify-end">
                                   <Select
-                                    value={order.status}
-                                    onChange={(e) => handleChangeOrderStatus(order, parseInt(e.target.value))}
+                                    value={order.status.toString()}
+                                    onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
                                     disabled={statusUpdatingId === order.id}
                                   >
-                                    <MenuItem value={0}>Recibida</MenuItem>
-                                    <MenuItem value={1}>Procesada</MenuItem>
-                                    <MenuItem value={2}>Entregada</MenuItem>
-                                    <MenuItem value={3}>Cancelada</MenuItem>
+                                    <SelectTrigger className="w-[140px] h-8 text-xs">
+                                      <SelectValue placeholder="Estado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="0">Recibida</SelectItem>
+                                      <SelectItem value="1">Procesada</SelectItem>
+                                      <SelectItem value="2">Entregada</SelectItem>
+                                      <SelectItem value="3">Cancelada</SelectItem>
+                                    </SelectContent>
                                   </Select>
-                                </FormControl>
-                              </CardActions>
+                                </div>
+                              </CardContent>
                             </Card>
                           ))}
                           {Math.ceil(orders.length / ordersItemsPerPage) > 1 && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                              <Pagination
-                                count={Math.ceil(orders.length / ordersItemsPerPage)}
-                                page={ordersPage}
-                                onChange={(e, v) => setOrdersPage(v)}
-                                color="primary"
-                                size="small"
-                                showFirstButton
-                                showLastButton
-                              />
-                            </Box>
+                            <div className="flex justify-center gap-2 mt-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
+                                disabled={ordersPage === 1}
+                              >
+                                Anterior
+                              </Button>
+                              <span className="flex items-center text-sm px-2">
+                                {ordersPage} / {Math.ceil(orders.length / ordersItemsPerPage)}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setOrdersPage(Math.min(Math.ceil(orders.length / ordersItemsPerPage), ordersPage + 1))}
+                                disabled={ordersPage === Math.ceil(orders.length / ordersItemsPerPage)}
+                              >
+                                Siguiente
+                              </Button>
+                            </div>
                           )}
                         </>
                       );
                     })()
                   )}
-                </Box>
+                </div>
               )}
-            </>
-          )
-        }
+            </div>
+          </TabsContent>
 
-        {tabValue === 2 && (
-          <Grid container spacing={isMobile ? 2 : 3}>
-            {loadingProducts ? (
-              <Grid item xs={12} display="flex" justifyContent="center">
-                <CircularProgress />
-              </Grid>
-            ) : products.length === 0 ? (
-              <Grid item xs={12}>
-                <Alert severity="info" sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>
-                  No hay productos para mostrar
-                </Alert>
-              </Grid>
-            ) : (
-              products.map((product) => (
-                <Grid item xs={12} sm={6} md={4} key={product.id}>
-                  <Card sx={{ boxShadow: 'none', border: '1px solid #eaeaea', borderRadius: '12px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <CardMedia
-                      component="img"
-                      sx={{ width: "100%", height: "100%", objectFit: "contain" }}
-                      image={product.image_base64}
-                      alt={product.name}
-                    />
-                    <CardContent sx={{ pb: 1 }}>
-                      <Typography variant={isMobile ? "subtitle2" : "h6"} gutterBottom sx={{ fontSize: isMobile ? '0.9rem' : '1.25rem' }}>
+          <TabsContent value="2" className="mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              {loadingProducts ? (
+                <div className="col-span-full flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="col-span-full">
+                  <Alert>
+                    <AlertDescription>No hay productos para mostrar</AlertDescription>
+                  </Alert>
+                </div>
+              ) : (
+                products.map((product) => (
+                  <Card key={product.id} className="h-full flex flex-col shadow-sm border-border overflow-hidden">
+                    <div className="relative aspect-video">
+                      <img
+                        src={product.image_base64}
+                        alt={product.name}
+                        className="w-full h-full object-contain bg-muted/20"
+                      />
+                    </div>
+                    <CardContent className="flex-1 pb-4 pt-4">
+                      <h3 className="font-bold text-lg mb-2">
                         {product.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                         {product.description}
-                      </Typography>
-                      <Typography variant={isMobile ? "subtitle1" : "h6"} color="primary" sx={{ fontSize: isMobile ? '0.95rem' : '1.25rem' }}>
+                      </p>
+                      <h4 className="font-bold text-primary text-xl mb-4">
                         {product.price} {product.currency}
-                      </Typography>
-                      <Box display="flex" gap={1} mt={1} flexWrap="wrap">
+                      </h4>
+                      <div className="flex gap-2 flex-wrap">
                         {product.has_delivery && (
-                          <Chip
-                            icon={<DeliveryIcon sx={{ fontSize: isMobile ? '0.7rem' : '1rem' }} />}
-                            label="Envío"
-                            size="small"
-                            sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}
-                          />
+                          <Badge variant="outline" className="text-xs">
+                            <Truck className="h-3 w-3 mr-1" /> Envío
+                          </Badge>
                         )}
                         {product.has_pickup && (
-                          <Chip
-                            icon={<PickupIcon sx={{ fontSize: isMobile ? '0.7rem' : '1rem' }} />}
-                            label="Recogida"
-                            size="small"
-                            sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}
-                          />
+                          <Badge variant="outline" className="text-xs">
+                            <PickupIcon className="h-3 w-3 mr-1" /> Recogida
+                          </Badge>
                         )}
-                      </Box>
+                      </div>
                     </CardContent>
                   </Card>
-                </Grid>
-              ))
+                ))
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </Card>
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 py-4">
+            {editingProduct && (
+              <div className="md:col-span-12 flex items-center space-x-2">
+                <Switch
+                  id="enable"
+                  checked={formData.enable}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enable: checked }))}
+                />
+                <Label htmlFor="enable">Producto Disponible</Label>
+              </div>
             )}
-          </Grid>
-        )}
-      </Paper>
 
+            <div className="md:col-span-4 space-y-2 flex flex-col justify-end">
+              <Label htmlFor="name">Nombre del producto <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={formErrors.name ? "border-red-500" : ""}
+              />
+              {formErrors.name && <span className="text-xs text-red-500">{formErrors.name}</span>}
+            </div>
 
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
-        fullScreen={isMobile}
-        PaperProps={{
-          sx: {
-            borderRadius: isMobile ? 0 : '12px',
-            boxShadow: 'none',
-            border: isMobile ? 'none' : '1px solid #eaeaea'
-          }
-        }}
-      >
-        <DialogTitle sx={{ fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: 600 }}>
-          {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1 }}>
-            <Grid container spacing={2}>
-              {editingProduct && (
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={<Switch checked={formData.enable} onChange={handleInputChange} name="enable" />}
-                    label="Producto Disponible"
+            <div className="md:col-span-4 space-y-2 flex flex-col justify-end">
+              <Label htmlFor="product_code">Código de producto (Opcional)</Label>
+              <Input
+                id="product_code"
+                name="product_code"
+                value={formData.product_code}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="md:col-span-4 space-y-2 flex flex-col justify-end">
+              <Label>Categoría <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+              <Select
+                value={formData.category || undefined}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.category}>
+                      {category.category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-12 space-y-2">
+              <Label htmlFor="description">Descripción <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+              <Textarea
+                id="description"
+                name="description"
+                rows={3}
+                value={formData.description}
+                onChange={handleInputChange}
+                className={formErrors.description ? "border-red-500" : ""}
+              />
+              {formErrors.description && <span className="text-xs text-red-500">{formErrors.description}</span>}
+            </div>
+
+            <div className="md:col-span-8 space-y-2">
+              <Label htmlFor="price">Precio <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.price}
+                onChange={handleInputChange}
+                className={formErrors.price ? "border-red-500" : ""}
+              />
+              {formErrors.price && <span className="text-xs text-red-500">{formErrors.price}</span>}
+            </div>
+
+            <div className="md:col-span-4 space-y-2">
+              <Label>Moneda <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
+              <Select
+                value={formData.currency}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="CUP">CUP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-12 mt-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="showDiscount"
+                  checked={showDiscount}
+                  onCheckedChange={(checked) => handleShowDiscountChange({ target: { checked } })}
+                />
+                <Label htmlFor="showDiscount" className="cursor-pointer font-medium">
+                  Añadir precio rebajado y período de oferta
+                </Label>
+              </div>
+            </div>
+
+            {showDiscount && (
+              <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6 bg-muted/20 p-4 rounded-lg border border-border">
+                {!editingProduct && (
+                  <div className="md:col-span-12">
+                    <Alert className="bg-yellow-50/50 text-yellow-800 border-yellow-200">
+                      <AlertDescription className="text-xs">
+                        Manipular precios para aparentar grandes descuentos daña la confianza de los clientes. Mantenga precios reales y coherentes: la transparencia genera más ventas y fidelidad.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+
+                <div className="md:col-span-4 space-y-2">
+                  <Label htmlFor="discount">Nuevo Precio (Rebaja aplicada)</Label>
+                  <Input
+                    id="discount"
+                    name="discount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.discount}
+                    onChange={handleInputChange}
+                    disabled={!formData.price || parseFloat(formData.price) <= 0}
+                    className={formErrors.discount ? "border-red-500" : ""}
                   />
-                </Grid>
-              )}
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  label="Nombre del producto"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  error={!!formErrors.name}
-                  helperText={formErrors.name}
-                  required
-                  size={isMobile ? "small" : "medium"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}><TextField fullWidth label="Código de producto (Opcional)" name="product_code" value={formData.product_code} onChange={handleInputChange} error={!!formErrors.product_code} helperText={formErrors.product_code} size={isMobile ? "small" : "medium"} /></Grid>
-              <Grid item xs={12} sm={4}><FormControl fullWidth size={isMobile ? "small" : "medium"}><InputLabel>Categoría</InputLabel><Select name="category" value={formData.category} onChange={handleInputChange} label="Categoría">{categories.map((category) => (<MenuItem key={category.id} value={category.category}>{category.category}</MenuItem>))}</Select></FormControl></Grid>
-              <Grid item xs={12}><TextField fullWidth label="Descripción" name="description" multiline rows={isMobile ? 2 : 3} value={formData.description} onChange={handleInputChange} error={!!formErrors.description} helperText={formErrors.description} required size={isMobile ? "small" : "medium"} /></Grid>
-              <Grid item xs={12} sm={8}><TextField fullWidth label="Precio" name="price" type="number" value={formData.price} onChange={handleInputChange} error={!!formErrors.price} helperText={formErrors.price} required inputProps={{ min: 0, step: 0.01 }} size={isMobile ? "small" : "medium"} /></Grid>
-              <Grid item xs={12} sm={4}><FormControl fullWidth size={isMobile ? "small" : "medium"}><InputLabel>Moneda</InputLabel><Select name="currency" value={formData.currency} onChange={handleInputChange} label="Moneda"><MenuItem value="USD">USD</MenuItem><MenuItem value="CUP">CUP</MenuItem></Select></FormControl></Grid>
-
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Checkbox checked={showDiscount} onChange={handleShowDiscountChange} name="showDiscount" size={isMobile ? "small" : "medium"} />}
-                  label={<Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>Añadir precio rebajado y período de oferta</Typography>}
-                />
-              </Grid>
-
-              {showDiscount && (
-                <>
-                  <Grid item xs={12}>
-                    {!editingProduct && (<Alert severity="warning" sx={{ mb: 2, fontSize: isMobile ? '0.75rem' : '0.85rem' }}>Manipular precios para aparentar grandes descuentos daña la confianza de los clientes. Mantenga precios reales y coherentes: la transparencia genera más ventas y fidelidad.</Alert>)}
-                    <TextField fullWidth label="Nuevo Precio (Rebaja aplicada)" type="number" name="discount" value={formData.discount} onChange={handleInputChange} error={!!formErrors.discount} helperText={formErrors.discount} inputProps={{ min: 0, step: 0.01 }} size={isMobile ? "small" : "medium"} disabled={!formData.price || parseFloat(formData.price) <= 0} />
-                    {formData.discount && formData.price && parseFloat(formData.discount) < (parseFloat(formData.price) / 2) && !formErrors.discount && (<FormHelperText sx={{ color: '#ed6c02', fontSize: isMobile ? '0.7rem' : '0.75rem', mt: 0.5 }}>⚠️ El descuento supera el 50% del precio original. Asegúrese de que esto sea intencional.</FormHelperText>)}
-                  </Grid>
-
-                  {formData.discount && parseFloat(formData.discount) > 0 && (
-                    <>
-                      <Grid item xs={12} sm={6}>
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                          <DateTimePicker
-                            label="Inicio de la oferta"
-                            value={formData.discount_start_date}
-                            onChange={(date) => handleDateChange('discount_start_date', date)}
-                            minDateTime={!editingProduct ? now : undefined}
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                                size: isMobile ? "small" : "medium",
-                                error: !!formErrors.discount_start_date,
-                                helperText: formErrors.discount_start_date,
-                                required: true
-                              }
-                            }}
-                          />
-                        </LocalizationProvider>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
-                          <DateTimePicker
-                            label="Fin de la oferta"
-                            value={formData.discount_end_date}
-                            onChange={(date) => handleDateChange('discount_end_date', date)}
-                            minDateTime={formData.discount_start_date || now}
-                            slotProps={{
-                              textField: {
-                                fullWidth: true,
-                                size: isMobile ? "small" : "medium",
-                                error: !!formErrors.discount_end_date,
-                                helperText: formErrors.discount_end_date,
-                                required: true
-                              }
-                            }}
-                          />
-                        </LocalizationProvider>
-                      </Grid>
-                    </>
+                  {formErrors.discount && <span className="text-xs text-red-500">{formErrors.discount}</span>}
+                  {formData.discount && formData.price && parseFloat(formData.discount) < (parseFloat(formData.price) / 2) && !formErrors.discount && (
+                    <span className="text-[11px] text-amber-600 mt-1 block">
+                      ⚠️ El descuento supera el 50% del precio original.
+                    </span>
                   )}
-                </>
-              )}
+                </div>
 
-              <Grid item xs={12}><Box sx={{ border: '1px dashed #ccc', p: 2, textAlign: 'center' }}><input accept="image/*" style={{ display: 'none' }} id="image-upload" type="file" onChange={handleImageUpload} />
-                <label htmlFor="image-upload">
-                  <Button variant="outlined" component="span" startIcon={<ImageIcon />} size={isMobile ? "small" : "medium"} sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem' }}>Subir Imagen
-                  </Button>
-                </label>
+                {formData.discount && parseFloat(formData.discount) > 0 && (
+                  <>
+                    <div className="md:col-span-4 space-y-2">
+                      <Label htmlFor="discount_start_date">Inicio de la oferta</Label>
+                      <Input
+                        id="discount_start_date"
+                        type="datetime-local"
+                        value={formData.discount_start_date ? moment(formData.discount_start_date).format('YYYY-MM-DDTHH:mm') : ''}
+                        onChange={(e) => handleDateChange('discount_start_date', e.target.value ? new Date(e.target.value) : null)}
+                        min={!editingProduct ? moment().format('YYYY-MM-DDTHH:mm') : undefined}
+                        className={formErrors.discount_start_date ? "border-red-500" : ""}
+                      />
+                      {formErrors.discount_start_date && <span className="text-xs text-red-500">{formErrors.discount_start_date}</span>}
+                    </div>
+
+                    <div className="md:col-span-4 space-y-2">
+                      <Label htmlFor="discount_end_date">Fin de la oferta</Label>
+                      <Input
+                        id="discount_end_date"
+                        type="datetime-local"
+                        value={formData.discount_end_date ? moment(formData.discount_end_date).format('YYYY-MM-DDTHH:mm') : ''}
+                        onChange={(e) => handleDateChange('discount_end_date', e.target.value ? new Date(e.target.value) : null)}
+                        min={formData.discount_start_date ? moment(formData.discount_start_date).format('YYYY-MM-DDTHH:mm') : moment().format('YYYY-MM-DDTHH:mm')}
+                        className={formErrors.discount_end_date ? "border-red-500" : ""}
+                      />
+                      {formErrors.discount_end_date && <span className="text-xs text-red-500">{formErrors.discount_end_date}</span>}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="md:col-span-12">
+              <div className="border border-dashed border-border rounded-lg p-6 text-center hover:bg-muted/50 transition-colors">
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="image-upload"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                <Label htmlFor="image-upload" className="cursor-pointer">
+                  <div className="flex flex-col items-center gap-2">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                    <span className="text-sm font-medium">Click para subir imagen</span>
+                  </div>
+                </Label>
                 {formErrors.image && (
-                  <Typography color="error" variant="caption" display="block" fontSize={isMobile ? '0.7rem' : '0.75rem'}>{formErrors.image}</Typography>
+                  <span className="text-xs text-red-500 block mt-2">{formErrors.image}</span>
                 )}
                 {formData.image_base64 && (
-                  <Box sx={{ mt: 2 }}><img src={formData.image_base64} alt="Preview" style={{ maxWidth: isMobile ? 150 : 200, maxHeight: isMobile ? 150 : 200, objectFit: 'contain' }} /></Box>
-                )}
-              </Box>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" gutterBottom sx={{ fontSize: isMobile ? '0.85rem' : '0.875rem' }}>Opciones de entrega:</Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        name="has_delivery"
-                        checked={formData.has_delivery}
-                        onChange={handleInputChange}
-                        size={isMobile ? "small" : "medium"}
-                      />
-                    }
-                    label={
-                      <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: 'text.primary' }}>Mensajería/Envío a domicilio (costo adicional)
-                      </Typography>}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        name="free_delivery"
-                        checked={formData.free_delivery}
-                        onChange={handleInputChange}
-                        size={isMobile ? "small" : "medium"} />}
-                    label={
-                      <Typography sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: 'success.main', fontWeight: formData.free_delivery ? 600 : 400 }}>Entrega gratis (el vendedor entrega sin costo)
-                      </Typography>}
-                  />
-                  <Box sx={{ borderTop: '1px solid', borderColor: 'divider', mt: 1, pt: 1 }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          name="has_pickup"
-                          checked={formData.has_pickup}
-                          onChange={handleInputChange}
-                          size={isMobile ? "small" : "medium"}
-                        />}
-                      label={
-                        <Typography
-                          sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', color: 'text.primary' }}>Recogida en tienda
-                        </Typography>}
+                  <div className="mt-4 flex justify-center">
+                    <img
+                      src={formData.image_base64}
+                      alt="Preview"
+                      className="max-w-[200px] max-h-[200px] object-contain rounded-md border border-border"
                     />
+                  </div>
+                )}
+              </div>
+            </div>
 
+            <div className="md:col-span-12 space-y-4 bg-muted/30 p-4 rounded-lg">
+              <Label className="text-base font-semibold">Opciones de entrega</Label>
 
-                  </Box>
-                </Box>
-                {formErrors.delivery && (<Typography color="error" variant="caption" display="block" sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem', mt: 1 }}>{formErrors.delivery}</Typography>)}
-              </Grid>
-            </Grid>
-          </Box>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="has_delivery"
+                    checked={formData.has_delivery}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, has_delivery: checked }))}
+                  />
+                  <Label htmlFor="has_delivery" className="font-normal cursor-pointer">
+                    Mensajería/Envío a domicilio (costo adicional)
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="free_delivery"
+                    checked={formData.free_delivery}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, free_delivery: checked }))}
+                  />
+                  <Label htmlFor="free_delivery" className={`cursor-pointer ${formData.free_delivery ? 'font-medium text-green-600' : 'font-normal'}`}>
+                    Entrega gratis (el vendedor entrega sin costo)
+                  </Label>
+                </div>
+
+                <Separator className="my-2" />
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="has_pickup"
+                    checked={formData.has_pickup}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, has_pickup: checked }))}
+                  />
+                  <Label htmlFor="has_pickup" className="font-normal cursor-pointer">
+                    Recogida en tienda
+                  </Label>
+                </div>
+              </div>
+
+              {formErrors.delivery && (
+                <span className="text-xs text-red-500 block mt-2">{formErrors.delivery}</span>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={handleCloseDialog}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto font-semibold"
+              onClick={handleSubmit}
+              disabled={submitting || !formIsValid}
+            >
+              {submitting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                editingProduct ? 'Actualizar' : 'Crear'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions style={{ padding: "1.25rem" }}>
-          <Button
-            onClick={handleCloseDialog}
-            color='error'
-            variant='contained'
-            disableElevation
-            size={isMobile ? "small" : "medium"}
-            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disableElevation
-            disabled={submitting || !formIsValid}
-            size={isMobile ? "small" : "medium"}
-            sx={{ fontSize: isMobile ? '0.8rem' : '0.875rem', borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-          >
-            {submitting ? (
-              <CircularProgress size={isMobile ? 16 : 24} />
-            ) : (
-              editingProduct ? 'Actualizar' : 'Crear'
-            )}
-          </Button>
-        </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={openCancelDialog}
-        onClose={() => setOpenCancelDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: '12px',
-            boxShadow: 'none',
-            border: '1px solid #eaeaea'
-          }
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>Cancelar orden</DialogTitle>
+      <Dialog open={openCancelDialog} onOpenChange={setOpenCancelDialog}>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>Confirme la cancelación e indique el motivo.</Typography>
-          <TextField
-            label="Motivo de cancelación"
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
-            fullWidth
-            multiline
-            minRows={2}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
-          />
+          <DialogHeader>
+            <DialogTitle>Motivo de Cancelación</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="cancelReason">Por favor, indique el motivo por el cual cancela esta orden:</Label>
+            <Textarea
+              id="cancelReason"
+              rows={3}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="mt-2"
+              placeholder="Ej: Producto agotado, cliente no responde, etc."
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                setOpenCancelDialog(false);
+                setOrderToCancel(null);
+                setCancelReason('');
+              }}
+            >
+              Cerrar
+            </Button>
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={confirmCancelOrder}
+              disabled={!cancelReason.trim()}
+            >
+              Confirmar Cancelación
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenCancelDialog(false)} color="inherit" variant="outlined" sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>Cerrar</Button>
-          <Button onClick={confirmCancelOrder} color="error" variant="contained" disableElevation disabled={!cancelReason || statusUpdatingId === (cancelOrder?.id || null)} sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}>Cancelar orden</Button>
-        </DialogActions>
       </Dialog>
-    </Container>
+
+      {/* Modal de confirmación para eliminar producto */}
+      <DialogMessage
+        open={deleteDialogOpen}
+        handleClose={() => { setDeleteDialog(false); setProductToDelete(null); }}
+        fn={handleConfirmDelete}
+        title="Eliminar Producto"
+        msg="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+      />
+    </div>
   );
 };
 

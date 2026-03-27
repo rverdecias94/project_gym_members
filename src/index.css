@@ -1,3 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 238 45% 58%;
+    /* #6164c7 */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 40 86% 48%;
+    /* #e49c10 - Amarillo principal (botones, estados) */
+    --secondary-foreground: 210 40% 98%;
+    --complementary: 42 100% 50%;
+    /* #ffb700 - Amarillo brillante (texto activo, alto contraste) */
+    --complementary-foreground: 210 40% 98%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 0 0% 77%;
+    /* #c5c5c5 */
+    --input: 0 0% 77%;
+    /* #c5c5c5 */
+    --ring: 238 45% 58%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 216 38% 14%;
+    /* #162131 */
+    --foreground: 210 40% 98%;
+    --card: 216 38% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 216 38% 14%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 238 45% 58%;
+    /* #6164c7 */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 40 86% 48%;
+    /* #e49c10 - Amarillo principal */
+    --secondary-foreground: 210 40% 98%;
+    --complementary: 42 100% 50%;
+    /* #ffb700 - Amarillo brillante */
+    --complementary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 23% 38%;
+    /* #4a5b77 */
+    --input: 217 23% 38%;
+    /* #4a5b77 */
+    --ring: 238 45% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Material UI DataGrid Dark Mode Overrides */
+.dark .MuiDataGrid-root {
+  background-color: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .MuiDataGrid-main {
+  background-color: transparent !important;
+}
+
+.dark .MuiDataGrid-cell {
+  border-bottom-color: hsl(var(--border)) !important;
+  background-color: transparent !important;
+}
+
+.dark .MuiDataGrid-columnHeaders {
+  border-bottom-color: hsl(var(--border)) !important;
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .MuiDataGrid-columnHeader {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .MuiDataGrid-filler {
+  background-color: transparent !important;
+}
+
+.dark .MuiDataGrid-scrollbarFiller {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .MuiDataGrid-columnSeparator {
+  color: hsl(var(--border)) !important;
+}
+
+.dark .MuiDataGrid-footerContainer {
+  border-top-color: hsl(var(--border)) !important;
+  background-color: transparent !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .MuiTablePagination-root {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .MuiDataGrid-row {
+  background-color: transparent !important;
+}
+
+.dark .MuiDataGrid-row:hover {
+  background-color: hsl(var(--muted) / 0.8) !important;
+}
+
+.dark .MuiDataGrid-row.Mui-selected {
+  background-color: hsl(var(--primary) / 0.2) !important;
+}
+
+.dark .MuiDataGrid-row.Mui-selected:hover {
+  background-color: hsl(var(--primary) / 0.3) !important;
+}
+
+.dark .MuiIconButton-root {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .MuiSvgIcon-root {
+  fill: currentColor !important;
+}
+
+.dark .MuiDataGrid-overlay {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Fix Select component styling in dark mode */
+.dark .MuiSelect-select {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .MuiInputBase-root {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .MuiOutlinedInput-notchedOutline {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: hsl(var(--primary)) !important;
+}
+
+.dark .MuiPaper-root.MuiMenu-paper {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.dark .MuiMenuItem-root:hover {
+  background-color: hsl(var(--muted)) !important;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -298,3 +478,11 @@
       -2em 2em 0 0, -3em 0em 0 0, -2em -2em 0 0.2em;
   }
 }
+/* Resaltar asterisco de campos requeridos en Material UI */
+.MuiFormLabel-asterisk {
+  color: #e11d48 !important;
+  font-weight: 800 !important;
+  font-size: 1.125rem !important;
+  margin-left: 0.25rem !important;
+}
+
