@@ -142,6 +142,7 @@ function App() {
           <div className='main-content'>
             <Routes>
               {/* Rutas Públicas */}
+              <Route path='/' element={<Login id={userId} />} />
               <Route path='/login' element={<Login id={userId} />} />
               <Route path='/terms-conditions' element={<TermsAndConditions />} />
               <Route path='/redirect' element={<Redirect />} />

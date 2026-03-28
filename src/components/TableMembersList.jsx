@@ -224,7 +224,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       field: 'actions',
       headerName: 'Seleccionar',
       sortable: false,
-      width: 80,
+      width: 100,
       renderCell: (params) => (
         <div className="flex items-center justify-center h-full cursor-pointer">
           <input
@@ -237,8 +237,8 @@ export const TableMembersList = ({ membersList = [] }) => {
         </div>
       ),
     },
-    { field: 'first_name', headerName: 'Nombre', width: 130 },
-    { field: 'last_name', headerName: 'Apellidos', width: 130 },
+    { field: 'first_name', headerName: 'Nombre', width: 180 },
+    { field: 'last_name', headerName: 'Apellidos', width: 180 },
     {
       field: 'phone',
       headerName: 'Teléfono',
@@ -250,7 +250,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       ),
     },
     { field: 'ci', headerName: 'CI', width: 130 },
-    { field: 'address', headerName: 'Dirección', width: 130 },
+    { field: 'address', headerName: 'Dirección', width: 280 },
     {
       field: 'trainer_name',
       headerName: 'Entrenador',
@@ -263,19 +263,6 @@ export const TableMembersList = ({ membersList = [] }) => {
           }
         </div>
       ),
-    },
-    {
-      field: 'status',
-      headerName: 'Estado',
-      width: 150,
-      renderCell: (params) => {
-        const isPaid = params.row.pay_status;
-        return (
-          <Badge variant={isPaid ? "default" : "destructive"}>
-            {isPaid ? 'Pagado' : 'Pendiente'}
-          </Badge>
-        );
-      },
     },
     {
       field: 'options',

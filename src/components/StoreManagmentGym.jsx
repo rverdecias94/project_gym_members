@@ -112,18 +112,20 @@ const StoreManagmentGym = () => {
     }
   }, [formData, openDialog, showDiscount]);
 
-  const getProducts = async () => {
+  const getProducts = () => {
     setLoadingProducts(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('user_store_id', user.id)
-        .order('created_at', { ascending: false });
+      setTimeout(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('user_store_id', user.id)
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProducts(data || []);
+        if (error) throw error;
+        setProducts(data || []);
+      }, 500);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Error al cargar productos');

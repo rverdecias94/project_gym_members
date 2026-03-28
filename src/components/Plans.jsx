@@ -30,7 +30,14 @@ import {
   BarChart,
   Support,
   Inventory,
-  Business
+  Business,
+  HowToReg,
+  ManageAccounts,
+  Storefront,
+  Receipt,
+  Insights,
+  AutoAwesome,
+  AddShoppingCart
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase/client';
@@ -90,7 +97,7 @@ const PlansPage = () => {
       name: 'Estándar',
       description: 'Ideal para gimnasios que desean gestionar sus operaciones de forma simple y eficiente.',
       originalPrice: 15,
-      currentPrice: 10.50,
+      currentPrice: 12,
       discount: 20,
       renewalPrice: 15,
       renewalMonth: 3,
@@ -100,8 +107,8 @@ const PlansPage = () => {
       ],
       includes: [
         { text: 'Registro de hasta 100 clientes', icon: <Group /> },
-        { text: 'Agregar y gestionar clientes y entrenadores', icon: <Group /> },
-        { text: 'Función de Checking en el gym (único en Cuba)', icon: <FitnessCenter /> },
+        { text: 'Agregar y gestionar clientes y entrenadores', icon: <ManageAccounts /> },
+        { text: 'Función de Checking en el gym (único en Cuba)', icon: <HowToReg /> },
         { text: 'Estadísticas generales (clientes, entrenadores, relaciones de agrupación)', icon: <BarChart /> },
       ],
       color: '#6164c7',
@@ -112,7 +119,7 @@ const PlansPage = () => {
       name: 'Tienda Fitness',
       description: 'Diseñado para tiendas que quieren escalar y vender más fácil.',
       originalPrice: 15,
-      currentPrice: 10.50,
+      currentPrice: 12,
       discount: 20,
       renewalPrice: 15,
       renewalMonth: 3,
@@ -122,9 +129,9 @@ const PlansPage = () => {
       ],
       includes: [
         { text: 'Visibilidad directa en la comunidad fitness', icon: <TrendingUp /> },
-        { text: 'Agregar productos en Tronoss', icon: <Inventory /> },
-        { text: 'Catálogo de productos', icon: <Business /> },
-        { text: 'Gestión de pedidos', icon: <Support /> },
+        { text: 'Agregar productos en Tronoss', icon: <AddShoppingCart /> },
+        { text: 'Catálogo de productos', icon: <Storefront /> },
+        { text: 'Gestión de pedidos', icon: <Receipt /> },
         { text: 'Posicionamiento como líder en el mercado fitness', icon: <Star /> }
       ],
       color: '#32aaf4',
@@ -145,14 +152,16 @@ const PlansPage = () => {
       ],
       includes: [
         { text: 'Registro ilimitado de clientes', icon: <Group /> },
-        { text: 'Agregar y gestionar clientes y entrenadores', icon: <Group /> },
-        { text: 'Función de Checking en el gym (único en Cuba)', icon: <FitnessCenter /> },
+        { text: 'Agregar y gestionar clientes y entrenadores', icon: <ManageAccounts /> },
+        { text: 'Función de Checking en el gym (único en Cuba)', icon: <HowToReg /> },
+        { text: 'Los clientes del gimnasio tendrán acceso a funciones IA en su aplicación de Tronoss', icon: <AutoAwesome /> },
         { text: 'Estadísticas generales (clientes, entrenadores, relaciones de agrupación)', icon: <BarChart /> },
-        { text: 'Estadísticas de negocio y estratégicas (retención, ingresos proyectados, rango de edad, pagos y tendencias.)', icon: <BarChart /> },
+        { text: 'Estadísticas de negocio y estratégicas (retención, ingresos proyectados, rango de edad, pagos y tendencias.)', icon: <Insights /> },
         { text: 'Visibilidad y posicionamiento en la comunidad fitness', icon: <Star /> },
-        { text: 'Agregar productos en Tronoss', icon: <Inventory /> },
-        { text: 'Catálogo de productos', icon: <Business /> },
-        { text: 'Gestión de pedidos', icon: <Support /> },
+        { text: 'Agregar productos en Tronoss', icon: <AddShoppingCart /> },
+        { text: 'Catálogo de productos', icon: <Storefront /> },
+        { text: 'Gestión de pedidos', icon: <Receipt /> },
+
       ],
       color: premiumColor,
       popular: true,
@@ -326,13 +335,13 @@ const PlansPage = () => {
                         }
                       }}
                     >
-                      {isActive && (
+                      {(isActive || plan.id === 'premium') && (
                         <Box
                           sx={{
                             position: 'absolute',
                             top: 12,
                             left: '50%',
-                            transform: 'translateX(-50%)',
+                            transform: 'translateX(-0%)',
                             background: isDark ? '#1a2332' : '#ffffff',
                             border: `2px solid ${plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color}`,
                             color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : plan.color,
@@ -350,7 +359,7 @@ const PlansPage = () => {
                             boxShadow: `0 4px 10px ${isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)'}`
                           }}
                         >
-                          <Star sx={{ fontSize: '1rem' }} /> PLAN ACTUAL
+                          <Star sx={{ fontSize: '1rem' }} /> {isActive ? "PLAN ACTUAL" : "EL MÁS DESEADO"}
                         </Box>
                       )}
 
@@ -526,7 +535,6 @@ const PlansPage = () => {
                           fullWidth
                           variant={plan.popular ? "contained" : "outlined"}
                           size="large"
-                          disabled={isActive}
                           onClick={() =>
                             !isActive &&
                             (accountData?.active
@@ -544,8 +552,8 @@ const PlansPage = () => {
                             borderRadius: 2,
                             fontSize: '1.1rem',
                             textTransform: 'none',
-                            opacity: isActive ? 0.6 : 1,
-                            cursor: isActive ? 'not-allowed' : 'pointer',
+                            opacity: 1,
+                            cursor: isActive ? 'no-drop' : 'pointer',
                             boxShadow: plan.popular && !isActive ? `0 8px 20px ${isDark ? 'rgba(255, 183, 0, 0.15)' : 'rgba(97, 100, 199, 0.15)'}` : 'none',
                             transition: 'all 0.2s',
                             '&:hover': !isActive && {

@@ -10,9 +10,8 @@ export default function PremiumDashboard({
 }) {
   const theme = useTheme();
   const [ageRanges, setAgeRanges] = useState({});
-  const [avgStay, setAvgStay] = useState(0);
-  const [monthlyIncome, setMonthlyIncome] = useState(0);
-  const [lastMonthIncome, setLastMonthIncome] = useState(0);
+  const [paymentStatus, setPaymentStatus] = useState({ upToDate: 0, delayed: 0 });
+  const [birthdays, setBirthdays] = useState({ thisMonth: 0, otherMonths: 0 });
   const [weeklyPayers, setWeeklyPayers] = useState(0);
   const [paymentsByMonth, setPaymentsByMonth] = useState(Array(12).fill(0));
   const [last7DaysData, setLast7DaysData] = useState([]);
@@ -155,38 +154,42 @@ export default function PremiumDashboard({
       });
       setAgeRanges(ranges);
 
-      // ---- Promedio de permanencia (meses) ----
-      let totalMonths = 0;
+      // ---- Estado de Pagos (Al día vs Atrasados) ----
+      let upToDate = 0;
+      let delayed = 0;
       membersList.forEach((m) => {
-        const createdAt = new Date(m.created_at);
-        const diff = (today - createdAt) / (1000 * 60 * 60 * 24 * 30);
-        totalMonths += diff;
-      });
-      setAvgStay((totalMonths / membersList.length).toFixed(1));
-
-      // ---- Ingresos proyectados ----
-      let activeMembers = membersList.filter((m) => m.active).length;
-      let baseIncome = activeMembers * (gymInfo?.monthly_payment || 0);
-      let trainerExtra =
-        membersList.filter((m) => m.has_trainer).length *
-        (gymInfo?.trainers_cost || 0);
-      const currentIncome = baseIncome + trainerExtra;
-      setMonthlyIncome(currentIncome);
-
-      // ---- Ingresos mes anterior ----
-      const lastMonth = today.getMonth() - 1;
-      const lastMonthYear =
-        lastMonth < 0 ? today.getFullYear() - 1 : today.getFullYear();
-      const lastMonthIndex = lastMonth < 0 ? 11 : lastMonth;
-      let lastMonthMembers = membersList.filter((m) => {
-        if (!m.pay_date) return false;
+        if (!m.active) return;
+        if (!m.pay_date) {
+          delayed++;
+          return;
+        }
         const payDate = new Date(m.pay_date);
-        return (
-          payDate.getMonth() === lastMonthIndex &&
-          payDate.getFullYear() === lastMonthYear
-        );
-      }).length;
-      setLastMonthIncome(lastMonthMembers * (gymInfo?.monthly_payment || 0));
+        payDate.setHours(0, 0, 0, 0);
+        const current = new Date();
+        current.setHours(0, 0, 0, 0);
+        if (payDate < current) {
+          delayed++;
+        } else {
+          upToDate++;
+        }
+      });
+      setPaymentStatus({ upToDate, delayed });
+
+      // ---- Cumpleaños del mes ----
+      let birthdaysThisMonth = 0;
+      let birthdaysOtherMonths = 0;
+      const currentMonth = today.getMonth();
+      membersList.forEach((m) => {
+        if (m.ci && m.ci.length >= 6) {
+          let month = parseInt(m.ci.substring(2, 4), 10) - 1;
+          if (month === currentMonth) {
+            birthdaysThisMonth++;
+          } else {
+            birthdaysOtherMonths++;
+          }
+        }
+      });
+      setBirthdays({ thisMonth: birthdaysThisMonth, otherMonths: birthdaysOtherMonths });
 
       // ---- Clientes que pagan esta semana ----
       const startOfWeek = new Date(today);
@@ -293,12 +296,12 @@ export default function PremiumDashboard({
           <CardContent className="p-5 h-full transition-all duration-300">
             <div className="w-full">
               <ReactApexChart
-                options={getChartOptions(["Meses promedio", "Referencia (12 meses)"], true, ['#6157d6', '#f278b6'])}
-                series={[Number(avgStay) || 0, 12]}
+                options={getChartOptions(["Al día", "Atrasados"], true, ['#10b981', '#ef4444'])}
+                series={[paymentStatus.upToDate, paymentStatus.delayed]}
                 type="donut"
                 height={250}
               />
-              <span className="block text-center mt-2.5 text-foreground font-semibold">Permanencia promedio de clientes</span>
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Estado de pagos</span>
             </div>
           </CardContent>
         </Card>
@@ -307,12 +310,12 @@ export default function PremiumDashboard({
           <CardContent className="p-5 h-full transition-all duration-300">
             <div className="w-full">
               <ReactApexChart
-                options={getChartOptions(["Mes anterior", "Mes actual"], false, ['#f278b6', '#6157d6'])}
-                series={[{ name: 'Ingresos', data: [lastMonthIncome, monthlyIncome] }]}
-                type="bar"
+                options={getChartOptions(["Este mes", "Resto del año"], true, ['#32aaf4', '#6157d6'])}
+                series={[birthdays.thisMonth, birthdays.otherMonths]}
+                type="donut"
                 height={250}
               />
-              <span className="block text-center mt-2.5 text-foreground font-semibold">Ingresos proyectados ({gymInfo?.monthly_currency || "CUP"})</span>
+              <span className="block text-center mt-2.5 text-foreground font-semibold">Cumpleaños de clientes</span>
             </div>
           </CardContent>
         </Card>

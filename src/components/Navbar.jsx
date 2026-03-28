@@ -91,85 +91,85 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   return (
     <>
       {showNav && (
-        <div className={`fixed top-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border shadow-sm ${mode ? 'bg-slate-900/80 text-white' : 'bg-primary/90 text-white'} px-4 md:px-8 py-3 flex items-center justify-between grid-cols-2 md:grid-cols-3`}>
-          <div className="flex items-center gap-4">
-            <img src="/logo_platform.png" alt="Logo" className="w-[120px] h-[30px] object-contain" />
-          </div>
-
-          {
-            !isMobile && daysRemaining <= 3 && daysRemaining > 0 &&
-            <span className="absolute left-1/2 -translate-x-1/2 text-sm font-medium bg-red-500/20 text-red-200 px-3 py-1 rounded-full border border-red-500/30">
-              Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
-            </span>
-          }
-
-          {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/redirect", "/general_info",
-            "/shop-stepper", "/bienvenido"].includes(location.pathname) && (
-              <div className='hidden md:flex justify-around items-center w-full max-w-2xl mx-auto'>
-                {accountType === "gym" && <NavButton to="/panel" icon={<LayoutDashboard className="h-5 w-5" />} text="Panel" />}
-                {accountType === "gym" && <NavButton to="/clientes" icon={<Users className="h-5 w-5" />} text="Clientes" />}
-                {accountType === "gym" && <NavButton to="/entrenadores" icon={<Dumbbell className="h-5 w-5" />}
-                  text="Entrenadores" />}
-                {
-                  accountType === "gym" ?
-                    <NavButton to="/tienda-gym" icon={<Store className="h-5 w-5" />} text="Tienda" />
-                    :
-                    <NavButton to="/tienda" icon={<Store className="h-5 w-5" />} text="Tienda" />
-                }
-                {accountType === "gym" && <NavButton to="/planes" icon={<TrendingUp className="h-5 w-5" />} text="Planes" />}
-              </div>
-            )}
-
-          <div className="flex items-center justify-end gap-2 md:gap-4 col-start-2 md:col-start-3">
-            {!isMobile && profile.name && <span className='hidden lg:block font-medium'>{`¡Hola ${getName(profile.name) || "Admin"}!`}</span>}
-            <div className="flex-grow-0">
-              {!["/admin", "/admin/panel"].includes(location.pathname) && (
-                hasActiveProfile ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-white text-primary font-bold">
-                            {profile?.name?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
-                      {settings.map((setting) => (
-                        <DropdownMenuItem key={setting.name} onClick={() => handleCloseUserMenu(setting.action)}>
-                          {setting.icon}
-                          <span>{setting.name}</span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full cursor-default hover:bg-transparent">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-white text-primary font-bold">
-                        {profile?.name?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                )
-              )}
+        <div className={`fixed top-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border shadow-sm ${mode ? 'bg-slate-900/80 text-white' : 'bg-primary/90 text-white'} flex flex-col`}>
+          <div className="px-4 md:px-8 py-3 flex items-center justify-between w-full">
+            <div className="flex items-center gap-4 w-1/3">
+              <img src="/logo_platform.png" alt="Logo" className="w-[120px] h-[30px] object-contain" />
             </div>
 
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white hover:text-white/80 hover:bg-white/10">
-              {!mode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
+            {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/redirect", "/general_info",
+              "/shop-stepper", "/bienvenido"].includes(location.pathname) && (
+                <div className='hidden md:flex justify-center items-center w-1/3 min-w-max gap-4 lg:gap-8'>
+                  {accountType === "gym" && <NavButton to="/panel" icon={<LayoutDashboard className="h-5 w-5" />} text="Panel" />}
+                  {accountType === "gym" && <NavButton to="/clientes" icon={<Users className="h-5 w-5" />} text="Clientes" />}
+                  {accountType === "gym" && <NavButton to="/entrenadores" icon={<Dumbbell className="h-5 w-5" />}
+                    text="Entrenadores" />}
+                  {
+                    accountType === "gym" ?
+                      <NavButton to="/tienda-gym" icon={<Store className="h-5 w-5" />} text="Tienda" />
+                      :
+                      <NavButton to="/tienda" icon={<Store className="h-5 w-5" />} text="Tienda" />
+                  }
+                  {accountType === "gym" && <NavButton to="/planes" icon={<TrendingUp className="h-5 w-5" />} text="Planes" />}
+                </div>
+              )}
 
-            <Button variant="ghost" size="icon" onClick={logoutUser} className="text-white hover:text-white/80 hover:bg-white/10">
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center justify-end gap-2 md:gap-4 w-1/3">
+              {!isMobile && profile.name && <span className='hidden lg:block font-medium'>{`¡Hola ${getName(profile.name) || "Admin"}!`}</span>}
+              <div className="flex-grow-0">
+                {!["/admin", "/admin/panel"].includes(location.pathname) && (
+                  hasActiveProfile ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-white text-primary font-bold">
+                              {profile?.name?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end" forceMount>
+                        {settings.map((setting) => (
+                          <DropdownMenuItem key={setting.name} onClick={() => handleCloseUserMenu(setting.action)}>
+                            {setting.icon}
+                            <span>{setting.name}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full cursor-default hover:bg-transparent">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-white text-primary font-bold">
+                          {profile?.name?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  )
+                )}
+              </div>
+
+              <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white hover:text-white/80 hover:bg-white/10">
+                {!mode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+
+              <Button variant="ghost" size="icon" onClick={logoutUser} className="text-white hover:text-white/80 hover:bg-white/10">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {accountType === "gym" && <SettingsAccountGym open={openSettings} handleClose={handleClose} profile={profile} />
+            }
+            {accountType === "shop" && <SettingsAccountShop open={openSettings} handleClose={handleClose} profile={profile} />
+            }
+            <PaymentHistoryModal open={openHistory} onClose={handleCloseHistory} accountId={profile?.id} />
           </div>
-
-          {accountType === "gym" && <SettingsAccountGym open={openSettings} handleClose={handleClose} profile={profile} />
-          }
-          {accountType === "shop" && <SettingsAccountShop open={openSettings} handleClose={handleClose} profile={profile} />
-          }
-          <PaymentHistoryModal open={openHistory} onClose={handleCloseHistory} accountId={profile?.id} />
+          {daysRemaining <= 3 && daysRemaining > 0 && (
+            <div className="w-full bg-yellow-500/10 border-b border-yellow-500/20 text-white dark:text-yellow-400 text-center py-1.5 text-sm font-medium">
+              Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
+            </div>
+          )}
         </div>
       )}
 

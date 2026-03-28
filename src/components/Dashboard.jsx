@@ -234,14 +234,8 @@ export default function Dashboard() {
   const showDasboard = () => {
     return (
       <div className="w-full">
-        <div className="px-4 md:px-4 max-w-[1400px] mx-auto">
-          {isMobile && daysRemaining <= 3 && (
-            <span className="absolute ml-16 text-sm font-medium bg-red-500/20 text-red-200 px-3 py-1 rounded-full border border-red-500/30">
-              Su cuenta quedará inactiva en {daysRemaining} {daysRemaining === 1 ? "día" : "días"}.
-            </span>
-          )}
-
-          <div className={`flex items-center gap-2 mb-6 ${isMobile && daysRemaining <= 3 ? "mt-12" : "mt-4"} px-2`}>
+        <div className="px-4 md:px-4 max-w-[1400px] mx-auto pt-6">
+          <div className={`flex items-center gap-2 mb-6 mt-4 px-2`}>
             <span className="text-2xl">📊</span>
             <h2 className="m-0 text-2xl font-semibold text-foreground">Estadísticas Generales</h2>
           </div>
@@ -356,6 +350,27 @@ export default function Dashboard() {
                       height={250}
                     />
                     <span className="block text-center mt-2.5 text-foreground font-semibold">Entrenador / Cliente</span>
+                  </div>
+                ) : (
+                  <>
+                    <Skeleton className="w-full h-[250px] rounded-xl" />
+                    <Skeleton className="w-2/5 h-4 mt-2.5 mx-auto" />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className={`col-span-1 ${membersList.length > 0 ? "visible" : "hidden"} bg-card border-border shadow-sm`}>
+              <CardContent className="p-5 h-full transition-all duration-300">
+                {membersList.length > 0 ? (
+                  <div className="w-full">
+                    <ReactApexChart
+                      options={getChartOptions(['Activos', 'Inactivos'], true, ['#10b981', '#ef4444'])}
+                      series={[membersActive.length, membersList.length - membersActive.length]}
+                      type="donut"
+                      height={250}
+                    />
+                    <span className="block text-center mt-2.5 text-foreground font-semibold">Estado de Clientes</span>
                   </div>
                 ) : (
                   <>

@@ -6,6 +6,8 @@ import { supabase } from '../supabase/client';
 import { provincias } from "./Provincias";
 import { useSnackbar } from '../context/Snackbar';
 
+import { processImage } from '../utils/imageProcessor';
+
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Upload, X } from "lucide-react";
 
 export default function SettingsAccountGym({ handleClose, open, profile }) {
   const { showMessage } = useSnackbar();
@@ -52,7 +54,8 @@ export default function SettingsAccountGym({ handleClose, open, profile }) {
     trainers_cost: 0,
     monthly_currency: "CUP",
     daily_currency: "CUP",
-    trainer_currency: "CUP"
+    trainer_currency: "CUP",
+    image_profile: null
   });
 
   const [daysRemaining, setDaysRemaining] = useState(0);
@@ -108,13 +111,28 @@ export default function SettingsAccountGym({ handleClose, open, profile }) {
       [name]: value
     }));
   };
-  
+
   const handleSelectChange = (name, value) => {
     setGymInfo(prev => ({
       ...prev,
       [name]: value
     }));
   }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const base64Image = await processImage(file);
+      setGymInfo(prev => ({ ...prev, image_profile: base64Image }));
+    } catch (error) {
+      showMessage(error.message, "error");
+    }
+  };
+
+  const handleImageDelete = () => {
+    setGymInfo(prev => ({ ...prev, image_profile: null }));
+  };
 
   const handleScheduleChange = (day, index, field, value) => {
     setGymInfo(prev => {
@@ -229,6 +247,47 @@ export default function SettingsAccountGym({ handleClose, open, profile }) {
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="mb-6 space-y-4">
+            <Label>Logo del Gimnasio</Label>
+            <div className="flex items-center gap-4">
+              {gymInfo.image_profile ? (
+                <div className="relative w-24 h-24 rounded-full border overflow-hidden">
+                  <img src={gymInfo.image_profile} alt="Logo" className="w-full h-full object-cover" />
+                  {/* <button
+                    onClick={handleImageDelete}
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full
+                    z-40 rounded-bl-lg hover:bg-red-600 transition-colors"
+                    title="Eliminar imagen"
+                  >
+                    <X size={14} />
+                  </button> */}
+                </div>
+              ) : (
+                <div className="w-24 h-24 rounded-full border-2 border-dashed flex items-center justify-center bg-muted/50">
+                  <span className="text-xs text-muted-foreground">Sin logo</span>
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="image_upload" className="cursor-pointer">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-sm font-medium">
+                    <Upload size={16} />
+                    {gymInfo.image_profile ? 'Cambiar imagen' : 'Subir imagen'}
+                  </div>
+                </Label>
+                <input
+                  id="image_upload"
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+                <span className="text-xs text-muted-foreground">Max: 2MB. Formatos: png, jpg, webp</span>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -355,25 +414,25 @@ export default function SettingsAccountGym({ handleClose, open, profile }) {
                       <Plus className="h-4 w-4 mr-1" /> Añadir horario
                     </Button>
                   </div>
-                  
+
                   {Array.isArray(gymInfo.schedules[key]) && gymInfo.schedules[key].length > 0 ? (
                     <div className="space-y-2">
                       {gymInfo.schedules[key].map((slot, idx) => (
                         <div key={idx} className="flex items-center gap-3">
                           <div className="space-y-1 flex-1">
                             <Label className="text-xs text-muted-foreground">Inicio</Label>
-                            <Input 
-                              type="time" 
-                              value={slot.start} 
-                              onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)} 
+                            <Input
+                              type="time"
+                              value={slot.start}
+                              onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)}
                             />
                           </div>
                           <div className="space-y-1 flex-1">
                             <Label className="text-xs text-muted-foreground">Fin</Label>
-                            <Input 
-                              type="time" 
-                              value={slot.end} 
-                              onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)} 
+                            <Input
+                              type="time"
+                              value={slot.end}
+                              onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)}
                             />
                           </div>
                           <div className="mt-5">

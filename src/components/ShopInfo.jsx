@@ -11,6 +11,10 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { useSnackbar } from "../context/Snackbar";
 import { useMembers } from "../context/Context";
+import { processImage } from "../utils/imageProcessor";
+import { Avatar, IconButton, Box } from "@mui/material";
+import PhotoCamera from "@mui/icons-material/PhotoCamera";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const nextPaymentDate = new Date();
 nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
@@ -68,7 +72,8 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
       friday: [],
       saturday: [],
       sunday: []
-    }
+    },
+    image_profile: null
   })
   const [state, setProvincia] = useState('');
   const [city, setMunicipio] = useState('');
@@ -171,6 +176,21 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
     }));
 
     validateFields(name, value);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const base64Image = await processImage(file);
+      setShopInfoState(prev => ({ ...prev, image_profile: base64Image }));
+    } catch (error) {
+      showMessage(error.message, "error");
+    }
+  };
+
+  const handleImageDelete = () => {
+    setShopInfoState(prev => ({ ...prev, image_profile: null }));
   };
 
   const validateFields = (name, value) => {
@@ -442,6 +462,32 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
         <Grid item lg={12} xl={12} md={12} sm={12} xs={12}>
           {step === 0 &&
             <Grid tem lg={12} xl={12} md={12} sm={12} xs={12}>
+              <Box display="flex" alignItems="center" gap={2} mb={3} mt={2}>
+                {shopInfo.image_profile ? (
+                  <Box position="relative">
+                    <Avatar src={shopInfo.image_profile} sx={{ width: 80, height: 80 }} />
+                    <IconButton
+                      size="small"
+                      onClick={handleImageDelete}
+                      sx={{ position: 'absolute', top: -10, right: -10, backgroundColor: 'rgba(255,0,0,0.8)', color: 'white', '&:hover': { backgroundColor: 'red' } }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <Avatar sx={{ width: 80, height: 80 }}>Logo</Avatar>
+                )}
+                <Box>
+                  <Button variant="contained" component="label" startIcon={<PhotoCamera />}>
+                    {shopInfo.image_profile ? "Cambiar Imagen" : "Subir Imagen"}
+                    <input type="file" hidden accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleImageUpload} />
+                  </Button>
+                  <Typography variant="caption" display="block" color="textSecondary" mt={1}>
+                    Max: 2MB. Formatos: png, jpg, webp
+                  </Typography>
+                </Box>
+              </Box>
+
               <TextField
                 required
                 id="outlined-required"
