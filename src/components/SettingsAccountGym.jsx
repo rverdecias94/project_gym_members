@@ -218,6 +218,16 @@ export default function SettingsAccountGym({ handleClose, open, profile }) {
           .eq("owner_id", owner_id);
 
         if (result) {
+          try {
+            const cachedGymInfo = sessionStorage.getItem("gym_info");
+            if (cachedGymInfo) {
+              const parsed = JSON.parse(cachedGymInfo);
+              const updated = { ...parsed, ...infoToSave };
+              sessionStorage.setItem("gym_info", JSON.stringify(updated));
+            }
+          } catch (e) {
+            console.error(e);
+          }
           showMessage("¡Información actualizada con éxito!", "success");
           handleClose();
         }

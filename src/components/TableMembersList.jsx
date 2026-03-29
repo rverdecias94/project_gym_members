@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
-  const { adding, trainersList, setBackdrop, gymInfo } = useMembers();
+  const { adding, trainersList, setBackdrop, gymInfo, getAuthUser } = useMembers();
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openRule, setOpenRule] = useState(false);
@@ -93,7 +93,17 @@ export const TableMembersList = ({ membersList = [] }) => {
     setCurrentPage(1); // Reset pagination when data changes
 
     const updateClientsLength = async () => {
-      const { data } = await supabase.auth.getUser();
+      const { data } = await getAuthUser();
+      try {
+        const cachedGymInfo = sessionStorage.getItem("gym_info");
+        if (cachedGymInfo) {
+          const parsed = JSON.parse(cachedGymInfo);
+          parsed.clients = membersList.length;
+          sessionStorage.setItem("gym_info", JSON.stringify(parsed));
+        }
+      } catch (e) {
+        console.error(e);
+      }
       await supabase
         .from("info_general_gym")
         .update({ clients: membersList.length })

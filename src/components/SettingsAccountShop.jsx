@@ -194,6 +194,16 @@ export default function SettingsAccountShop({ handleClose, open, profile }) {
           .eq("owner_id", owner_id);
 
         if (result) {
+          try {
+            const cachedShopInfo = sessionStorage.getItem("shop_info");
+            if (cachedShopInfo) {
+              const parsed = JSON.parse(cachedShopInfo);
+              const updated = { ...parsed, ...infoToSave };
+              sessionStorage.setItem("shop_info", JSON.stringify(updated));
+            }
+          } catch (e) {
+            console.error(e);
+          }
           showMessage("¡Información actualizada con éxito!", "success");
           handleClose();
         }

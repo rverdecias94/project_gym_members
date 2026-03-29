@@ -59,6 +59,24 @@ export const ContextProvider = ({ children }) => {
 
 
 
+  // Wrapper for getUser to use sessionStorage
+  const getAuthUser = async () => {
+    try {
+      const cached = sessionStorage.getItem("auth_user");
+      if (cached) {
+        return { data: { user: JSON.parse(cached) }, error: null };
+      }
+    } catch (e) {
+      console.error("Error reading auth_user from session", e);
+    }
+
+    const { data, error } = await supabase.auth.getUser();
+    if (data?.user) {
+      sessionStorage.setItem("auth_user", JSON.stringify(data.user));
+    }
+    return { data, error };
+  };
+
   // Helper function to check payment status and update products
   const checkPaymentAndDisableProducts = async (userData, userId) => {
     if (userData?.next_payment_date) {
@@ -83,11 +101,32 @@ export const ContextProvider = ({ children }) => {
   };
 
   // Unified getGymInfo function
-  const getGymInfo = async () => {
+  const getGymInfo = async (forceUpdate = false) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
       if (!user) {
         throw new Error("Usuario no autenticado");
+      }
+
+      if (!forceUpdate) {
+        try {
+          const cachedGymInfo = sessionStorage.getItem("gym_info");
+          if (cachedGymInfo) {
+            const parsed = JSON.parse(cachedGymInfo);
+            setGymInfo(parsed);
+            if (parsed.next_payment_date) {
+              const today = new Date();
+              const futureDate = new Date(parsed.next_payment_date);
+              const timeDifference = futureDate - today;
+              const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+              setDaysRemaining(daysDifference);
+            }
+            await checkPaymentAndDisableProducts(parsed, user.id);
+            return parsed;
+          }
+        } catch (e) {
+          console.error("Error reading gym_info from session", e);
+        }
       }
 
       const { data, error } = await supabase
@@ -103,6 +142,7 @@ export const ContextProvider = ({ children }) => {
       }
 
       if (data) {
+        sessionStorage.setItem("gym_info", JSON.stringify(data));
         setGymInfo(data); // Update state
         if (data.next_payment_date) {
           const today = new Date();
@@ -123,11 +163,25 @@ export const ContextProvider = ({ children }) => {
   };
 
   // Unified getShopInfo function
-  const getShopInfo = async () => {
+  const getShopInfo = async (forceUpdate = false) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
       if (!user) {
         throw new Error("Usuario no autenticado");
+      }
+
+      if (!forceUpdate) {
+        try {
+          const cachedShopInfo = sessionStorage.getItem("shop_info");
+          if (cachedShopInfo) {
+            const parsed = JSON.parse(cachedShopInfo);
+            setShopInfo(parsed);
+            await checkPaymentAndDisableProducts(parsed, user.id);
+            return parsed;
+          }
+        } catch (e) {
+          console.error("Error reading shop_info from session", e);
+        }
       }
 
       const { data, error } = await supabase
@@ -143,6 +197,7 @@ export const ContextProvider = ({ children }) => {
       }
 
       if (data) {
+        sessionStorage.setItem("shop_info", JSON.stringify(data));
         setShopInfo(data); // Update state
         console.log(data)
         // Check overdue payment
@@ -159,7 +214,7 @@ export const ContextProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
       if (user) {
         const { type, data } = await identifyAccountType(user.id);
         if (type === 'gym') {
@@ -194,7 +249,7 @@ export const ContextProvider = ({ children }) => {
       if (needsUpdateClients || value) {
         setLoadingMembersList(true);
         setBackdrop(true);
-        const { data } = await supabase.auth.getUser();
+        const { data } = await getAuthUser();
         await supabase
           .from("members")
           .select()
@@ -220,7 +275,7 @@ export const ContextProvider = ({ children }) => {
   const getDashboardData = () => {
     setTimeout(async () => {
       setBackdrop(true);
-      const { data } = await supabase.auth.getUser();
+      const { data } = await getAuthUser();
       await supabase
         .from("members")
         .select("id,active, created_at, gender, gym_id, has_trainer, trainer_name, first_name, last_name,ci, pay_date,address")
@@ -252,7 +307,7 @@ export const ContextProvider = ({ children }) => {
     setTimeout(async () => {
       if (needsUpdateTrainer || force) {
         setBackdrop(true);
-        const { data } = await supabase.auth.getUser();
+        const { data } = await getAuthUser();
         const res = await supabase.from("trainers").select().eq("gym_id", data?.user?.id);
         if (res?.data) {
           setTrainersList(res.data);
@@ -286,7 +341,7 @@ export const ContextProvider = ({ children }) => {
 
     setTimeout(async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await getAuthUser();
         const { data: newMembers, error: insertError } = await supabase.from("members").insert({
           first_name: dataToSave.first_name,
           last_name: dataToSave.last_name,
@@ -357,7 +412,7 @@ export const ContextProvider = ({ children }) => {
 
     let dataToSave = { ...trainerData }
     try {
-      const { data } = await supabase.auth.getUser();
+      const { data } = await getAuthUser();
       const result = await supabase.from("trainers").insert({
         name: dataToSave.name,
         last_name: dataToSave.last_name,
@@ -384,7 +439,7 @@ export const ContextProvider = ({ children }) => {
   const deleteMember = async (id) => {
     setBackdrop(true);
     await handlerNeedUpdateClients(true);
-    const { data } = await supabase.auth.getUser();
+    const { data } = await getAuthUser();
     const { error } = await supabase.from("members")
       .delete()
       .eq("gym_id", data?.user?.id)
@@ -398,7 +453,7 @@ export const ContextProvider = ({ children }) => {
 
   const deleteTrainer = async (id) => {
     setBackdrop(true);
-    const { data } = await supabase.auth.getUser();
+    const { data } = await getAuthUser();
     const { error } = await supabase.from("trainers")
       .delete()
       .eq("gym_id", data?.user?.id)
@@ -413,7 +468,7 @@ export const ContextProvider = ({ children }) => {
   const updateClient = async (member, virifiedAcount) => {
     setBackdrop(true);
     setAdding(true);
-    const { data } = await supabase.auth.getUser();
+    const { data } = await getAuthUser();
     let memberToSave = { ...member };
 
     if (virifiedAcount) {
@@ -552,7 +607,7 @@ export const ContextProvider = ({ children }) => {
     if (needsUpdateProducts || forceUpdate) {
       setBackdrop(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await getAuthUser();
         const { data, error } = await supabase
           .from('products')
           .select('*')
@@ -575,7 +630,7 @@ export const ContextProvider = ({ children }) => {
     setBackdrop(true);
     setAdding(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
       const result = await supabase.from("products").insert({
         name: productData.name,
         description: productData.description,
@@ -649,7 +704,7 @@ export const ContextProvider = ({ children }) => {
   const deleteProduct = async (productId) => {
     setBackdrop(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
       const { error } = await supabase
         .from("products")
         .delete()
@@ -676,7 +731,7 @@ export const ContextProvider = ({ children }) => {
     setAdding(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
 
       if (!user) {
         throw new Error("Usuario no autenticado");
@@ -771,6 +826,7 @@ export const ContextProvider = ({ children }) => {
       getShopInfo,
       registerPayment,
       setGymInfo,
+      getAuthUser,
     }}>
     {children}
   </Context.Provider>

@@ -68,6 +68,17 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
 
+    try {
+      const cachedGymInfo = sessionStorage.getItem("gym_info");
+      if (cachedGymInfo) {
+        const parsed = JSON.parse(cachedGymInfo);
+        parsed.theme = newTheme;
+        sessionStorage.setItem("gym_info", JSON.stringify(parsed));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     await supabase
       .from("info_general_gym")
       .update({ theme: newTheme })

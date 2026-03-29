@@ -248,6 +248,16 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
           .eq("owner_id", id);
 
         if (result) {
+          try {
+            const cachedGymInfo = sessionStorage.getItem("gym_info");
+            if (cachedGymInfo) {
+              const parsed = JSON.parse(cachedGymInfo);
+              const updated = { ...parsed, ...infoToSave };
+              sessionStorage.setItem("gym_info", JSON.stringify(updated));
+            }
+          } catch (e) {
+            console.error(e);
+          }
           navigate('/bienvenido');
         }
       } catch (error) {

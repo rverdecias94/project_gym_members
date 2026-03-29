@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { getDashboardData, membersList, trainersList, setNavBarOptions, daysRemaining, gymInfo } = useMembers();
+  const { getDashboardData, membersList, trainersList, setNavBarOptions, daysRemaining, gymInfo, getAuthUser } = useMembers();
   const [relationMembersTrainers, setRelationMembersTrainers] = useState([]);
   const [elemntsByTrainer, setElemntsByTrainer] = useState([]);
   const [trainersName, setTrainerName] = useState([]);
@@ -135,7 +135,17 @@ export default function Dashboard() {
         if (membersList.length > 0) {
           let membersListActive = membersList.filter(item => item.active);
 
-          const { data } = await supabase.auth.getUser();
+          const { data } = await getAuthUser();
+          try {
+            const cachedGymInfo = sessionStorage.getItem("gym_info");
+            if (cachedGymInfo) {
+              const parsed = JSON.parse(cachedGymInfo);
+              parsed.clients = membersListActive.length;
+              sessionStorage.setItem("gym_info", JSON.stringify(parsed));
+            }
+          } catch (e) {
+            console.error(e);
+          }
           await supabase
             .from("info_general_gym")
             .update({ clients: membersListActive.length })

@@ -259,6 +259,16 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
           .eq("owner_id", id);
 
         if (result) {
+          try {
+            const cachedShopInfo = sessionStorage.getItem("shop_info");
+            if (cachedShopInfo) {
+              const parsed = JSON.parse(cachedShopInfo);
+              const updated = { ...parsed, ...infoToSave };
+              sessionStorage.setItem("shop_info", JSON.stringify(updated));
+            }
+          } catch (e) {
+            console.error(e);
+          }
           navigate('/tienda');
         }
       } catch (error) {

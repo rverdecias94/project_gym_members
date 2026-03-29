@@ -116,7 +116,7 @@ const StoreManagmentGym = () => {
     setLoadingProducts(true);
     try {
       setTimeout(async () => {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await getAuthUser();
         const { data, error } = await supabase
           .from('products')
           .select('*')
@@ -152,7 +152,7 @@ const StoreManagmentGym = () => {
   const getOrders = async () => {
     setLoadingOrders(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
       const { data, error } = await supabase
         .from('orders')
         .select('*')
@@ -343,7 +343,7 @@ const StoreManagmentGym = () => {
 
     setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getAuthUser();
       const productData = {
         name: formData.name,
         description: formData.description,
