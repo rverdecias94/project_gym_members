@@ -1,14 +1,13 @@
 /* eslint-disable react/prop-types */
-import { Divider, useTheme } from "@mui/material";
 import ReactApexChart from 'react-apexcharts';
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export default function PremiumDashboard({
   membersList,
   gymInfo,
 }) {
-  const theme = useTheme();
   const [ageRanges, setAgeRanges] = useState({});
   const [paymentStatus, setPaymentStatus] = useState({ upToDate: 0, delayed: 0 });
   const [birthdays, setBirthdays] = useState({ thisMonth: 0, otherMonths: 0 });

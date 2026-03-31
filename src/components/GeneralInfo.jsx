@@ -1,21 +1,22 @@
-import { Button, Grid, TextField, Typography, Checkbox, FormControlLabel } from "@mui/material"
-import { useEffect, useState, useCallback } from "react"
-import { supabase } from "../supabase/client"
+import { useEffect, useState, useCallback, useRef } from "react";
+import { supabase } from "../supabase/client";
 import { useLocation, useNavigate } from "react-router-dom";
-import TimerButton from "./TimerButton";
-import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { provincias } from "./Provincias";
-import { useTheme } from '@mui/material/styles';
-import { LocalizationProvider, MobileTimePicker } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
 import { useSnackbar } from "../context/Snackbar";
 import { useMembers } from "../context/Context";
 import { processImage } from "../utils/imageProcessor";
-import { Avatar, IconButton, Box } from "@mui/material";
-import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import DeleteIcon from "@mui/icons-material/Delete";
 
+// Shadcn UI components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Icons
+import { Camera, Trash2 } from "lucide-react";
 
 const nextPaymentDate = new Date();
 nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
@@ -49,22 +50,23 @@ const GYM_DEFAULT = {
   monthly_currency: "CUP",
   daily_currency: "CUP",
   image_profile: null
-}
-
+};
 
 // eslint-disable-next-line react/prop-types
 const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading }) => {
   const location = useLocation();
   const { planId } = location.state || {};
-  const theme = useTheme();
   const navigate = useNavigate();
   const { showMessage } = useSnackbar();
-  const { setGymInfo: setGymInfoInContext } = useMembers();
+  const { setGymInfo: setGymInfoInContext, getAuthUser } = useMembers();
   const [userInactive, setUserInactive] = useState(null);
   const [reload, setReload] = useState(false);
   const [createProfile, setCreateProfile] = useState(null);
   const [withOutAccount, setWithOutAccount] = useState(null);
   const [loading, setLoading] = useState(true);
+  const fileRef = useRef(null);
+  const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+
   const [gymInfo, setGymInfo] = useState({
     gym_name: "",
     address: "",
@@ -90,19 +92,19 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
     daily_currency: "CUP",
     trainer_currency: "CUP",
     image_profile: null
-  })
+  });
+
   const [state, setProvincia] = useState('');
   const [city, setMunicipio] = useState('');
   const [errors, setErrors] = useState({});
   const [useGeneralSchedule, setUseGeneralSchedule] = useState(false);
   const [generalScheduleType, setGeneralScheduleType] = useState('mon_fri');
   const [customSchedules, setCustomSchedules] = useState(null);
-  /* const [isSaveButtonEnabled, setIsSaveButtonEnabled] = useState(false); */
+  const [useSamePhone, setUseSamePhone] = useState(false);
 
   const [monthly, setMonthly] = useState(false);
   const [daily, setDaily] = useState(false);
   const [trainer, setTrainer] = useState(false);
-
 
   useEffect(() => {
     const existsUser = () => {
@@ -114,6 +116,15 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
           if (setIsLoading) setIsLoading(false);
           return;
         }
+
+        const { data: authData } = await getAuthUser();
+        if (authData?.user) {
+          setUserInfo({
+            name: authData.user.user_metadata?.name || '',
+            email: authData.user.email || ''
+          });
+        }
+
         const { data: members } = await supabase
           .from("members")
           .select()
@@ -122,46 +133,40 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
         const { data } = await supabase
           .from('info_general_gym')
           .select('owner_id')
-          .eq('owner_id', id)
+          .eq('owner_id', id);
 
         if (data && data.length > 0 && id !== undefined) {
-          // Buscar el usuario en la tabla de gimnasios
-          const { data } = await supabase
+          const { data: gymData } = await supabase
             .from('info_general_gym')
             .select()
-            .eq('owner_id', id)
+            .eq('owner_id', id);
 
-
-          if (data && data.length > 0) {
-            setGymInfo(data[0]);
-            setGymInfoInContext(data[0]);
+          if (gymData && gymData.length > 0) {
+            setGymInfo(gymData[0]);
+            setGymInfoInContext(gymData[0]);
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
 
             const todayStr = `${yyyy}-${mm}-${dd}`;
-            const nextPaymentStr = data[0].next_payment_date;
+            const nextPaymentStr = gymData[0].next_payment_date;
 
             if (nextPaymentStr <= todayStr) {
               setUserInactive(true);
-            }
-
-
-            else if (data[0].active === true) {
-              const containsDefault = Object.values(data[0]).some(value =>
+            } else if (gymData[0].active === true) {
+              const containsDefault = Object.values(gymData[0]).some(value =>
                 typeof value === 'string' && value.includes("DEFAULT_")
               );
               if (containsDefault) {
                 setCreateProfile(true);
               } else {
-
                 if (members && members.length === 0)
                   navigate('/bienvenido');
                 else
                   navigate("/panel");
               }
-            } else if (data[0].active === false) {
+            } else if (gymData[0].active === false) {
               setUserInactive(true);
             } else {
               setWithOutAccount(true);
@@ -174,7 +179,7 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
         setLoading(false);
         if (setIsLoading) setIsLoading(false);
       }, 0);
-    }
+    };
 
     const saveUser = () => {
       setTimeout(async () => {
@@ -184,32 +189,76 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
           .from('info_general_gym')
           .insert(GYM_DEFAULT);
         if (data)
-          existsUser()
-      }, 1000)
+          existsUser();
+      }, 1000);
     };
 
     existsUser();
   }, [id, reload, planId, setGymInfoInContext]);
 
-
-
   useEffect(() => {
     checkFormValidity();
-  }, [gymInfo])
+  }, [gymInfo, monthly, daily, trainer]);
 
   useEffect(() => {
-    if (clickOnSave)
-      saveGymInfo();
-  }, [clickOnSave])
-
+    if (clickOnSave) saveGymInfo();
+  }, [clickOnSave]);
 
   const handlerChange = (e) => {
-    let { name, value } = e.target
+    let { name, value } = e.target;
+
+    if (name === 'owner_name') {
+      value = value.replace(/[0-9]/g, '');
+    }
+
+    if (name === 'owner_phone' || name === 'public_phone') {
+      if (!value.startsWith('DEFAULT_')) {
+        value = value.replace(/[^0-9]/g, '');
+        if (value.length > 8) value = value.slice(0, 8);
+      }
+    }
+
+    setGymInfo(prev => {
+      const newState = { ...prev, [name]: value };
+      if (name === 'owner_phone' && useSamePhone) {
+        newState.public_phone = value;
+      }
+      return newState;
+    });
+
+    validateFields(name, value);
+    if (name === 'owner_phone' && useSamePhone) {
+      validateFields('public_phone', value);
+    }
+  };
+
+  const handleFocus = (e) => {
+    let { name, value } = e.target;
+    if (typeof value === 'string' && value.startsWith('DEFAULT_')) {
+      setGymInfo(prev => ({ ...prev, [name]: '' }));
+      validateFields(name, '');
+    }
+  };
+
+  const handleUseSamePhone = (checked) => {
+    setUseSamePhone(checked);
+    if (checked) {
+      setGymInfo(prev => {
+        const newState = { ...prev, public_phone: prev.owner_phone };
+        return newState;
+      });
+      validateFields('public_phone', gymInfo.owner_phone);
+    } else {
+      setGymInfo(prev => ({ ...prev, public_phone: '' }));
+      validateFields('public_phone', '');
+    }
+  };
+
+  const handleSelectChange = (name, value) => {
     setGymInfo(prev => ({
       ...prev,
       [name]: value
     }));
-
     validateFields(name, value);
   };
 
@@ -230,15 +279,16 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
 
   const handleReload = () => {
     setReload(true);
-    setWithOutAccount(false)
-  }
+    setWithOutAccount(false);
+  };
 
   const saveGymInfo = () => {
     let infoToSave = {
       ...gymInfo,
       monthly_payment: monthly ? gymInfo.monthly_payment : null,
       daily_payment: daily ? gymInfo.daily_payment : null,
-    }
+      trainers_cost: trainer ? gymInfo.trainers_cost : null,
+    };
     setTimeout(async () => {
       try {
         if (!id) return;
@@ -261,91 +311,62 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
           navigate('/bienvenido');
         }
       } catch (error) {
-        showMessage("Error al guardar la información. Intente nuevamente o contacte al administrador", "error");
-        console.error(error)
+        showMessage("Error al guardar la información", "error");
+        console.error(error);
       }
     }, 1000);
-  }
+  };
 
   const validateFields = (name, value) => {
     let error = "";
 
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,20}$/;
+    const addressRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s#\/,\.]{15,100}$/;
+    const ownerRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,50}$/;
+    const phoneRegex = /^[0-9]{8}$/;
+
     if (name === "gym_name") {
-      if (value.trim().length < 3) {
-        error = "Nomb. de gimnasio inválido";
-      }
+      if (!nameRegex.test(value) || value.includes("DEFAULT_")) error = "Letras y números (3-20 caracteres)";
     }
     if (name === "address") {
-      if (value.trim().length < 3) {
-        error = "Dirección inválida";
-      }
+      if (!addressRegex.test(value) || value.includes("DEFAULT_")) error = "15 a 100 caracteres. Permite # / , .";
     }
-
     if (name === "owner_name") {
-      if (value.trim().length < 3 || /\d/.test(value)) {
-        error = "Nombre inválido";
-      }
+      if (!ownerRegex.test(value) || value.includes("DEFAULT_")) error = "Solo letras y espacios (min 3)";
     }
-
     if (name === "owner_phone") {
-      if (!/\d{8}$/.test(value)) {
-        error = "Teléfono inválido";
-      }
+      if (!phoneRegex.test(value)) error = "Teléfono inválido (exacto 8 números)";
     }
-
     if (name === "public_phone") {
-      if (!/\d{8}$/.test(value)) {
-        error = "Teléfono inválido";
-      }
+      if (!phoneRegex.test(value)) error = "Teléfono inválido (exacto 8 números)";
     }
+    if (name === "monthly_payment" && value !== "" && (isNaN(value) || Number(value) <= 0)) error = "Pago mensual inválido";
+    if (name === "daily_payment" && value !== "" && (isNaN(value) || Number(value) <= 0)) error = "Pago diario inválido";
+    if (name === "trainers_cost" && value !== "" && (isNaN(value) || Number(value) <= 0)) error = "Pago de entrenador inválido";
 
-    if (name === "monthly_payment" && value !== "") {
-      if (isNaN(value) || Number(value) <= 0) {
-        error = "Pago mensual inválido";
+    setErrors(prevErrors => {
+      const newErrors = { ...prevErrors };
+      if (error) {
+        newErrors[name] = error;
+      } else {
+        delete newErrors[name];
       }
-    }
-
-    if (name === "daily_payment" && value !== "") {
-      if (isNaN(value) || Number(value) <= 0) {
-        error = "Pago diario inválido";
-      }
-    }
-
-    if (name === "trainers_cost" && value !== "") {
-      if (isNaN(value) || Number(value) <= 0) {
-        error = "Pago de entrenador inválido";
-      }
-    }
-
-    setErrors(prevErrors => ({
-      ...prevErrors,
-      [name]: error
-    }));
+      return newErrors;
+    });
   };
 
   const applyTemplateSchedule = useCallback((templateSlots, scheduleType) => {
     setGymInfo(prev => {
       const newSchedules = { ...prev.schedules };
-
       const daysToApply = [];
-      if (scheduleType === 'mon_fri') {
-        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday');
-      } else if (scheduleType === 'mon_sat') {
-        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
-      } else if (scheduleType === 'all_week') {
-        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
-      }
+      if (scheduleType === 'mon_fri') daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday');
+      else if (scheduleType === 'mon_sat') daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
+      else if (scheduleType === 'all_week') daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
 
       const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-
       allDays.forEach(day => {
-        if (daysToApply.includes(day)) {
-          newSchedules[day] = templateSlots;
-        } else {
-          newSchedules[day] = [];
-        }
+        newSchedules[day] = daysToApply.includes(day) ? templateSlots : [];
       });
-
       return { ...prev, schedules: newSchedules };
     });
   }, []);
@@ -367,10 +388,9 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
     applyTemplateSchedule(newTemplateSlots, generalScheduleType);
   };
 
-  const handleUseGeneralScheduleChange = (e) => {
-    const isChecked = e.target.checked;
-    setUseGeneralSchedule(isChecked);
-    if (isChecked) {
+  const handleUseGeneralScheduleChange = (checked) => {
+    setUseGeneralSchedule(checked);
+    if (checked) {
       setCustomSchedules(gymInfo.schedules);
     } else {
       if (customSchedules) {
@@ -385,85 +405,69 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
       const template = (gymInfo.schedules.monday || []);
       applyTemplateSchedule(template, generalScheduleType);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generalScheduleType, useGeneralSchedule, applyTemplateSchedule]);
 
   const checkFormValidity = () => {
-    const { gym_name, address, owner_name, owner_phone, public_phone, state, city, daily_payment, monthly_payment, } = gymInfo;
+    const { gym_name, address, owner_name, owner_phone, public_phone, state, city } = gymInfo;
     const noErrors = !Object.values(errors).some(error => error);
-    const allFieldsValid =
-      gym_name.trim().length >= 3 &&
-      address.trim().length >= 3 &&
-      owner_name.trim().length >= 3 &&
-      !/\d/.test(owner_name) &&
-      /\d{8}$/.test(owner_phone) &&
-      /\d{8}$/.test(public_phone) &&
-      state !== "" &&
-      city !== "" &&
-      (monthly_payment || daily_payment);
 
-    const paymentsValid = (monthly && !isNaN(gymInfo.monthly_payment) && Number(gymInfo.monthly_payment) > 0) ||
-      (daily && !isNaN(gymInfo.daily_payment) && Number(gymInfo.daily_payment) > 0);
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,20}$/;
+    const addressRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s#\/,\.]{15,100}$/;
+    const ownerRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,50}$/;
+    const phoneRegex = /^[0-9]{8}$/;
 
-    const schedulesValid = Object.values(gymInfo.schedules).some(day => day.length > 0);
+    const step0Valid =
+      nameRegex.test(gym_name || "") && !(gym_name || "").includes("DEFAULT_") &&
+      addressRegex.test(address || "") && !(address || "").includes("DEFAULT_") &&
+      ownerRegex.test(owner_name || "") && !(owner_name || "").includes("DEFAULT_") &&
+      phoneRegex.test(owner_phone || "") &&
+      phoneRegex.test(public_phone || "") &&
+      state !== "" && !state.includes("DEFAULT_") &&
+      city !== "" && !city.includes("DEFAULT_");
 
-    setIsSaveButtonEnabled(noErrors && allFieldsValid && paymentsValid && schedulesValid);
+    const step1Valid = (monthly && !isNaN(gymInfo.monthly_payment) && Number(gymInfo.monthly_payment) > 0) ||
+      (daily && !isNaN(gymInfo.daily_payment) && Number(gymInfo.daily_payment) > 0) ||
+      (trainer && !isNaN(gymInfo.trainers_cost) && Number(gymInfo.trainers_cost) > 0);
+
+    const step2Valid = Object.values(gymInfo.schedules).some(day => day.length > 0);
+
+    let currentStepValid = false;
+    if (step === 0) currentStepValid = step0Valid;
+    if (step === 1) currentStepValid = step1Valid;
+    if (step === 2) currentStepValid = step2Valid;
+
+    setIsSaveButtonEnabled(noErrors && currentStepValid);
   };
 
-
-
-
-  const handleProvinciaChange = (event) => {
-    let { value } = event.target;
+  const handleProvinciaChange = (value) => {
     setProvincia(value);
-    setGymInfo(prev => ({
-      ...prev,
-      state: value
-    }));
+    setGymInfo(prev => ({ ...prev, state: value }));
     setMunicipio('');
   };
 
-  const handleMunicipioChange = (event) => {
-    let { value } = event.target;
+  const handleMunicipioChange = (value) => {
     setMunicipio(value);
-    setGymInfo(prev => ({
-      ...prev,
-      city: value
-    }));
+    setGymInfo(prev => ({ ...prev, city: value }));
   };
 
   const handleScheduleChange = (dayKey, index, field, value) => {
     setGymInfo(prev => {
       const newSchedules = { ...prev.schedules };
       const updatedDay = [...newSchedules[dayKey]];
-      updatedDay[index] = {
-        ...updatedDay[index],
-        [field]: value,
-      };
+      updatedDay[index] = { ...updatedDay[index], [field]: value };
       newSchedules[dayKey] = updatedDay;
-
-      return {
-        ...prev,
-        schedules: newSchedules,
-      };
+      return { ...prev, schedules: newSchedules };
     });
   };
-
 
   const addTimeSlot = (dayKey) => {
     setGymInfo(prev => {
       const newSchedules = { ...prev.schedules };
       const currentSlots = Array.isArray(newSchedules[dayKey]) ? newSchedules[dayKey] : [];
       newSchedules[dayKey] = [...currentSlots, { start: "08:00", end: "09:00" }];
-
-      return {
-        ...prev,
-        schedules: newSchedules,
-      };
+      return { ...prev, schedules: newSchedules };
     });
   };
-
-
 
   const removeTimeSlot = (dayKey, index) => {
     setGymInfo(prev => {
@@ -471,423 +475,423 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
       const updatedDay = [...newSchedules[dayKey]];
       updatedDay.splice(index, 1);
       newSchedules[dayKey] = updatedDay;
-
-      return {
-        ...prev,
-        schedules: newSchedules,
-      };
+      return { ...prev, schedules: newSchedules };
     });
+  };
+
+  const logoutUser = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const generateWhatsAppLink = () => {
+    let planName = "No especificado";
+    const selectedPlanId = planId || localStorage.getItem('selectedPlanId');
+    if (selectedPlanId === "premium") planName = "Premium";
+    else if (selectedPlanId === "estandar") planName = "Estandar";
+    else if (selectedPlanId === "market-fit") planName = "Tienda Fitness";
+
+    console.log("Plan ID from context/local:", selectedPlanId);
+
+    const message = `Hola, mi nombre es ${userInfo.name || "Usuario"}. He solicitado el plan "${planName}" con el correo ${userInfo.email || "No especificado"}. Deseo finalizar la creación de mi cuenta.`;
+    return `https://wa.me/5356408532?text=${encodeURIComponent(message)}`;
   };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div className="flex justify-center items-center h-[50vh]">
         <div className="loader"></div>
       </div>
     );
   }
 
   return (
-    <Grid container
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingBottom: "2rem",
-        gap: 20,
-        backgroundColor: theme.palette.background.main,
-      }}
-    >
-      {userInactive &&
-        <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-          <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
-            Su cuenta está inactiva temporalmente hasta que sea efectuado el pago mensual del uso de la aplicación.
-          </Typography>
-          <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
-            Usted será regresado al inicio de sesión, por favor contacte con el administrador.
-          </Typography>
-          <TimerButton setReload={handleReload} timer={"seconds"} />
-        </Grid>
-      }
+    <div className="w-full">
+      {userInactive && (
+        <div className="text-center space-y-6 py-10">
+          <h2 className="text-xl font-bold">Su cuenta está inactiva temporalmente hasta que sea efectuado el pago mensual del uso de la aplicación.</h2>
+          <h2 className="text-xl font-bold">Por favor, contacte con el administrador para reactivar su cuenta.</h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+            <a href={generateWhatsAppLink()} target="_blank" rel="noreferrer" className="w-full sm:w-auto">
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                Contactar por WhatsApp
+              </Button>
+            </a>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={logoutUser}>
+              Cerrar sesión
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {
-        withOutAccount && !userInactive &&
-        <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-          <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
-            ¡Registro exitoso!
-          </Typography>
-          <Typography variant="h6" style={{ marginBottom: '30px', textAlign: "center" }}>
-            La activación de su solicitud está en curso. Este proceso suele tardar alrededor de 10 minutos, agradecemos su paciencia.
-          </Typography>
-          <TimerButton setReload={handleReload} timer={"minutes"} />
-        </Grid>
-      }
+      {withOutAccount && !userInactive && (
+        <div className="text-center space-y-6 py-10">
+          <h2 className="text-2xl font-bold">¡Registro exitoso!</h2>
+          <p className="text-lg text-muted-foreground">Para finalizar la creación de su cuenta debe contactarnos por WhatsApp.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+            <a href={generateWhatsAppLink()} target="_blank" rel="noreferrer" className="w-full sm:w-auto">
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                Contactar por WhatsApp
+              </Button>
+            </a>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={logoutUser}>
+              Cerrar sesión
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {createProfile &&
-
-        <Grid item lg={12} xl={12} md={12} sm={12} xs={12}>
-          {step === 0 &&
-            <Grid tem lg={12} xl={12} md={12} sm={12} xs={12}>
-              <Box display="flex" alignItems="center" gap={2} mb={3} mt={2}>
-                {gymInfo.image_profile ? (
-                  <Box position="relative">
-                    <Avatar src={gymInfo.image_profile} sx={{ width: 80, height: 80 }} />
-                    <IconButton
-                      size="small"
+      {createProfile && (
+        <div className="w-full">
+          {step === 0 && (
+            <div className="space-y-6">
+              <div className="flex items-start gap-5">
+                <div className="relative">
+                  <Avatar className="h-24 w-24 ring-2 ring-border">
+                    <AvatarImage src={gymInfo.image_profile} alt="Logo del Gimnasio" />
+                    <AvatarFallback>Logo</AvatarFallback>
+                  </Avatar>
+                  {gymInfo.image_profile && (
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="absolute -top-2 -right-2 h-8 w-8 rounded-full"
                       onClick={handleImageDelete}
-                      sx={{ position: 'absolute', top: -10, right: -10, backgroundColor: 'rgba(255,0,0,0.8)', color: 'white', '&:hover': { backgroundColor: 'red' } }}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                ) : (
-                  <Avatar sx={{ width: 80, height: 80 }}>Logo</Avatar>
-                )}
-                <Box>
-                  <Button variant="contained" component="label" startIcon={<PhotoCamera />}>
-                    {gymInfo.image_profile ? "Cambiar Imagen" : "Subir Imagen"}
-                    <input type="file" hidden accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleImageUpload} />
-                  </Button>
-                  <Typography variant="caption" display="block" color="textSecondary" mt={1}>
-                    Max: 2MB. Formatos: png, jpg, webp
-                  </Typography>
-                </Box>
-              </Box>
-
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.gym_name ? errors.gym_name : "Nombre de gimnasio"}
-                name="gym_name"
-                value={gymInfo.gym_name}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-              <br />
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.address ? errors.address : "Dirección"}
-                name="address"
-                value={gymInfo.address}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-
-              <FormControl required fullWidth margin="normal" id="prov-required">
-                <InputLabel>Provincia</InputLabel>
-                <Select
-                  value={state}
-                  onChange={handleProvinciaChange}
-                >
-                  {Object.keys(provincias).map((prov) => (
-                    <MenuItem key={prov} value={prov}>
-                      {prov}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl required fullWidth margin="normal" disabled={!state} id="mun-required">
-                <InputLabel>Municipio</InputLabel>
-                <Select
-                  value={city}
-                  onChange={handleMunicipioChange}
-                >
-                  {(provincias[state] || []).map((mun) => (
-                    <MenuItem key={mun} value={mun}>
-                      {mun}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.owner_name ? errors.owner_name : "Nombre de Propietario"}
-                name="owner_name"
-                value={gymInfo.owner_name}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.owner_phone ? errors.owner_phone : "Teléfono operacional"}
-                name="owner_phone"
-                value={gymInfo.owner_phone}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-              <p style={{ marginTop: 10, color: "#999" }}>Nota: Usaremos este número para mantener la comunicación de operaciones entre tu gimnasio y Tronoss.</p>
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.public_phone ? errors.public_phone : "Teléfono de contacto (opcional)"}
-                name="public_phone"
-                value={gymInfo.public_phone}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-              <p style={{ marginTop: 10, color: "#999" }}>Nota: Este teléfono se mostrará al público para que puedan comunicarse con ustedes y recibir apoyo o aclarar dudas.</p>
-            </Grid>
-          }
-
-
-          {step === 1 &&
-            <Grid item lg={12} xl={12} md={12} sm={12} xs={12}>
-              <>
-                <div style={{ display: "flex", width: "100%", justifyContent: "center", gap: 20 }}>
-                  <label>
-                    <input type="checkbox" checked={monthly} onChange={() => setMonthly(!monthly)} /> Mensual
-                  </label>
-                  <label>
-                    <input type="checkbox" checked={daily} onChange={() => setDaily(!daily)} /> Diario
-                  </label>
-                  <label>
-                    <input type="checkbox" checked={trainer} onChange={() => setTrainer(!trainer)} /> Entrenador
-                  </label>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-              </>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => fileRef.current?.click()}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 flex gap-2"
+                  >
+                    <Camera className="w-4 h-4" />
+                    {gymInfo.image_profile ? "Cambiar Imagen" : "Subir Imagen"}
+                  </Button>
+                  <div className="text-xs text-muted-foreground">Max: 2MB. Formatos: png, jpg, webp</div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
+              </div>
 
-              {monthly && (
-                <Grid style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                  <TextField
-                    required
-                    label={errors.monthly_payment ? errors.monthly_payment : "Pago mensual"}
-                    name="monthly_payment"
-                    value={gymInfo.monthly_payment || ""}
+              <Separator />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid gap-2">
+                  <Label htmlFor="gym_name">Nombre de gimnasio *</Label>
+                  <Input
+                    id="gym_name"
+                    name="gym_name"
+                    value={gymInfo.gym_name?.startsWith("DEFAULT_") ? "" : gymInfo.gym_name}
                     onChange={handlerChange}
-                    style={{ width: "100%", marginTop: 20 }}
+                    onFocus={handleFocus}
+                    placeholder="El potro salvaje"
+                    className={errors.gym_name ? "border-destructive" : ""}
                   />
+                  {errors.gym_name && <span className="text-xs text-destructive">{errors.gym_name}</span>}
+                </div>
 
-                  <FormControl required fullWidth margin="normal" id="mun-required">
-                    <InputLabel>Moneda</InputLabel>
-                    <Select
-                      value={gymInfo.monthly_currency}
-                      onChange={handlerChange}
-                      style={{ width: "100%", marginTop: 10 }}
-                      name="monthly_currency"
-                    >
-                      {(["USD", "CUP"]).map((mun) => (
-                        <MenuItem key={mun} value={mun}>
-                          {mun}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                </Grid>
-              )}
-
-              {daily && (
-
-                <Grid style={{ display: "flex", width: "100%", gap: 20, alignItems: "center", justifyContent: "space-between" }}>
-                  <TextField
-                    required
-                    label={errors.daily_payment ? errors.daily_payment : "Pago diario"}
-                    name="daily_payment"
-                    value={gymInfo.daily_payment || ""}
+                <div className="grid gap-2">
+                  <Label htmlFor="address">Dirección *</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={gymInfo.address?.startsWith("DEFAULT_") ? "" : gymInfo.address}
                     onChange={handlerChange}
-                    style={{ width: "100%", marginTop: 20 }}
+                    onFocus={handleFocus}
+                    placeholder="Dirección del gimnasio"
+                    className={errors.address ? "border-destructive" : ""}
                   />
+                  {errors.address && <span className="text-xs text-destructive">{errors.address}</span>}
+                </div>
 
-                  <FormControl required fullWidth margin="normal" id="mun-required">
-                    <InputLabel>Moneda</InputLabel>
-                    <Select
-                      value={gymInfo.daily_currency}
-                      onChange={handlerChange}
-                      style={{ width: "100%", marginTop: 10 }}
-                      name="daily_currency"
-                    >
-                      {(["USD", "CUP"]).map((mun) => (
-                        <MenuItem key={mun} value={mun}>
-                          {mun}
-                        </MenuItem>
+                <div className="grid gap-2">
+                  <Label>Provincia *</Label>
+                  <Select value={state} onValueChange={handleProvinciaChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona Provincia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(provincias).map((prov) => (
+                        <SelectItem key={prov} value={prov}>{prov}</SelectItem>
                       ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              )}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {trainer && (
+                <div className="grid gap-2">
+                  <Label>Municipio *</Label>
+                  <Select value={city} onValueChange={handleMunicipioChange} disabled={!state}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona Municipio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(provincias[state] || []).map((mun) => (
+                        <SelectItem key={mun} value={mun}>{mun}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Grid style={{ display: "flex", width: "100%", gap: 20, alignItems: "center", justifyContent: "space-between" }}>
-                  <TextField
-                    required
-                    label={errors.trainers_cost ? errors.trainers_cost : "Costo por entrenador"}
-                    name="trainers_cost"
-                    value={gymInfo.trainers_cost || ""}
+                <div className="grid gap-2">
+                  <Label htmlFor="owner_name">Nombre de Propietario *</Label>
+                  <Input
+                    id="owner_name"
+                    name="owner_name"
+                    value={gymInfo.owner_name?.startsWith("DEFAULT_") ? "" : gymInfo.owner_name}
                     onChange={handlerChange}
-                    style={{ width: "100%", marginTop: 20 }}
+                    onFocus={handleFocus}
+                    placeholder="Nombre del propietario"
+                    className={errors.owner_name ? "border-destructive" : ""}
                   />
+                  {errors.owner_name && <span className="text-xs text-destructive">{errors.owner_name}</span>}
+                </div>
 
-                  <FormControl required fullWidth margin="normal" id="mun-required">
-                    <InputLabel>Moneda</InputLabel>
-                    <Select
-                      value={gymInfo.trainer_currency}
+                <div className="grid gap-2">
+                  <Label htmlFor="owner_phone">Teléfono operacional *</Label>
+                  <div className="flex items-center">
+                    <span className="flex items-center justify-center bg-muted border border-r-0 border-input rounded-l-md px-3 h-10 text-sm">
+                      🇨🇺 +53
+                    </span>
+                    <Input
+                      id="owner_phone"
+                      name="owner_phone"
+                      value={gymInfo.owner_phone?.startsWith("DEFAULT_") ? "" : gymInfo.owner_phone}
                       onChange={handlerChange}
-                      style={{ width: "100%", marginTop: 10 }}
-                      name="trainer_currency"
-                    >
-                      {(["USD", "CUP"]).map((mun) => (
-                        <MenuItem key={mun} value={mun}>
-                          {mun}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              )}
-            </Grid>
-          }
+                      onFocus={handleFocus}
+                      placeholder="Ej: 51234567"
+                      className={`rounded-l-none ${errors.owner_phone ? "border-destructive" : ""}`}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Usaremos este número para mantener la comunicación de operaciones.</span>
+                  {errors.owner_phone && <span className="text-xs text-destructive">{errors.owner_phone}</span>}
+                </div>
 
-          {step === 2 &&
-            <Grid>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={useGeneralSchedule}
-                    onChange={handleUseGeneralScheduleChange}
-                    name="useGeneralSchedule"
-                  />
-                }
-                label="Aplicar el mismo horario para todos los días"
-              />
+                <div className="grid gap-2 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="public_phone">Teléfono de contacto *</Label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="same_phone" checked={useSamePhone} onCheckedChange={handleUseSamePhone} />
+                      <Label htmlFor="same_phone" className="text-xs font-normal cursor-pointer">Usar operacional</Label>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="flex items-center justify-center bg-muted border border-r-0 border-input rounded-l-md px-3 h-10 text-sm">
+                      🇨🇺 +53
+                    </span>
+                    <Input
+                      id="public_phone"
+                      name="public_phone"
+                      value={gymInfo.public_phone?.startsWith("DEFAULT_") ? "" : gymInfo.public_phone}
+                      onChange={handlerChange}
+                      onFocus={handleFocus}
+                      disabled={useSamePhone}
+                      placeholder="Ej: 51234567"
+                      className={`rounded-l-none ${errors.public_phone ? "border-destructive" : ""}`}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Este teléfono se mostrará al público para que puedan comunicarse con ustedes.</span>
+                  {errors.public_phone && <span className="text-xs text-destructive">{errors.public_phone}</span>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-8">
+              <div className="flex flex-wrap justify-center gap-6 p-4 border rounded-lg bg-muted/20">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="monthly" checked={monthly} onCheckedChange={setMonthly} />
+                  <Label htmlFor="monthly" className="cursor-pointer">Mensual</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="daily" checked={daily} onCheckedChange={setDaily} />
+                  <Label htmlFor="daily" className="cursor-pointer">Diario</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="trainer" checked={trainer} onCheckedChange={setTrainer} />
+                  <Label htmlFor="trainer" className="cursor-pointer">Entrenador</Label>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {monthly && (
+                  <div className="grid grid-cols-2 gap-4 items-start">
+                    <div className="grid gap-2">
+                      <Label htmlFor="monthly_payment">Pago mensual *</Label>
+                      <Input
+                        id="monthly_payment"
+                        name="monthly_payment"
+                        type="number"
+                        value={gymInfo.monthly_payment || ""}
+                        onChange={handlerChange}
+                        className={errors.monthly_payment ? "border-destructive" : ""}
+                      />
+                      {errors.monthly_payment && <span className="text-xs text-destructive">{errors.monthly_payment}</span>}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Moneda *</Label>
+                      <Select value={gymInfo.monthly_currency} onValueChange={(v) => handleSelectChange('monthly_currency', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CUP">CUP</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {daily && (
+                  <div className="grid grid-cols-2 gap-4 items-start">
+                    <div className="grid gap-2">
+                      <Label htmlFor="daily_payment">Pago diario *</Label>
+                      <Input
+                        id="daily_payment"
+                        name="daily_payment"
+                        type="number"
+                        value={gymInfo.daily_payment || ""}
+                        onChange={handlerChange}
+                        className={errors.daily_payment ? "border-destructive" : ""}
+                      />
+                      {errors.daily_payment && <span className="text-xs text-destructive">{errors.daily_payment}</span>}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Moneda *</Label>
+                      <Select value={gymInfo.daily_currency} onValueChange={(v) => handleSelectChange('daily_currency', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CUP">CUP</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {trainer && (
+                  <div className="grid grid-cols-2 gap-4 items-start">
+                    <div className="grid gap-2">
+                      <Label htmlFor="trainers_cost">Costo por entrenador *</Label>
+                      <Input
+                        id="trainers_cost"
+                        name="trainers_cost"
+                        type="number"
+                        value={gymInfo.trainers_cost || ""}
+                        onChange={handlerChange}
+                        className={errors.trainers_cost ? "border-destructive" : ""}
+                      />
+                      {errors.trainers_cost && <span className="text-xs text-destructive">{errors.trainers_cost}</span>}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Moneda *</Label>
+                      <Select value={gymInfo.trainer_currency} onValueChange={(v) => handleSelectChange('trainer_currency', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CUP">CUP</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 bg-muted/20 p-4 border rounded-lg">
+                <Checkbox id="useGeneralSchedule" checked={useGeneralSchedule} onCheckedChange={handleUseGeneralScheduleChange} />
+                <Label htmlFor="useGeneralSchedule" className="cursor-pointer">Aplicar el mismo horario para todos los días</Label>
+              </div>
 
               {useGeneralSchedule ? (
-                <div>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Aplicar a</InputLabel>
-                    <Select
-                      value={generalScheduleType}
-                      onChange={(e) => setGeneralScheduleType(e.target.value)}
-                    >
-                      <MenuItem value="mon_fri">Lunes a Viernes</MenuItem>
-                      <MenuItem value="mon_sat">Lunes a Sábado</MenuItem>
-                      <MenuItem value="all_week">Todos los 7 días</MenuItem>
+                <div className="space-y-4">
+                  <div className="grid gap-2 max-w-xs">
+                    <Label>Aplicar a</Label>
+                    <Select value={generalScheduleType} onValueChange={setGeneralScheduleType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mon_fri">Lunes a Viernes</SelectItem>
+                        <SelectItem value="mon_sat">Lunes a Sábado</SelectItem>
+                        <SelectItem value="all_week">Todos los 7 días</SelectItem>
+                      </SelectContent>
                     </Select>
-                  </FormControl>
-                  <hr style={{ marginTop: 20, color: "#ccc", borderTop: "1px solid #ccc" }} />
-                  <strong>Horario General</strong>
-                  {(gymInfo.schedules.monday || []).map((slot, idx) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <MobileTimePicker
-                          label="Inicio"
-                          value={dayjs(slot.start, 'HH:mm')}
-                          onChange={(newValue) => {
-                            const formatted = dayjs(newValue).format("HH:mm");
-                            handleTemplateScheduleChange(idx, "start", formatted);
-                          }}
-                          ampm={false}
-                          touchUi
-                          slotProps={{ textField: { size: "small", fullWidth: true } }}
-                        />
-                      </LocalizationProvider>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <MobileTimePicker
-                          label="Fin"
-                          value={dayjs(slot.end, 'HH:mm')}
-                          onChange={(newValue) => {
-                            const formatted = dayjs(newValue).format("HH:mm");
-                            handleTemplateScheduleChange(idx, "end", formatted);
-                          }}
-                          ampm={false}
-                          touchUi
-                          slotProps={{ textField: { size: "small", fullWidth: true } }}
-                        />
-                      </LocalizationProvider>
-                      <Button onClick={() => removeTemplateTimeSlot(idx)} color="error" size="small">Eliminar</Button>
-                    </div>
-                  ))}
-                  <Button variant="contained" onClick={addTemplateTimeSlot} size="small" sx={{ mt: 1, width: "fit-content" }}>
-                    + Añadir horario
-                  </Button>
+                  </div>
+
+                  <Separator />
+                  <h3 className="font-semibold">Horario General</h3>
+
+                  <div className="space-y-3">
+                    {(gymInfo.schedules.monday || []).map((slot, idx) => (
+                      <div key={idx} className="flex items-end gap-3">
+                        <div className="grid gap-1 flex-1">
+                          <Label className="text-xs">Inicio</Label>
+                          <Input type="time" value={slot.start} onChange={(e) => handleTemplateScheduleChange(idx, "start", e.target.value)} />
+                        </div>
+                        <div className="grid gap-1 flex-1">
+                          <Label className="text-xs">Fin</Label>
+                          <Input type="time" value={slot.end} onChange={(e) => handleTemplateScheduleChange(idx, "end", e.target.value)} />
+                        </div>
+                        <Button variant="destructive" size="icon" onClick={() => removeTemplateTimeSlot(idx)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" onClick={addTemplateTimeSlot} size="sm" className="mt-2">
+                      + Añadir horario
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <>
-                  {gymInfo?.schedules &&
-                    [
-                      { key: "monday", label: "Lunes" },
-                      { key: "tuesday", label: "Martes" },
-                      { key: "wednesday", label: "Miércoles" },
-                      { key: "thursday", label: "Jueves" },
-                      { key: "friday", label: "Viernes" },
-                      { key: "saturday", label: "Sábado" },
-                      { key: "sunday", label: "Domingo" }
-                    ].map(({ key, label }) => (
-                      <div key={key} style={{ marginBottom: 15, marginTop: 20, display: 'grid', flexDirection: 'column' }}>
-                        <strong>{label}</strong>
-                        {Array.isArray(gymInfo.schedules[key]) &&
-                          gymInfo.schedules[key].map((slot, idx) => (
-                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
-                              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <MobileTimePicker
-                                  label="Inicio"
-                                  value={dayjs(slot.start, 'HH:mm')}
-                                  onChange={(newValue) => {
-                                    const formatted = dayjs(newValue).format("HH:mm");
-                                    handleScheduleChange(key, idx, "start", formatted);
-                                  }}
-                                  ampm={false}
-                                  touchUi
-                                  slotProps={{
-                                    textField: {
-                                      size: "small",
-                                      fullWidth: true,
-                                    },
-                                  }}
-                                />
-                              </LocalizationProvider>
-
-                              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <MobileTimePicker
-                                  label="Fin"
-                                  value={dayjs(slot.end, 'HH:mm')}
-                                  onChange={(newValue) => {
-                                    const formatted = dayjs(newValue).format("HH:mm");
-                                    handleScheduleChange(key, idx, "end", formatted);
-                                  }}
-                                  ampm={false}
-                                  touchUi
-                                  slotProps={{
-                                    textField: {
-                                      size: "small",
-                                      fullWidth: true,
-                                    },
-                                  }}
-                                />
-                              </LocalizationProvider>
-
-                              <Button onClick={() => removeTimeSlot(key, idx)} color="error" size="small">Eliminar</Button>
-                            </div>
-                          ))}
-                        <Button variant="contained" onClick={() => addTimeSlot(key)} size="small" sx={{ mt: 1, width: "fit-content" }}>
-                          + Añadir horario
-                        </Button>
-                        <hr style={{
-                          marginTop: 20,
-                          color: "#ccc",
-                          borderTop: "1px solid #ccc"
-                        }} />
-                      </div>
-                    ))
-                  }
-                </>
+                <div className="space-y-8">
+                  {[
+                    { key: "monday", label: "Lunes" },
+                    { key: "tuesday", label: "Martes" },
+                    { key: "wednesday", label: "Miércoles" },
+                    { key: "thursday", label: "Jueves" },
+                    { key: "friday", label: "Viernes" },
+                    { key: "saturday", label: "Sábado" },
+                    { key: "sunday", label: "Domingo" }
+                  ].map(({ key, label }) => (
+                    <div key={key} className="space-y-3">
+                      <h3 className="font-semibold text-primary">{label}</h3>
+                      {Array.isArray(gymInfo.schedules[key]) && gymInfo.schedules[key].map((slot, idx) => (
+                        <div key={idx} className="flex items-end gap-3">
+                          <div className="grid gap-1 flex-1">
+                            <Label className="text-xs">Inicio</Label>
+                            <Input type="time" value={slot.start} onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)} />
+                          </div>
+                          <div className="grid gap-1 flex-1">
+                            <Label className="text-xs">Fin</Label>
+                            <Input type="time" value={slot.end} onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)} />
+                          </div>
+                          <Button variant="destructive" size="icon" onClick={() => removeTimeSlot(key, idx)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button variant="outline" onClick={() => addTimeSlot(key)} size="sm" className="mt-2">
+                        + Añadir horario
+                      </Button>
+                      <Separator className="mt-4" />
+                    </div>
+                  ))}
+                </div>
               )}
-            </Grid>
-          }
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
-        </Grid>
-      }
-    </Grid>
-  )
-
-
-}
-
-export default GeneralInfo
-
+export default GeneralInfo;

@@ -1,20 +1,22 @@
-import { Button, Grid, TextField, Typography, Checkbox, FormControlLabel } from "@mui/material"
-import { useEffect, useState, useCallback } from "react"
-import { supabase } from "../supabase/client"
+import { useEffect, useState, useCallback, useRef } from "react";
+import { supabase } from "../supabase/client";
 import { useLocation, useNavigate } from "react-router-dom";
-import TimerButton from "./TimerButton";
-import { MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { provincias } from "./Provincias";
-import { useTheme } from '@mui/material/styles';
-import { LocalizationProvider, MobileTimePicker } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
 import { useSnackbar } from "../context/Snackbar";
 import { useMembers } from "../context/Context";
 import { processImage } from "../utils/imageProcessor";
-import { Avatar, IconButton, Box } from "@mui/material";
-import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import DeleteIcon from "@mui/icons-material/Delete";
+
+// Shadcn UI components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Icons
+import { Camera, Trash2 } from "lucide-react";
 
 const nextPaymentDate = new Date();
 nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
@@ -41,21 +43,23 @@ const SHOP_DEFAULT = {
   },
   theme: true,
   image_profile: null
-}
+};
 
 // eslint-disable-next-line react/prop-types
 const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading }) => {
   const location = useLocation();
   const { planId } = location.state || {};
-  const theme = useTheme();
   const navigate = useNavigate();
   const { showMessage } = useSnackbar();
-  const { setShopInfo } = useMembers();
+  const { setShopInfo: setShopInfoContext, getAuthUser } = useMembers();
   const [userInactive, setUserInactive] = useState(null);
   const [reload, setReload] = useState(false);
   const [createProfile, setCreateProfile] = useState(null);
   const [withOutAccount, setWithOutAccount] = useState(null);
   const [loading, setLoading] = useState(true);
+  const fileRef = useRef(null);
+  const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+
   const [shopInfo, setShopInfoState] = useState({
     shop_name: "",
     address: "",
@@ -74,13 +78,15 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
       sunday: []
     },
     image_profile: null
-  })
+  });
+
   const [state, setProvincia] = useState('');
   const [city, setMunicipio] = useState('');
   const [errors, setErrors] = useState({});
   const [useGeneralSchedule, setUseGeneralSchedule] = useState(false);
   const [generalScheduleType, setGeneralScheduleType] = useState('mon_fri');
   const [customSchedules, setCustomSchedules] = useState(null);
+  const [useSamePhone, setUseSamePhone] = useState(false);
 
   useEffect(() => {
     const existsUser = () => {
@@ -88,21 +94,29 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
       if (setIsLoading) setIsLoading(true);
       setTimeout(async () => {
         if (!id || id === undefined) return;
+
+        const { data: authData } = await getAuthUser();
+        if (authData?.user) {
+          setUserInfo({
+            name: authData.user.user_metadata?.name || '',
+            email: authData.user.email || ''
+          });
+        }
+
         const { data } = await supabase
           .from('info_shops')
           .select('owner_id')
-          .eq('owner_id', id)
+          .eq('owner_id', id);
 
         if (data && data.length > 0 && id !== undefined) {
-          // Buscar el usuario en la tabla de tiendas
-          const { data } = await supabase
+          const { data: shopData } = await supabase
             .from('info_shops')
             .select()
-            .eq('owner_id', id)
+            .eq('owner_id', id);
 
-          if (data && data.length > 0) {
-            setShopInfo(data[0]);
-            setShopInfoState(data[0]);
+          if (shopData && shopData.length > 0) {
+            setShopInfoContext(shopData[0]);
+            setShopInfoState(shopData[0]);
 
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -110,13 +124,12 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
             const dd = String(today.getDate()).padStart(2, '0');
 
             const todayStr = `${yyyy}-${mm}-${dd}`;
-            const nextPaymentStr = data[0].next_payment_date;
+            const nextPaymentStr = shopData[0].next_payment_date;
 
             if (nextPaymentStr <= todayStr) {
               setUserInactive(true);
-            }
-            else if (data[0].active === true) {
-              const containsDefault = Object.values(data[0]).some(value =>
+            } else if (shopData[0].active === true) {
+              const containsDefault = Object.values(shopData[0]).some(value =>
                 typeof value === 'string' && value.includes("DEFAULT_")
               );
               if (containsDefault) {
@@ -124,7 +137,7 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
               } else {
                 navigate("/tienda");
               }
-            } else if (data[0].active === false) {
+            } else if (shopData[0].active === false) {
               setUserInactive(true);
             } else {
               setWithOutAccount(true);
@@ -137,45 +150,84 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
         setLoading(false);
         if (setIsLoading) setIsLoading(false);
       }, 0);
-    }
+    };
 
     const saveUser = async () => {
       if (!id) return;
       try {
         const { error } = await supabase
           .from('info_shops')
-          .insert([{ ...SHOP_DEFAULT, owner_id: id }])
+          .insert([{ ...SHOP_DEFAULT, owner_id: id }]);
 
         if (error) {
           console.error("Error al guardar usuario:", error);
-          showMessage("Error al guardar la información. Intente nuevamente o contacte al administrador", "error");
+          showMessage("Error al guardar la información", "error");
         }
       } catch (error) {
         console.error("Error al guardar usuario:", error);
-        showMessage("Error al guardar la información. Intente nuevamente o contacte al administrador", "error");
+        showMessage("Error al guardar la información", "error");
       }
-    }
+    };
 
     existsUser();
-  }, [id, reload, planId]);
+  }, [id, reload, planId, setShopInfoContext]);
 
   useEffect(() => {
     checkFormValidity();
-  }, [shopInfo])
+  }, [shopInfo]);
 
   useEffect(() => {
-    if (clickOnSave)
-      saveShopInfo();
-  }, [clickOnSave])
+    if (clickOnSave) saveShopInfo();
+  }, [clickOnSave]);
 
   const handlerChange = (e) => {
-    let { name, value } = e.target
-    setShopInfoState(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    let { name, value } = e.target;
+
+    if (name === 'owner_name') {
+      value = value.replace(/[0-9]/g, '');
+    }
+
+    if (name === 'owner_phone' || name === 'public_phone') {
+      if (!value.startsWith('DEFAULT_')) {
+        value = value.replace(/[^0-9]/g, '');
+        if (value.length > 8) value = value.slice(0, 8);
+      }
+    }
+
+    setShopInfoState(prev => {
+      const newState = { ...prev, [name]: value };
+      if (name === 'owner_phone' && useSamePhone) {
+        newState.public_phone = value;
+      }
+      return newState;
+    });
 
     validateFields(name, value);
+    if (name === 'owner_phone' && useSamePhone) {
+      validateFields('public_phone', value);
+    }
+  };
+
+  const handleFocus = (e) => {
+    let { name, value } = e.target;
+    if (typeof value === 'string' && value.startsWith('DEFAULT_')) {
+      setShopInfoState(prev => ({ ...prev, [name]: '' }));
+      validateFields(name, '');
+    }
+  };
+
+  const handleUseSamePhone = (checked) => {
+    setUseSamePhone(checked);
+    if (checked) {
+      setShopInfoState(prev => {
+        const newState = { ...prev, public_phone: prev.owner_phone };
+        return newState;
+      });
+      validateFields('public_phone', shopInfo.owner_phone);
+    } else {
+      setShopInfoState(prev => ({ ...prev, public_phone: '' }));
+      validateFields('public_phone', '');
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -196,60 +248,41 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
   const validateFields = (name, value) => {
     let newErrors = { ...errors };
 
-    switch (name) {
-      case 'shop_name':
-        if (value.trim().length < 3) {
-          newErrors.shop_name = 'El nombre debe tener al menos 3 caracteres';
-        } else {
-          delete newErrors.shop_name;
-        }
-        break;
-      case 'address':
-        if (value.trim().length < 3) {
-          newErrors.address = 'La dirección debe tener al menos 3 caracteres';
-        } else {
-          delete newErrors.address;
-        }
-        break;
-      case 'owner_name':
-        if (value.trim().length < 3) {
-          newErrors.owner_name = 'El nombre debe tener al menos 3 caracteres';
-        } else if (/\d/.test(value)) {
-          newErrors.owner_name = 'El nombre no debe contener números';
-        } else {
-          delete newErrors.owner_name;
-        }
-        break;
-      case 'owner_phone':
-        if (!/\d{8}$/.test(value)) {
-          newErrors.owner_phone = 'El teléfono debe tener 8 dígitos';
-        } else {
-          delete newErrors.owner_phone;
-        }
-        break;
-      case 'public_phone':
-        if (value && !/\d{8}$/.test(value)) {
-          newErrors.public_phone = 'El teléfono debe tener 8 dígitos';
-        } else {
-          delete newErrors.public_phone;
-        }
-        break;
-      default:
-        break;
-    }
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,20}$/;
+    const addressRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s#\/,\.]{15,100}$/;
+    const ownerRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,50}$/;
+    const phoneRegex = /^[0-9]{8}$/;
 
+    if (name === 'shop_name') {
+      if (!nameRegex.test(value) || value.includes("DEFAULT_")) newErrors.shop_name = 'Letras y números (3-20 caracteres)';
+      else delete newErrors.shop_name;
+    }
+    if (name === 'address') {
+      if (!addressRegex.test(value) || value.includes("DEFAULT_")) newErrors.address = '15 a 100 caracteres. Permite # / , .';
+      else delete newErrors.address;
+    }
+    if (name === 'owner_name') {
+      if (!ownerRegex.test(value) || value.includes("DEFAULT_")) newErrors.owner_name = 'Solo letras y espacios (min 3)';
+      else delete newErrors.owner_name;
+    }
+    if (name === 'owner_phone') {
+      if (!phoneRegex.test(value)) newErrors.owner_phone = 'Teléfono inválido (exacto 8 números)';
+      else delete newErrors.owner_phone;
+    }
+    if (name === 'public_phone') {
+      if (!phoneRegex.test(value)) newErrors.public_phone = 'Teléfono inválido (exacto 8 números)';
+      else delete newErrors.public_phone;
+    }
     setErrors(newErrors);
   };
 
   const handleReload = () => {
     setReload(true);
-    setWithOutAccount(false)
-  }
+    setWithOutAccount(false);
+  };
 
   const saveShopInfo = () => {
-    let infoToSave = {
-      ...shopInfo
-    }
+    let infoToSave = { ...shopInfo };
     setTimeout(async () => {
       try {
         if (!id) return;
@@ -272,35 +305,24 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
           navigate('/tienda');
         }
       } catch (error) {
-        showMessage("Error al guardar la información. Intente nuevamente o contacte al administrador", "error");
-        console.error(error)
+        showMessage("Error al guardar la información", "error");
+        console.error(error);
       }
     }, 1000);
-  }
+  };
 
   const applyTemplateSchedule = useCallback((templateSlots, scheduleType) => {
     setShopInfoState(prev => {
       const newSchedules = { ...prev.schedules };
-
       const daysToApply = [];
-      if (scheduleType === 'mon_fri') {
-        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday');
-      } else if (scheduleType === 'mon_sat') {
-        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
-      } else if (scheduleType === 'all_week') {
-        daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
-      }
+      if (scheduleType === 'mon_fri') daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday');
+      else if (scheduleType === 'mon_sat') daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday');
+      else if (scheduleType === 'all_week') daysToApply.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
 
       const allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-
       allDays.forEach(day => {
-        if (daysToApply.includes(day)) {
-          newSchedules[day] = templateSlots;
-        } else {
-          newSchedules[day] = [];
-        }
+        newSchedules[day] = daysToApply.includes(day) ? templateSlots : [];
       });
-
       return { ...prev, schedules: newSchedules };
     });
   }, []);
@@ -322,10 +344,9 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
     applyTemplateSchedule(newTemplateSlots, generalScheduleType);
   };
 
-  const handleUseGeneralScheduleChange = (e) => {
-    const isChecked = e.target.checked;
-    setUseGeneralSchedule(isChecked);
-    if (isChecked) {
+  const handleUseGeneralScheduleChange = (checked) => {
+    setUseGeneralSchedule(checked);
+    if (checked) {
       setCustomSchedules(shopInfo.schedules);
     } else {
       if (customSchedules) {
@@ -340,60 +361,53 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
       const template = (shopInfo.schedules.monday || []);
       applyTemplateSchedule(template, generalScheduleType);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generalScheduleType, useGeneralSchedule, applyTemplateSchedule]);
 
   const checkFormValidity = () => {
     const { shop_name, address, owner_name, owner_phone, public_phone, state, city } = shopInfo;
     const noErrors = !Object.values(errors).some(error => error);
-    const allFieldsValid =
-      shop_name?.trim().length >= 3 &&
-      address?.trim().length >= 3 &&
-      owner_name?.trim().length >= 3 &&
-      !/\d/.test(owner_name) &&
-      /\d{8}$/.test(owner_phone) &&
-      /\d{8}$/.test(public_phone) &&
-      state !== "" &&
-      city !== "";
 
-    const schedulesValid = Object.values(shopInfo.schedules).some(day => day.length > 0);
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,20}$/;
+    const addressRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s#\/,\.]{15,100}$/;
+    const ownerRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,50}$/;
+    const phoneRegex = /^[0-9]{8}$/;
 
-    setIsSaveButtonEnabled(noErrors && allFieldsValid && schedulesValid);
+    const step0Valid =
+      nameRegex.test(shop_name || "") && !(shop_name || "").includes("DEFAULT_") &&
+      addressRegex.test(address || "") && !(address || "").includes("DEFAULT_") &&
+      ownerRegex.test(owner_name || "") && !(owner_name || "").includes("DEFAULT_") &&
+      phoneRegex.test(owner_phone || "") &&
+      phoneRegex.test(public_phone || "") &&
+      state !== "" && !state.includes("DEFAULT_") &&
+      city !== "" && !city.includes("DEFAULT_");
+
+    const step1Valid = Object.values(shopInfo.schedules).some(day => day.length > 0);
+
+    let currentStepValid = false;
+    if (step === 0) currentStepValid = step0Valid;
+    if (step === 1) currentStepValid = step1Valid;
+
+    setIsSaveButtonEnabled(noErrors && currentStepValid);
   };
 
-  const handleProvinciaChange = (event) => {
-    let { value } = event.target;
+  const handleProvinciaChange = (value) => {
     setProvincia(value);
-    setShopInfoState(prev => ({
-      ...prev,
-      state: value
-    }));
+    setShopInfoState(prev => ({ ...prev, state: value }));
     setMunicipio('');
   };
 
-  const handleMunicipioChange = (event) => {
-    let { value } = event.target;
+  const handleMunicipioChange = (value) => {
     setMunicipio(value);
-    setShopInfoState(prev => ({
-      ...prev,
-      city: value
-    }));
+    setShopInfoState(prev => ({ ...prev, city: value }));
   };
 
   const handleScheduleChange = (dayKey, index, field, value) => {
     setShopInfoState(prev => {
       const newSchedules = { ...prev.schedules };
       const updatedDay = [...newSchedules[dayKey]];
-      updatedDay[index] = {
-        ...updatedDay[index],
-        [field]: value,
-      };
+      updatedDay[index] = { ...updatedDay[index], [field]: value };
       newSchedules[dayKey] = updatedDay;
-
-      return {
-        ...prev,
-        schedules: newSchedules,
-      };
+      return { ...prev, schedules: newSchedules };
     });
   };
 
@@ -402,11 +416,7 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
       const newSchedules = { ...prev.schedules };
       const currentSlots = Array.isArray(newSchedules[dayKey]) ? newSchedules[dayKey] : [];
       newSchedules[dayKey] = [...currentSlots, { start: "08:00", end: "09:00" }];
-
-      return {
-        ...prev,
-        schedules: newSchedules,
-      };
+      return { ...prev, schedules: newSchedules };
     });
   };
 
@@ -416,309 +426,318 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
       const updatedDay = [...newSchedules[dayKey]];
       updatedDay.splice(index, 1);
       newSchedules[dayKey] = updatedDay;
-
-      return {
-        ...prev,
-        schedules: newSchedules,
-      };
+      return { ...prev, schedules: newSchedules };
     });
+  };
+
+  const logoutUser = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const generateWhatsAppLink = () => {
+    let planName = "No especificado";
+    const selectedPlanId = planId || localStorage.getItem('selectedPlanId');
+    if (selectedPlanId === "premium") planName = "Premium";
+    else if (selectedPlanId === "estandar") planName = "Estandar";
+    else if (selectedPlanId === "market-fit") planName = "Tienda Fitness";
+
+    console.log("Plan ID from context/local:", selectedPlanId);
+
+    const message = `Hola, mi nombre es ${userInfo.name || "Usuario"}. He solicitado el plan "${planName}" con el correo ${userInfo.email || "No especificado"}. Deseo finalizar la creación de mi cuenta.`;
+    return `https://wa.me/5356408532?text=${encodeURIComponent(message)}`;
   };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div className="flex justify-center items-center h-[50vh]">
         <div className="loader"></div>
       </div>
     );
   }
 
   return (
-    <Grid container
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingBottom: "2rem",
-        gap: 20,
-        backgroundColor: theme.palette.background.main,
-      }}
-    >
-      {userInactive &&
-        <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-          <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
-            Su cuenta está inactiva temporalmente hasta que sea efectuado el pago mensual del uso de la aplicación.
-          </Typography>
-          <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
-            Usted será regresado al inicio de sesión, por favor contacte con el administrador.
-          </Typography>
-          <TimerButton setReload={handleReload} timer={"seconds"} />
-        </Grid>
-      }
+    <div className="w-full">
+      {userInactive && (
+        <div className="text-center space-y-6 py-10">
+          <h2 className="text-xl font-bold">Su cuenta está inactiva temporalmente hasta que sea efectuado el pago mensual del uso de la aplicación.</h2>
+          <h2 className="text-xl font-bold">Por favor, contacte con el administrador para reactivar su cuenta.</h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+            <a href={generateWhatsAppLink()} target="_blank" rel="noreferrer" className="w-full sm:w-auto">
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                Contactar por WhatsApp
+              </Button>
+            </a>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={logoutUser}>
+              Cerrar sesión
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {
-        withOutAccount && !userInactive &&
-        <Grid item lg={6} xl={6} md={6} sm={6} xs={12}>
-          <Typography variant="h5" style={{ marginBottom: '30px', fontWeight: 'bold', textAlign: "center" }}>
-            ¡Registro exitoso!
-          </Typography>
-          <Typography variant="h6" style={{ marginBottom: '30px', textAlign: "center" }}>
-            La activación de su solicitud está en curso. Este proceso suele tardar alrededor de 10 minutos, agradecemos su paciencia.
-          </Typography>
-          <TimerButton setReload={handleReload} timer={"minutes"} />
-        </Grid>
-      }
+      {withOutAccount && !userInactive && (
+        <div className="text-center space-y-6 py-10">
+          <h2 className="text-2xl font-bold">¡Registro exitoso!</h2>
+          <p className="text-lg text-muted-foreground">Para finalizar la creación de su cuenta debe contactarnos por WhatsApp.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+            <a href={generateWhatsAppLink()} target="_blank" rel="noreferrer" className="w-full sm:w-auto">
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                Contactar por WhatsApp
+              </Button>
+            </a>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={logoutUser}>
+              Cerrar sesión
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {createProfile &&
-        <Grid item lg={12} xl={12} md={12} sm={12} xs={12}>
-          {step === 0 &&
-            <Grid tem lg={12} xl={12} md={12} sm={12} xs={12}>
-              <Box display="flex" alignItems="center" gap={2} mb={3} mt={2}>
-                {shopInfo.image_profile ? (
-                  <Box position="relative">
-                    <Avatar src={shopInfo.image_profile} sx={{ width: 80, height: 80 }} />
-                    <IconButton
-                      size="small"
+      {createProfile && (
+        <div className="w-full">
+          {step === 0 && (
+            <div className="space-y-6">
+              <div className="flex items-start gap-5">
+                <div className="relative">
+                  <Avatar className="h-24 w-24 ring-2 ring-border">
+                    <AvatarImage src={shopInfo.image_profile} alt="Logo" />
+                    <AvatarFallback>Logo</AvatarFallback>
+                  </Avatar>
+                  {shopInfo.image_profile && (
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="absolute -top-2 -right-2 h-8 w-8 rounded-full"
                       onClick={handleImageDelete}
-                      sx={{ position: 'absolute', top: -10, right: -10, backgroundColor: 'rgba(255,0,0,0.8)', color: 'white', '&:hover': { backgroundColor: 'red' } }}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                ) : (
-                  <Avatar sx={{ width: 80, height: 80 }}>Logo</Avatar>
-                )}
-                <Box>
-                  <Button variant="contained" component="label" startIcon={<PhotoCamera />}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => fileRef.current?.click()}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 flex gap-2"
+                  >
+                    <Camera className="w-4 h-4" />
                     {shopInfo.image_profile ? "Cambiar Imagen" : "Subir Imagen"}
-                    <input type="file" hidden accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleImageUpload} />
                   </Button>
-                  <Typography variant="caption" display="block" color="textSecondary" mt={1}>
-                    Max: 2MB. Formatos: png, jpg, webp
-                  </Typography>
-                </Box>
-              </Box>
-
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.shop_name ? errors.shop_name : "Nombre de la Tienda"}
-                name="shop_name"
-                value={shopInfo.shop_name}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.address ? errors.address : "Dirección"}
-                name="address"
-                value={shopInfo.address}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-
-              <FormControl required fullWidth margin="normal" id="prov-required">
-                <InputLabel>Provincia</InputLabel>
-                <Select
-                  value={state}
-                  onChange={handleProvinciaChange}
-                >
-                  {Object.keys(provincias).map((prov) => (
-                    <MenuItem key={prov} value={prov}>
-                      {prov}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl required fullWidth margin="normal" id="mun-required">
-                <InputLabel>Municipio</InputLabel>
-                <Select
-                  value={city}
-                  onChange={handleMunicipioChange}
-                >
-                  {(provincias[state] || []).map((mun) => (
-                    <MenuItem key={mun} value={mun}>
-                      {mun}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.owner_name ? errors.owner_name : "Nombre de Propietario"}
-                name="owner_name"
-                value={shopInfo.owner_name}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.owner_phone ? errors.owner_phone : "Teléfono operacional"}
-                name="owner_phone"
-                value={shopInfo.owner_phone}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-              <p style={{ marginTop: 10, color: "#999" }}>Nota: Usaremos este número para mantener la comunicación de operaciones entre tu tienda y Tronoss.</p>
-              <TextField
-                required
-                id="outlined-required"
-                label={errors.public_phone ? errors.public_phone : "Teléfono de contacto (opcional)"}
-                name="public_phone"
-                value={shopInfo.public_phone}
-                onChange={handlerChange}
-                style={{ width: "100%", marginTop: 20 }}
-              />
-              <p style={{ marginTop: 10, color: "#999" }}>Nota: Este teléfono se mostrará al público para que puedan comunicarse con ustedes y recibir apoyo o aclarar dudas.</p>
-            </Grid>
-          }
-
-          {step === 1 &&
-            <Grid>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={useGeneralSchedule}
-                    onChange={handleUseGeneralScheduleChange}
-                    name="useGeneralSchedule"
+                  <div className="text-xs text-muted-foreground">Max: 2MB. Formatos: png, jpg, webp</div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleImageUpload}
                   />
-                }
-                label="Aplicar el mismo horario para todos los días"
-              />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid gap-2">
+                  <Label htmlFor="shop_name">Nombre de la Tienda *</Label>
+                  <Input
+                    id="shop_name"
+                    name="shop_name"
+                    value={shopInfo.shop_name?.startsWith("DEFAULT_") ? "" : shopInfo.shop_name}
+                    onChange={handlerChange}
+                    onFocus={handleFocus}
+                    className={errors.shop_name ? "border-destructive" : ""}
+                  />
+                  {errors.shop_name && <span className="text-xs text-destructive">{errors.shop_name}</span>}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="address">Dirección *</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={shopInfo.address?.startsWith("DEFAULT_") ? "" : shopInfo.address}
+                    onChange={handlerChange}
+                    onFocus={handleFocus}
+                    className={errors.address ? "border-destructive" : ""}
+                  />
+                  {errors.address && <span className="text-xs text-destructive">{errors.address}</span>}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Provincia *</Label>
+                  <Select value={state} onValueChange={handleProvinciaChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(provincias).map((prov) => (
+                        <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Municipio *</Label>
+                  <Select value={city} onValueChange={handleMunicipioChange} disabled={!state}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(provincias[state] || []).map((mun) => (
+                        <SelectItem key={mun} value={mun}>{mun}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="owner_name">Nombre de Propietario *</Label>
+                  <Input
+                    id="owner_name"
+                    name="owner_name"
+                    value={shopInfo.owner_name?.startsWith("DEFAULT_") ? "" : shopInfo.owner_name}
+                    onChange={handlerChange}
+                    onFocus={handleFocus}
+                    className={errors.owner_name ? "border-destructive" : ""}
+                  />
+                  {errors.owner_name && <span className="text-xs text-destructive">{errors.owner_name}</span>}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="owner_phone">Teléfono operacional *</Label>
+                  <div className="flex items-center">
+                    <span className="flex items-center justify-center bg-muted border border-r-0 border-input rounded-l-md px-3 h-10 text-sm">
+                      🇨🇺 +53
+                    </span>
+                    <Input
+                      id="owner_phone"
+                      name="owner_phone"
+                      value={shopInfo.owner_phone?.startsWith("DEFAULT_") ? "" : shopInfo.owner_phone}
+                      onChange={handlerChange}
+                      onFocus={handleFocus}
+                      placeholder="Ej: 51234567"
+                      className={`rounded-l-none ${errors.owner_phone ? "border-destructive" : ""}`}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Usaremos este número para mantener la comunicación de operaciones.</span>
+                  {errors.owner_phone && <span className="text-xs text-destructive">{errors.owner_phone}</span>}
+                </div>
+
+                <div className="grid gap-2 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="public_phone">Teléfono de contacto *</Label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="same_phone" checked={useSamePhone} onCheckedChange={handleUseSamePhone} />
+                      <Label htmlFor="same_phone" className="text-xs font-normal cursor-pointer">Usar operacional</Label>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="flex items-center justify-center bg-muted border border-r-0 border-input rounded-l-md px-3 h-10 text-sm">
+                      🇨🇺 +53
+                    </span>
+                    <Input
+                      id="public_phone"
+                      name="public_phone"
+                      value={shopInfo.public_phone?.startsWith("DEFAULT_") ? "" : shopInfo.public_phone}
+                      onChange={handlerChange}
+                      onFocus={handleFocus}
+                      disabled={useSamePhone}
+                      placeholder="Ej: 51234567"
+                      className={`rounded-l-none ${errors.public_phone ? "border-destructive" : ""}`}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Este teléfono se mostrará al público para que puedan comunicarse con ustedes.</span>
+                  {errors.public_phone && <span className="text-xs text-destructive">{errors.public_phone}</span>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 bg-muted/20 p-4 border rounded-lg">
+                <Checkbox id="useGeneralSchedule" checked={useGeneralSchedule} onCheckedChange={handleUseGeneralScheduleChange} />
+                <Label htmlFor="useGeneralSchedule" className="cursor-pointer">Aplicar el mismo horario para todos los días</Label>
+              </div>
 
               {useGeneralSchedule ? (
-                <div>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Aplicar a</InputLabel>
-                    <Select
-                      value={generalScheduleType}
-                      onChange={(e) => setGeneralScheduleType(e.target.value)}
-                    >
-                      <MenuItem value="mon_fri">Lunes a Viernes</MenuItem>
-                      <MenuItem value="mon_sat">Lunes a Sábado</MenuItem>
-                      <MenuItem value="all_week">Todos los 7 días</MenuItem>
+                <div className="space-y-4">
+                  <div className="grid gap-2 max-w-xs">
+                    <Label>Aplicar a</Label>
+                    <Select value={generalScheduleType} onValueChange={setGeneralScheduleType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mon_fri">Lunes a Viernes</SelectItem>
+                        <SelectItem value="mon_sat">Lunes a Sábado</SelectItem>
+                        <SelectItem value="all_week">Todos los 7 días</SelectItem>
+                      </SelectContent>
                     </Select>
-                  </FormControl>
-                  <hr style={{ marginTop: 20, color: "#ccc", borderTop: "1px solid #ccc" }} />
-                  <strong>Horario General</strong>
-                  {(shopInfo.schedules.monday || []).map((slot, idx) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <MobileTimePicker
-                          label="Inicio"
-                          value={dayjs(slot.start, 'HH:mm')}
-                          onChange={(newValue) => {
-                            const formatted = dayjs(newValue).format("HH:mm");
-                            handleTemplateScheduleChange(idx, "start", formatted);
-                          }}
-                          ampm={false}
-                          touchUi
-                          slotProps={{ textField: { size: "small", fullWidth: true } }}
-                        />
-                      </LocalizationProvider>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <MobileTimePicker
-                          label="Fin"
-                          value={dayjs(slot.end, 'HH:mm')}
-                          onChange={(newValue) => {
-                            const formatted = dayjs(newValue).format("HH:mm");
-                            handleTemplateScheduleChange(idx, "end", formatted);
-                          }}
-                          ampm={false}
-                          touchUi
-                          slotProps={{ textField: { size: "small", fullWidth: true } }}
-                        />
-                      </LocalizationProvider>
-                      <Button onClick={() => removeTemplateTimeSlot(idx)} color="error" size="small">Eliminar</Button>
-                    </div>
-                  ))}
-                  <Button variant="contained" onClick={addTemplateTimeSlot} size="small" sx={{ mt: 1, width: "fit-content" }}>
-                    + Añadir horario
-                  </Button>
+                  </div>
+
+                  <Separator />
+                  <h3 className="font-semibold">Horario General</h3>
+
+                  <div className="space-y-3">
+                    {(shopInfo.schedules.monday || []).map((slot, idx) => (
+                      <div key={idx} className="flex items-end gap-3">
+                        <div className="grid gap-1 flex-1">
+                          <Label className="text-xs">Inicio</Label>
+                          <Input type="time" value={slot.start} onChange={(e) => handleTemplateScheduleChange(idx, "start", e.target.value)} />
+                        </div>
+                        <div className="grid gap-1 flex-1">
+                          <Label className="text-xs">Fin</Label>
+                          <Input type="time" value={slot.end} onChange={(e) => handleTemplateScheduleChange(idx, "end", e.target.value)} />
+                        </div>
+                        <Button variant="destructive" size="icon" onClick={() => removeTemplateTimeSlot(idx)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" onClick={addTemplateTimeSlot} size="sm" className="mt-2">
+                      + Añadir horario
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <>
-                  {shopInfo?.schedules &&
-                    [
-                      { key: "monday", label: "Lunes" },
-                      { key: "tuesday", label: "Martes" },
-                      { key: "wednesday", label: "Miércoles" },
-                      { key: "thursday", label: "Jueves" },
-                      { key: "friday", label: "Viernes" },
-                      { key: "saturday", label: "Sábado" },
-                      { key: "sunday", label: "Domingo" }
-                    ].map(({ key, label }) => (
-                      <div key={key} style={{ marginBottom: 15, marginTop: 20, display: 'grid', flexDirection: 'column' }}>
-                        <strong>{label}</strong>
-                        {Array.isArray(shopInfo.schedules[key]) &&
-                          shopInfo.schedules[key].map((slot, idx) => (
-                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 20 }}>
-                              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <MobileTimePicker
-                                  label="Inicio"
-                                  value={dayjs(slot.start, 'HH:mm')}
-                                  onChange={(newValue) => {
-                                    const formatted = dayjs(newValue).format("HH:mm");
-                                    handleScheduleChange(key, idx, "start", formatted);
-                                  }}
-                                  ampm={false}
-                                  touchUi
-                                  slotProps={{
-                                    textField: {
-                                      size: "small",
-                                      fullWidth: true,
-                                    },
-                                  }}
-                                />
-                              </LocalizationProvider>
-
-                              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <MobileTimePicker
-                                  label="Fin"
-                                  value={dayjs(slot.end, 'HH:mm')}
-                                  onChange={(newValue) => {
-                                    const formatted = dayjs(newValue).format("HH:mm");
-                                    handleScheduleChange(key, idx, "end", formatted);
-                                  }}
-                                  ampm={false}
-                                  touchUi
-                                  slotProps={{
-                                    textField: {
-                                      size: "small",
-                                      fullWidth: true,
-                                    },
-                                  }}
-                                />
-                              </LocalizationProvider>
-
-                              <Button onClick={() => removeTimeSlot(key, idx)} color="error" size="small">Eliminar</Button>
-                            </div>
-                          ))}
-                        <Button variant="contained" onClick={() => addTimeSlot(key)} size="small" sx={{ mt: 1, width: "fit-content" }}>
-                          + Añadir horario
-                        </Button>
-                        <hr style={{
-                          marginTop: 20,
-                          color: "#ccc",
-                          borderTop: "1px solid #ccc"
-                        }} />
-                      </div>
-                    ))
-                  }
-                </>
+                <div className="space-y-8">
+                  {[
+                    { key: "monday", label: "Lunes" },
+                    { key: "tuesday", label: "Martes" },
+                    { key: "wednesday", label: "Miércoles" },
+                    { key: "thursday", label: "Jueves" },
+                    { key: "friday", label: "Viernes" },
+                    { key: "saturday", label: "Sábado" },
+                    { key: "sunday", label: "Domingo" }
+                  ].map(({ key, label }) => (
+                    <div key={key} className="space-y-3">
+                      <h3 className="font-semibold text-primary">{label}</h3>
+                      {Array.isArray(shopInfo.schedules[key]) && shopInfo.schedules[key].map((slot, idx) => (
+                        <div key={idx} className="flex items-end gap-3">
+                          <div className="grid gap-1 flex-1">
+                            <Label className="text-xs">Inicio</Label>
+                            <Input type="time" value={slot.start} onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)} />
+                          </div>
+                          <div className="grid gap-1 flex-1">
+                            <Label className="text-xs">Fin</Label>
+                            <Input type="time" value={slot.end} onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)} />
+                          </div>
+                          <Button variant="destructive" size="icon" onClick={() => removeTimeSlot(key, idx)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button variant="outline" onClick={() => addTimeSlot(key)} size="sm" className="mt-2">
+                        + Añadir horario
+                      </Button>
+                      <Separator className="mt-4" />
+                    </div>
+                  ))}
+                </div>
               )}
-            </Grid>
-          }
-        </Grid>
-      }
-    </Grid>
-  )
-}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
-export default ShopInfo
+export default ShopInfo;

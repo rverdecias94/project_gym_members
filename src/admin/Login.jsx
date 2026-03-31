@@ -1,16 +1,15 @@
-
-import { Button, Grid, TextField, Typography } from "@mui/material"
 import { useState } from "react"
-import { useTheme } from '@mui/material/styles';
 import { supabase } from '../supabase/client';
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const LoginAdmin = () => {
-  const theme = useTheme()
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
-    username: null,
-    password: null,
+    username: "",
+    password: "",
   })
 
   const handleChange = (e) => {
@@ -56,74 +55,45 @@ const LoginAdmin = () => {
   };
 
   return (
-    <Grid
-      container
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.background.default,
-        padding: '20px',
-        position: 'relative',
-      }}
-    >
-      <Grid item lg={4} xl={4} md={5} sm={6} xs={12} style={{
-        textAlign: "center",
-        background: theme.palette.mode === 'dark' ? "#141e2c" : theme.palette.primary.main,
-        boxShadow: "0px 0px 10px -1px #ccc",
-        height: "auto",
-        borderRadius: "3%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "start",
-        padding: 10,
-        gap: 10
-      }}>
+    <div className="min-h-screen flex justify-center items-center bg-background p-5 relative">
+      <div className="text-center bg-card shadow-md h-auto rounded-xl flex flex-col justify-start p-6 gap-6 w-full max-w-md border border-border">
+        <h2 className="text-2xl font-bold text-foreground mb-4">Administración</h2>
 
-        <TextField
-          label="Usuario"
-          type="text"
-          value={credentials.username}
-          onChange={handleChange}
-          name="username"
-          placeholder="mi_usuario"
-          fullWidth
-          inputProps={{ maxLength: 20 }}
-        />
-        <TextField
-          label="Contraseña"
-          type="password"
-          name="password"
-          value={credentials.password}
-          onChange={handleChange}
-          placeholder="************"
-          fullWidth
-          inputProps={{ maxLength: 20 }}
-        />
+        <div className="grid gap-2 text-left">
+          <Label htmlFor="username">Usuario</Label>
+          <Input
+            id="username"
+            type="text"
+            value={credentials.username}
+            onChange={handleChange}
+            name="username"
+            placeholder="mi_usuario"
+            maxLength={20}
+          />
+        </div>
+
+        <div className="grid gap-2 text-left">
+          <Label htmlFor="password">Contraseña</Label>
+          <Input
+            id="password"
+            type="password"
+            name="password"
+            value={credentials.password}
+            onChange={handleChange}
+            placeholder="************"
+            maxLength={20}
+          />
+        </div>
 
         <Button
           onClick={handleEnterAdminPanel}
-          variant="outlined"
-          style={{
-            width: '100%',
-            padding: '10px 0',
-            fontSize: '16px',
-            color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.secondary,
-            borderColor: '#dadce0',
-            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.light : theme.palette.background.default,
-          }}
+          variant="outline"
+          className="w-full py-6 text-base mt-4"
         >
-          <Typography variant="h6"
-            sx={{
-              color: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.primary.main,
-            }}
-          >
-            Entrar al panel de Administración
-          </Typography>
+          Entrar al panel de Administración
         </Button>
-      </Grid>
-    </Grid>
+      </div>
+    </div>
   )
 }
 

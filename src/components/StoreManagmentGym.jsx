@@ -22,7 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import DialogMessage from './DialogMessage';
 
 const StoreManagmentGym = () => {
-  const { getGymInfo } = useMembers();
+  const { getGymInfo, getAuthUser } = useMembers();
   const [store, setStore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
@@ -67,6 +67,13 @@ const StoreManagmentGym = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterDelivery, setFilterDelivery] = useState("");
+  const [filterProductDate, setFilterProductDate] = useState("");
+
+  const [filterOrderClient, setFilterOrderClient] = useState("");
+  const [filterOrderStatus, setFilterOrderStatus] = useState("all");
+  const [filterOrderProduct, setFilterOrderProduct] = useState("");
+  const [filterOrderId, setFilterOrderId] = useState("");
+  const [filterOrderDate, setFilterOrderDate] = useState("");
 
   const now = new Date();
 
@@ -147,6 +154,16 @@ const StoreManagmentGym = () => {
     if (s === 2) return 'Entregada';
     if (s === 3) return 'Cancelada';
     return '-';
+  };
+
+  const getStatusBadgeProps = (status) => {
+    switch (status) {
+      case 0: return { variant: "secondary", className: "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 border" };
+      case 1: return { variant: "secondary", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 border" };
+      case 2: return { variant: "secondary", className: "bg-green-100 text-green-800 hover:bg-green-200 border-green-200 dark:bg-green-900/30 dark:text-green-300 border" };
+      case 3: return { variant: "destructive", className: "" };
+      default: return { variant: "secondary", className: "" };
+    }
   };
 
   const getOrders = async () => {
@@ -486,7 +503,19 @@ const StoreManagmentGym = () => {
       (filterDelivery === "pickup" && product.has_pickup) ||
       (filterDelivery === "free" && product.free_delivery);
 
-    return matchesSearch && matchesCategory && matchesDelivery;
+    const matchesDate = !filterProductDate || moment(product.created_at).format('YYYY-MM-DD') === filterProductDate;
+
+    return matchesSearch && matchesCategory && matchesDelivery && matchesDate;
+  });
+
+  const filteredOrders = orders.filter(order => {
+    const matchesClient = !filterOrderClient || (order.member_name || "").toLowerCase().includes(filterOrderClient.toLowerCase());
+    const matchesStatus = filterOrderStatus === "all" || order.status.toString() === filterOrderStatus;
+    const matchesProduct = !filterOrderProduct || (order.name_products || "").toLowerCase().includes(filterOrderProduct.toLowerCase());
+    const matchesId = !filterOrderId || order.id_products?.toString().includes(filterOrderId);
+    const matchesDate = !filterOrderDate || moment(order.created_at).format('YYYY-MM-DD') === filterOrderDate;
+
+    return matchesClient && matchesStatus && matchesProduct && matchesId && matchesDate;
   });
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -619,7 +648,7 @@ const StoreManagmentGym = () => {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto mt-[8rem] mb-8 px-4 flex flex-col md:flex-row gap-4">
+    <div className="max-w-[1400px] mx-auto mt-[8rem] mb-8 px-4 flex flex-col md:flex-row gap-4 pb-24 md:pb-0">
       <div className="flex flex-col gap-4 mb-6 md:w-1/4 h-auto">
         <Card className="p-6 w-full shadow-sm border-border relative">
           {loading && (
@@ -630,60 +659,154 @@ const StoreManagmentGym = () => {
           <h2 className="text-lg font-semibold mb-4">Filtros</h2>
 
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="search">Buscar producto</Label>
-              <Input
-                id="search"
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
+            {(tabValue === 0 || tabValue === 2) && (
+              <>
+                <div>
+                  <Label htmlFor="search">Buscar producto</Label>
+                  <Input
+                    id="search"
+                    placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
 
-            <div>
-              <Label>Categoría</Label>
-              <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.category}>
-                      {cat.category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label>Categoría</Label>
+                  <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.category}>
+                          {cat.category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Entrega</Label>
-              <Select value={filterDelivery || "all"} onValueChange={(v) => setFilterDelivery(v === "all" ? "" : v)}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="delivery">Mensajería</SelectItem>
-                  <SelectItem value="pickup">Recogida</SelectItem>
-                  <SelectItem value="free">Entrega Gratis</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label>Entrega</Label>
+                  <Select value={filterDelivery || "all"} onValueChange={(v) => setFilterDelivery(v === "all" ? "" : v)}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="delivery">Mensajería</SelectItem>
+                      <SelectItem value="pickup">Recogida</SelectItem>
+                      <SelectItem value="free">Entrega Gratis</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <Button
-              variant="outline"
-              className="w-full mt-2"
-              onClick={() => {
-                setSearchTerm("");
-                setFilterCategory("");
-                setFilterDelivery("");
-              }}
-            >
-              Limpiar filtros
-            </Button>
+                <div>
+                  <Label htmlFor="productDate">Fecha de creación</Label>
+                  <Input
+                    id="productDate"
+                    type="date"
+                    value={filterProductDate}
+                    onChange={(e) => setFilterProductDate(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilterCategory("");
+                    setFilterDelivery("");
+                    setFilterProductDate("");
+                  }}
+                >
+                  Limpiar filtros
+                </Button>
+              </>
+            )}
+
+            {tabValue === 1 && (
+              <>
+                <div>
+                  <Label htmlFor="orderClient">Cliente</Label>
+                  <Input
+                    id="orderClient"
+                    placeholder="Nombre del cliente..."
+                    value={filterOrderClient}
+                    onChange={(e) => setFilterOrderClient(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <div>
+                  <Label>Estado</Label>
+                  <Select value={filterOrderStatus} onValueChange={setFilterOrderStatus}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="0">Recibida</SelectItem>
+                      <SelectItem value="1">Procesada</SelectItem>
+                      <SelectItem value="2">Entregada</SelectItem>
+                      <SelectItem value="3">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="orderProduct">Producto</Label>
+                  <Input
+                    id="orderProduct"
+                    placeholder="Nombre del producto..."
+                    value={filterOrderProduct}
+                    onChange={(e) => setFilterOrderProduct(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="orderId">Pedido ID</Label>
+                  <Input
+                    id="orderId"
+                    placeholder="Ej. 123"
+                    value={filterOrderId}
+                    onChange={(e) => setFilterOrderId(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="orderDate">Fecha</Label>
+                  <Input
+                    id="orderDate"
+                    type="date"
+                    value={filterOrderDate}
+                    onChange={(e) => setFilterOrderDate(e.target.value)}
+                    className="mt-1.5"
+                  />
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => {
+                    setFilterOrderClient("");
+                    setFilterOrderStatus("all");
+                    setFilterOrderProduct("");
+                    setFilterOrderId("");
+                    setFilterOrderDate("");
+                  }}
+                >
+                  Limpiar filtros
+                </Button>
+              </>
+            )}
           </div>
         </Card>
       </div>
@@ -951,7 +1074,7 @@ const StoreManagmentGym = () => {
                               <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
                             </td>
                           </tr>
-                        ) : orders.length === 0 ? (
+                        ) : filteredOrders.length === 0 ? (
                           <tr>
                             <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
                               No hay órdenes registradas
@@ -961,7 +1084,7 @@ const StoreManagmentGym = () => {
                           (() => {
                             const startIndex = (ordersPage - 1) * ordersItemsPerPage;
                             const endIndex = startIndex + ordersItemsPerPage;
-                            const currentOrders = orders.slice(startIndex, endIndex);
+                            const currentOrders = filteredOrders.slice(startIndex, endIndex);
                             return currentOrders.map(order => (
                               <tr key={order.id} className="hover:bg-muted/30">
                                 <td className="px-4 py-3 font-medium whitespace-nowrap">
@@ -976,7 +1099,7 @@ const StoreManagmentGym = () => {
                                 <td className="px-4 py-3">{mapPurchaseType(order.purchase_type)}</td>
                                 <td className="px-4 py-3 max-w-[150px] truncate" title={order.delivery_address}>{order.delivery_address ? order.delivery_address : '-'}</td>
                                 <td className="px-4 py-3">
-                                  <Badge variant={order.status === 3 ? "destructive" : (order.status === 2 ? "default" : "secondary")} className={order.status === 2 ? "bg-green-500 hover:bg-green-600" : ""}>
+                                  <Badge {...getStatusBadgeProps(order.status)}>
                                     {mapStatus(order.status)}
                                   </Badge>
                                 </td>
@@ -1004,7 +1127,7 @@ const StoreManagmentGym = () => {
                       </tbody>
                     </table>
                   </div>
-                  {Math.ceil(orders.length / ordersItemsPerPage) > 1 && (
+                  {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
                     <div className="flex justify-center p-4 border-t border-border">
                       <div className="flex gap-2">
                         <Button
@@ -1016,13 +1139,13 @@ const StoreManagmentGym = () => {
                           Anterior
                         </Button>
                         <span className="flex items-center text-sm px-2">
-                          Página {ordersPage} de {Math.ceil(orders.length / ordersItemsPerPage)}
+                          Página {ordersPage} de {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
                         </span>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setOrdersPage(Math.min(Math.ceil(orders.length / ordersItemsPerPage), ordersPage + 1))}
-                          disabled={ordersPage === Math.ceil(orders.length / ordersItemsPerPage)}
+                          onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
+                          disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
                         >
                           Siguiente
                         </Button>
@@ -1034,13 +1157,13 @@ const StoreManagmentGym = () => {
                 <div className="flex flex-col gap-4">
                   {loadingOrders ? (
                     <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-                  ) : orders.length === 0 ? (
+                  ) : filteredOrders.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">No hay órdenes registradas</div>
                   ) : (
-                    (() => {
+                          (() => {
                       const startIndex = (ordersPage - 1) * ordersItemsPerPage;
                       const endIndex = startIndex + ordersItemsPerPage;
-                      const currentOrders = orders.slice(startIndex, endIndex);
+                      const currentOrders = filteredOrders.slice(startIndex, endIndex);
                       return (
                         <>
                           {currentOrders.map(order => (
@@ -1051,7 +1174,7 @@ const StoreManagmentGym = () => {
                                     <Badge variant="outline" className="w-fit mb-1 bg-primary/5 text-xs text-muted-foreground border-muted">No-{order.id_products}</Badge>
                                     <h3 className="font-bold">{order.member_name}</h3>
                                   </div>
-                                  <Badge variant={order.status === 3 ? "destructive" : (order.status === 2 ? "default" : "secondary")} className={order.status === 2 ? "bg-green-500 hover:bg-green-600" : ""}>
+                                  <Badge {...getStatusBadgeProps(order.status)}>
                                     {mapStatus(order.status)}
                                   </Badge>
                                 </div>
@@ -1087,7 +1210,7 @@ const StoreManagmentGym = () => {
                               </CardContent>
                             </Card>
                           ))}
-                          {Math.ceil(orders.length / ordersItemsPerPage) > 1 && (
+                          {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
                             <div className="flex justify-center gap-2 mt-4">
                               <Button
                                 variant="outline"
@@ -1098,13 +1221,13 @@ const StoreManagmentGym = () => {
                                 Anterior
                               </Button>
                               <span className="flex items-center text-sm px-2">
-                                {ordersPage} / {Math.ceil(orders.length / ordersItemsPerPage)}
+                                {ordersPage} / {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
                               </span>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setOrdersPage(Math.min(Math.ceil(orders.length / ordersItemsPerPage), ordersPage + 1))}
-                                disabled={ordersPage === Math.ceil(orders.length / ordersItemsPerPage)}
+                                onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
+                                disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
                               >
                                 Siguiente
                               </Button>
@@ -1277,20 +1400,22 @@ const StoreManagmentGym = () => {
               </Select>
             </div>
 
-            <div className="md:col-span-12 mt-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="showDiscount"
-                  checked={showDiscount}
-                  onCheckedChange={(checked) => handleShowDiscountChange({ target: { checked } })}
-                />
-                <Label htmlFor="showDiscount" className="cursor-pointer font-medium">
-                  Añadir precio rebajado y período de oferta
-                </Label>
+            {editingProduct && (
+              <div className="md:col-span-12 mt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="showDiscount"
+                    checked={showDiscount}
+                    onCheckedChange={(checked) => handleShowDiscountChange({ target: { checked } })}
+                  />
+                  <Label htmlFor="showDiscount" className="cursor-pointer font-medium">
+                    Añadir precio rebajado y período de oferta
+                  </Label>
+                </div>
               </div>
-            </div>
+            )}
 
-            {showDiscount && (
+            {editingProduct && showDiscount && (
               <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6 bg-muted/20 p-4 rounded-lg border border-border">
                 {!editingProduct && (
                   <div className="md:col-span-12">
@@ -1393,9 +1518,16 @@ const StoreManagmentGym = () => {
                   <Checkbox
                     id="has_delivery"
                     checked={formData.has_delivery}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, has_delivery: checked }))}
+                    disabled={formData.free_delivery}
+                    onCheckedChange={(checked) => {
+                      setFormData(prev => {
+                        const newFormData = { ...prev, has_delivery: checked };
+                        setTimeout(() => validateForm(newFormData), 0);
+                        return newFormData;
+                      });
+                    }}
                   />
-                  <Label htmlFor="has_delivery" className="font-normal cursor-pointer">
+                  <Label htmlFor="has_delivery" className={`cursor-pointer ${formData.free_delivery ? 'text-muted-foreground' : 'font-normal'}`}>
                     Mensajería/Envío a domicilio (costo adicional)
                   </Label>
                 </div>
@@ -1404,9 +1536,16 @@ const StoreManagmentGym = () => {
                   <Checkbox
                     id="free_delivery"
                     checked={formData.free_delivery}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, free_delivery: checked }))}
+                    disabled={formData.has_delivery}
+                    onCheckedChange={(checked) => {
+                      setFormData(prev => {
+                        const newFormData = { ...prev, free_delivery: checked };
+                        setTimeout(() => validateForm(newFormData), 0);
+                        return newFormData;
+                      });
+                    }}
                   />
-                  <Label htmlFor="free_delivery" className={`cursor-pointer ${formData.free_delivery ? 'font-medium text-green-600' : 'font-normal'}`}>
+                  <Label htmlFor="free_delivery" className={`cursor-pointer ${formData.free_delivery ? 'font-medium text-green-600' : formData.has_delivery ? 'text-muted-foreground' : 'font-normal'}`}>
                     Entrega gratis (el vendedor entrega sin costo)
                   </Label>
                 </div>
@@ -1417,7 +1556,13 @@ const StoreManagmentGym = () => {
                   <Checkbox
                     id="has_pickup"
                     checked={formData.has_pickup}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, has_pickup: checked }))}
+                    onCheckedChange={(checked) => {
+                      setFormData(prev => {
+                        const newFormData = { ...prev, has_pickup: checked };
+                        setTimeout(() => validateForm(newFormData), 0);
+                        return newFormData;
+                      });
+                    }}
                   />
                   <Label htmlFor="has_pickup" className="font-normal cursor-pointer">
                     Recogida en tienda
@@ -1476,7 +1621,7 @@ const StoreManagmentGym = () => {
               className="w-full sm:w-auto"
               onClick={() => {
                 setOpenCancelDialog(false);
-                setOrderToCancel(null);
+                setCancelOrder(null);
                 setCancelReason('');
               }}
             >

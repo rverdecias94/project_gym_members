@@ -38,7 +38,7 @@ function App() {
     name: null,
     phone: null,
   });
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const validPath = ['/shop-stepper', '/redirect', '/planes', '/tienda', '/tienda-gym', '/terms-conditions', '/admin/panel', '/new_trainer', '/new_member', '/general_info', '/entrenadores', '/bienvenido', '/clientes', '/login', '/panel']
 
   useEffect(() => {

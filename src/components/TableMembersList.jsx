@@ -363,12 +363,6 @@ export const TableMembersList = ({ membersList = [] }) => {
           <p><strong>CI:</strong> {member.ci}</p>
           <p><strong>Dirección:</strong> {member.address}</p>
           <p><strong>Entrenador:</strong> {member.trainer_name || '-'}</p>
-          <p className="flex items-center gap-2">
-            <strong>Estado:</strong>
-            <Badge variant={member.pay_status ? "default" : "destructive"}>
-              {member.pay_status ? 'Pagado' : 'Pendiente'}
-            </Badge>
-          </p>
         </div>
       </CardContent>
 
@@ -387,7 +381,7 @@ export const TableMembersList = ({ membersList = [] }) => {
   );
 
   return (
-    <div className="w-full h-[400px] mb-10">
+    <div className="w-full min-h-[400px] mb-10 pb-20 md:pb-0">
       <br />
       <div className="flex flex-col gap-4">
         <div className="w-full">

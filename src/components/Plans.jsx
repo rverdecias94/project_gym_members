@@ -171,6 +171,7 @@ const PlansPage = () => {
 
   const handlePlanSelect = async (planId) => {
     setSelectedPlan(planId);
+    localStorage.setItem('selectedPlanId', planId);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("Usuario no autenticado");

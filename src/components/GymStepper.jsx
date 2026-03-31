@@ -1,17 +1,51 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
-import {
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
-  Box,
-  Grid,
-} from "@mui/material";
 import GeneralInfo from "./GeneralInfo";
 import { useMembers } from "../context/Context";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 const steps = ["Datos Generales", "Tipo de pago", "Horarios de funcionamiento"];
+
+function StepHeader({ steps, current }) {
+  return (
+    <div className="flex items-center justify-center gap-2 sm:gap-6 w-full mb-8">
+      {steps.map((label, i) => {
+        const active = i === current;
+        const done = i < current;
+        return (
+          <div key={label} className="flex items-center gap-2 sm:gap-3">
+            <div
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300 shadow-sm",
+                done && "border-primary bg-primary text-primary-foreground",
+                active && "border-primary bg-primary text-primary-foreground ring-4 ring-primary/20",
+                !done && !active && "border-muted-foreground/30 bg-background text-muted-foreground"
+              )}
+            >
+              {done ? (
+                <Check className="h-5 w-5" />
+              ) : (
+                i + 1
+              )}
+            </div>
+            <div className={cn("hidden sm:block text-sm font-medium", (active || done) ? "text-foreground" : "text-muted-foreground")}>{label}</div>
+            {i !== steps.length - 1 && (
+              <div
+                className={cn(
+                  "ml-2 sm:ml-6 h-px w-12 sm:w-24 rounded transition-all duration-300",
+                  done ? "bg-primary" : "bg-muted-foreground/30"
+                )}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function GymStepper({ id }) {
   const [activeStep, setActiveStep] = useState(0);
@@ -27,9 +61,7 @@ export default function GymStepper({ id }) {
   const dd = String(today.getDate()).padStart(2, '0');
 
   const todayStr = `${yyyy}-${mm}-${dd}`;
-  const nextPaymentStr = gymInfo.next_payment_date;
-
-
+  const nextPaymentStr = gymInfo?.next_payment_date;
 
   useEffect(() => {
     if (gymInfo && gymInfo.next_payment_date) {
@@ -39,7 +71,7 @@ export default function GymStepper({ id }) {
         setUserActive(false);
       }
     }
-  }, [gymInfo]);
+  }, [gymInfo, nextPaymentStr, todayStr]);
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
@@ -54,20 +86,13 @@ export default function GymStepper({ id }) {
   };
 
   return (
-    <Grid container justifyContent="center" sx={{ p: 4 }}>
-      <Grid item xs={12} md={10} lg={8}>
-        {gymInfo.active && userActive && !isLoading &&
-          <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        }
+    <div className="flex justify-center p-4 sm:p-8 w-full">
+      <div className="w-full max-w-4xl space-y-6">
+        {gymInfo?.active && userActive && !isLoading && (
+          <StepHeader steps={steps} current={activeStep} />
+        )}
 
-
-        <Box sx={{ mt: 4 }}>
+        <div className="rounded-xl border border-border bg-card/60 p-5 shadow-sm">
           <GeneralInfo
             id={id}
             step={activeStep}
@@ -75,28 +100,31 @@ export default function GymStepper({ id }) {
             clickOnSave={clickOnSave}
             setIsLoading={setIsLoading}
           />
-        </Box>
+        </div>
 
-        {gymInfo.active && userActive && !isLoading &&
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
-            <Button
-              disabled={activeStep === 0}
-              onClick={handleBack}
-              variant="outlined"
-            >
-              Atrás
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleNext}
-              disabled={activeStep === steps.length - 1 && !isSaveButtonEnabled}
-            >
-              {activeStep === steps.length - 1 ? "Guardar" : "Siguiente"}
-            </Button>
-          </Box>
-        }
-      </Grid>
-    </Grid>
+        {gymInfo?.active && userActive && !isLoading && (
+          <>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <Button
+                disabled={activeStep === 0}
+                onClick={handleBack}
+                variant="secondary"
+                className="min-w-[100px]"
+              >
+                Atrás
+              </Button>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[100px]"
+                onClick={handleNext}
+                disabled={activeStep === steps.length - 1 && !isSaveButtonEnabled}
+              >
+                {activeStep === steps.length - 1 ? "Finalizar" : "Siguiente"}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
