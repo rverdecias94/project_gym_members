@@ -54,12 +54,14 @@ export default function Navbar({ profile, mode, toggleTheme }) {
   const logoutUser = async () => {
     try {
       let { error } = await supabase.auth.signOut();
+      sessionStorage.clear();
       setNavBarOptions(false);
       // alert no mas
       setShowNav(false);
       if (error) throw error;
       navigate('/login');
     } catch (error) {
+      sessionStorage.clear();
       navigate('/login');
     }
   };

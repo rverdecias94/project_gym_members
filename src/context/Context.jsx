@@ -61,18 +61,11 @@ export const ContextProvider = ({ children }) => {
 
   // Wrapper for getUser to use sessionStorage
   const getAuthUser = async () => {
-    try {
-      const cached = sessionStorage.getItem("auth_user");
-      if (cached) {
-        return { data: { user: JSON.parse(cached) }, error: null };
-      }
-    } catch (e) {
-      console.error("Error reading auth_user from session", e);
-    }
-
     const { data, error } = await supabase.auth.getUser();
     if (data?.user) {
       sessionStorage.setItem("auth_user", JSON.stringify(data.user));
+    } else {
+      sessionStorage.removeItem("auth_user");
     }
     return { data, error };
   };
@@ -342,6 +335,15 @@ export const ContextProvider = ({ children }) => {
     setTimeout(async () => {
       try {
         const { data: { user } } = await getAuthUser();
+        const gymId = gymInfo?.owner_id || user?.id;
+
+        if (!gymId) {
+          showMessage("Error de autenticación. Por favor, inicie sesión nuevamente.", "error");
+          setAdding(false);
+          setBackdrop(false);
+          return;
+        }
+
         const { data: newMembers, error: insertError } = await supabase.from("members").insert({
           first_name: dataToSave.first_name,
           last_name: dataToSave.last_name,
@@ -353,7 +355,7 @@ export const ContextProvider = ({ children }) => {
           trainer_name: dataToSave.trainer_name,
           image_profile: dataToSave.image_profile,
           pay_date: dataToSave.pay_date,
-          gym_id: user?.id,
+          gym_id: gymId,
         }).select();
 
         setBackdrop(false);
@@ -381,7 +383,7 @@ export const ContextProvider = ({ children }) => {
             .from('payment_history_members')
             .insert({
               member_id: newMember.id,
-              gym_id: user.id,
+              gym_id: gymId,
               quantity_paid: totalAmount,
               currency: gymInfo.monthly_currency || 'CUP',
               trainer_included: trainerIncluded,
@@ -439,16 +441,31 @@ export const ContextProvider = ({ children }) => {
   const deleteMember = async (id) => {
     setBackdrop(true);
     await handlerNeedUpdateClients(true);
-    const { data } = await getAuthUser();
-    const { error } = await supabase.from("members")
-      .delete()
-      .eq("gym_id", data?.user?.id)
-      .eq("id", id);
-    setBackdrop(false);
-    if (!error) {
+    try {
+      const { data } = await getAuthUser();
+      
+      // Delete payment history first to satisfy foreign key constraint
+      const { error: historyError } = await supabase.from("payment_history_members")
+        .delete()
+        .eq("member_id", id);
+        
+      if (historyError) throw historyError;
+
+      const { error } = await supabase.from("members")
+        .delete()
+        .eq("gym_id", data?.user?.id)
+        .eq("id", id);
+        
+      if (error) throw error;
+      
       showMessage("Registro eliminado satisfactoriamente", "success");
       await getMembers(true);
-    } else throw new Error(error);
+    } catch (error) {
+      showMessage("Error al eliminar el registro", "error");
+      console.error(error);
+    } finally {
+      setBackdrop(false);
+    }
   };
 
   const deleteTrainer = async (id) => {
@@ -732,8 +749,9 @@ export const ContextProvider = ({ children }) => {
 
     try {
       const { data: { user } } = await getAuthUser();
+      const gymId = gymInfo?.owner_id || user?.id;
 
-      if (!user) {
+      if (!gymId) {
         throw new Error("Usuario no autenticado");
       }
 
@@ -760,7 +778,7 @@ export const ContextProvider = ({ children }) => {
           has_trainer: memberData.trainer_name !== null && memberData.trainer_name !== ''
         })
         .eq('id', memberData.id)
-        .eq('gym_id', user.id);
+        .eq('gym_id', gymId);
 
       if (updateError) throw updateError;
 
@@ -769,7 +787,7 @@ export const ContextProvider = ({ children }) => {
         .from('payment_history_members')
         .insert({
           member_id: memberData.id, // bigint de members.id
-          gym_id: user.id, // uuid del gimnasio
+          gym_id: gymId, // uuid del gimnasio
           quantity_paid: totalAmount,
           currency: gymInfo.monthly_currency || 'CUP',
           trainer_included: trainerIncluded,

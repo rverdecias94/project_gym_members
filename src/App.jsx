@@ -145,7 +145,7 @@ function App() {
 
 
   return (
-    <div style={{ width: "100%", height: "100vh", padding: "0px !important" }}>
+    <div style={{ width: "100%", minHeight: "86vh", padding: "0px !important" }}>
       <ContextProvider>
         <BackdropProvider>
           {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && !is404 && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}

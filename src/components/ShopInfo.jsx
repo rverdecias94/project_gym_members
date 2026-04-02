@@ -135,7 +135,11 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
               if (containsDefault) {
                 setCreateProfile(true);
               } else {
-                navigate("/tienda");
+                if (localStorage.getItem('accountType') === 'gym') {
+                  navigate('/bienvenido');
+                } else {
+                  navigate("/tienda");
+                }
               }
             } else if (shopData[0].active === false) {
               setUserInactive(true);
@@ -302,7 +306,11 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
           } catch (e) {
             console.error(e);
           }
-          navigate('/tienda');
+          if (localStorage.getItem('accountType') === 'gym') {
+            navigate('/bienvenido');
+          } else {
+            navigate('/tienda');
+          }
         }
       } catch (error) {
         showMessage("Error al guardar la información", "error");
@@ -440,9 +448,6 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
     if (selectedPlanId === "premium") planName = "Premium";
     else if (selectedPlanId === "estandar") planName = "Estandar";
     else if (selectedPlanId === "market-fit") planName = "Tienda Fitness";
-
-    console.log("Plan ID from context/local:", selectedPlanId);
-
     const message = `Hola, mi nombre es ${userInfo.name || "Usuario"}. He solicitado el plan "${planName}" con el correo ${userInfo.email || "No especificado"}. Deseo finalizar la creación de mi cuenta.`;
     return `https://wa.me/5356408532?text=${encodeURIComponent(message)}`;
   };
@@ -493,6 +498,11 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
 
       {createProfile && (
         <div className="w-full">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold text-primary">Configuración de Tienda</h2>
+            <p className="text-sm text-muted-foreground mt-1">Complete los datos de su tienda de suplementos o accesorios</p>
+          </div>
+
           {step === 0 && (
             <div className="space-y-6">
               <div className="flex items-start gap-5">

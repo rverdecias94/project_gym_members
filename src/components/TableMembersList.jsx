@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
   const { adding, trainersList, setBackdrop, gymInfo, getAuthUser } = useMembers();
+  const hasTrainers = Array.isArray(trainersList) && trainersList.length > 0;
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openRule, setOpenRule] = useState(false);
@@ -73,18 +74,21 @@ export const TableMembersList = ({ membersList = [] }) => {
   const isDark = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
-    if (trainersList?.length > 0) {
-      const trainers = [];
-
-      trainers.push({ value: "Todos", label: "Todos" })
-      trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
-
-      trainersList.forEach(element => {
-        trainers.push({ value: element.name, label: element.name });
-      });
-      setTrainers(trainers);
+    if (!hasTrainers) {
+      setTrainers([]);
+      setTrainerName("");
+      return;
     }
-  }, [])
+
+    const trainers = [];
+    trainers.push({ value: "Todos", label: "Todos" })
+    trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
+
+    trainersList.forEach(element => {
+      trainers.push({ value: element.name, label: element.name });
+    });
+    setTrainers(trainers);
+  }, [hasTrainers, trainersList])
 
   useEffect(() => {
     setMembersOriginal(membersList);
@@ -385,7 +389,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       <br />
       <div className="flex flex-col gap-4">
         <div className="w-full">
-          {membersList.length !== 0 && (
+          {hasTrainers && membersList.length !== 0 && (
             <div className={`w-full ${!isMobile ? "max-w-xs" : ""}`}>
               <Select value={trainer_name || "Todos"} onValueChange={setTrainerName}>
                 <SelectTrigger>
@@ -403,7 +407,7 @@ export const TableMembersList = ({ membersList = [] }) => {
           )}
         </div>
 
-        <hr className="my-2 border-border" />
+        {hasTrainers && <hr className="my-2 border-border" />}
 
         <div className="flex flex-col md:flex-row w-full justify-between items-start md:items-center mt-2 relative gap-4">
 

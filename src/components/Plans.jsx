@@ -59,6 +59,7 @@ const PlansPage = () => {
   const [accountType, setAccountType] = useState('none');
   const [accountData, setAccountData] = useState({});
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+  const selectedPlanId = localStorage.getItem('selectedPlanId');
   /* const [isLoading, setIsLoading] = useState(true); */
 
   useEffect(() => {
@@ -74,6 +75,34 @@ const PlansPage = () => {
   }, []);
 
   useEffect(() => {
+    const storedAccountType = localStorage.getItem('accountType');
+    const inferredAccountType = storedAccountType === 'shop' || storedAccountType === 'gym' ? storedAccountType : 'gym';
+    setAccountType(inferredAccountType);
+
+    if (selectedPlanId) {
+      setSelectedPlan(selectedPlanId);
+    }
+
+    const storageKey = inferredAccountType === 'shop' ? 'shop_info' : 'gym_info';
+    try {
+      const cached = sessionStorage.getItem(storageKey);
+      if (cached) {
+        setAccountData(JSON.parse(cached));
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (selectedPlanId) {
+      setAccountData(prev => ({
+        ...prev,
+        active: prev?.active ?? true,
+        store: selectedPlanId === 'premium'
+      }));
+      return;
+    }
+
     const checkAccountType = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -177,9 +206,12 @@ const PlansPage = () => {
       throw new Error("Usuario no autenticado");
     }
 
-    // Verificar el tipo de cuenta
-    const { type } = await identifyAccountType(user.id);
-    if (type === 'shop') {
+    const storedAccountType = localStorage.getItem('accountType');
+    const inferredAccountType = accountType !== 'none'
+      ? accountType
+      : (storedAccountType === 'shop' || storedAccountType === 'gym' ? storedAccountType : 'gym');
+
+    if (inferredAccountType === 'shop') {
       // Para tiendas
       if (planId === 'market-fit') {
         navigate('/shop-stepper', { state: { planId } });
@@ -220,9 +252,14 @@ const PlansPage = () => {
   }
 
   const getButtonConfig = (planId) => {
-    if (!accountData?.active) return { label: "Seleccionar", isActive: false };
+    const effectiveActive = accountData?.active ?? true;
+    const effectiveStore = accountType === 'gym'
+      ? (accountData?.store ?? (selectedPlanId === 'premium'))
+      : accountData?.store;
 
-    if (accountData?.store && accountType === 'gym') {
+    if (!effectiveActive) return { label: "Seleccionar", isActive: false };
+
+    if (effectiveStore && accountType === 'gym') {
       // Tiene activa la tienda
       if (planId === "premium") return { label: "Plan activo", isActive: true };
       if (planId === "estandar") return { label: "Cambiar plan", isActive: false };

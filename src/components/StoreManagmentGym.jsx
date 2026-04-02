@@ -5,7 +5,7 @@ import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
 import moment from "moment/moment";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Image as ImageIcon, Truck, Store as PickupIcon, CheckCircle, Store as StoreIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Image as ImageIcon, Truck, Store as PickupIcon, CheckCircle, Store as StoreIcon, Settings } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,12 +20,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DialogMessage from './DialogMessage';
+import SettingsAccountShop from "./SettingsAccountShop";
 
 const StoreManagmentGym = () => {
   const { getGymInfo, getAuthUser } = useMembers();
   const [store, setStore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
+  const selectedPlanId = localStorage.getItem('selectedPlanId');
 
   // Estados para productos
   const [products, setProducts] = useState([]);
@@ -89,20 +91,40 @@ const StoreManagmentGym = () => {
   const [deleteDialogOpen, setDeleteDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
+  const [showSettings, setShowSettings] = useState(false);
+
   useEffect(() => {
     const getData = async () => {
+      let cachedGymHasStore = false;
+      try {
+        const cachedGymInfo = sessionStorage.getItem("gym_info");
+        if (cachedGymInfo) {
+          const parsed = JSON.parse(cachedGymInfo);
+          cachedGymHasStore = parsed?.store === true;
+        }
+      } catch {
+        cachedGymHasStore = false;
+      }
+
+      if (selectedPlanId === 'estandar' && !cachedGymHasStore) {
+        setStore(false);
+        setLoading(false);
+        return;
+      }
+
       try {
         let data = await getGymInfo();
-        if (data && data.store && data.store !== undefined) {
-          setStore(data.store);
+        const storeEnabled = data?.store === true;
+        setStore(storeEnabled);
+        if (storeEnabled) {
           await getProducts();
           await getOrders();
+          let result = await supabase.from('categories').select('*');
+          setCategories(result.data || []);
         }
       } catch (error) {
         console.error('Error getting gym info:', error);
       } finally {
-        let result = await supabase.from('categories').select('*');
-        setCategories(result.data || []);
         setLoading(false);
       }
     };
@@ -581,14 +603,24 @@ const StoreManagmentGym = () => {
 
   if (!store && !loading) {
     return (
-      <div className="max-w-5xl mx-auto mt-[6rem] mb-12 px-4">
-        <Card className="border border-border shadow-sm rounded-xl p-4 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-            <div className="md:col-span-5 text-center md:text-left">
-              <StoreIcon className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto md:mx-0 mb-4" />
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">Tienda no habilitada</h2>
+      <div className="max-w-5xl mx-auto mt-[6rem] mb-12 pb-10 px-4 space-y-6">
+        <div className="rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-5 md:p-6">
+          <p className="text-sm font-semibold text-primary mb-2">Amplía tu cuenta de gimnasio</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            Activa la tienda y centraliza tu operación en un solo sistema
+          </h2>
+          <p className="text-sm md:text-base text-muted-foreground max-w-3xl">
+            Mantén las herramientas que ya usas en tu gimnasio y suma una tienda integrada para administrar tu negocio desde el mismo panel.
+          </p>
+        </div>
+
+        <Card className="border border-border shadow-sm rounded-2xl overflow-hidden bg-card">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-0">
+            <div className="md:col-span-5 p-6 md:p-8 border-b md:border-b-0 md:border-r border-border text-center md:text-left bg-background">
+              <StoreIcon className="w-12 h-12 md:w-16 md:h-16 text-primary mx-auto md:mx-0 mb-4" />
+              <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Tienda no habilitada</h3>
               <p className="text-muted-foreground mb-6">
-                Tu gimnasio no tiene habilitada la funcionalidad de tienda.
+                Tu cuenta actual funciona correctamente para la gestión del gimnasio, pero todavía no tiene activada la tienda virtual.
               </p>
 
               <Button
@@ -599,43 +631,42 @@ const StoreManagmentGym = () => {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                Te contactaremos para procesar tu solicitud y activar tu tienda
+                Te contactaremos para procesar tu solicitud y activar la tienda en tu cuenta premium.
               </p>
             </div>
 
-            <div className="md:col-span-7">
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-purple-900 mb-2">
-                  🛍️ Habilita tu tienda virtual
-                </h3>
-                <p className="text-purple-800 mb-6">
-                  Vende productos directamente desde tu plataforma de gimnasio con nuestra funcionalidad de tienda integrada.
-                </p>
+            <div className="md:col-span-7 p-6 md:p-8 bg-gradient-to-br from-primary/10 via-background to-primary/5">
+              <div className="flex flex-col gap-6">
+                <div>
+                  <p className="text-sm font-semibold text-primary mb-2">🛍️ Tienda integrada</p>
+                  <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2">
+                    Suma la tienda sin salir del ecosistema de tu gimnasio
+                  </h3>
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    El plan premium complementa las funciones actuales del gimnasio y agrega funciones sobre la tienda virtual para que trabajes con más control desde un mismo lugar.
+                  </p>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
                   <div className="sm:col-span-4">
-                    <div className="bg-white rounded-xl p-4 text-center border border-border">
-                      <span className="text-3xl font-bold text-green-600 block">$5</span>
+                    <div className="rounded-2xl p-5 text-center border border-border bg-card shadow-sm">
+                      <span className="text-3xl font-bold text-primary block">$5</span>
                       <span className="text-sm text-muted-foreground">USD/mes</span>
                     </div>
                   </div>
 
-                  <div className="sm:col-span-8 grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm">Catálogo ilimitado</span>
+                  <div className="sm:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
+                      <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                      <span className="text-sm font-medium text-foreground">Gestión de productos</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm">Gestión de inventario</span>
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
+                      <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                      <span className="text-sm font-medium text-foreground">Gestión de órdenes</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm">Entregas flexibles</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm">Múltiples monedas</span>
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
+                      <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                      <span className="text-sm font-medium text-foreground">Estadísticas de la tienda</span>
                     </div>
                   </div>
                 </div>
@@ -647,377 +678,363 @@ const StoreManagmentGym = () => {
     );
   }
 
-  return (
-    <div className="max-w-[1400px] mx-auto mt-[8rem] mb-8 px-4 flex flex-col md:flex-row gap-4 pb-24 md:pb-0">
-      <div className="flex flex-col gap-4 mb-6 md:w-1/4 h-auto">
-        <Card className="p-6 w-full shadow-sm border-border relative">
-          {loading && (
-            <div className="absolute inset-0 bg-background/50 z-10 flex justify-center items-center rounded-lg">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            </div>
-          )}
-          <h2 className="text-lg font-semibold mb-4">Filtros</h2>
-
-          <div className="space-y-4">
-            {(tabValue === 0 || tabValue === 2) && (
-              <>
-                <div>
-                  <Label htmlFor="search">Buscar producto</Label>
-                  <Input
-                    id="search"
-                    placeholder="Buscar..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label>Categoría</Label>
-                  <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.category}>
-                          {cat.category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Entrega</Label>
-                  <Select value={filterDelivery || "all"} onValueChange={(v) => setFilterDelivery(v === "all" ? "" : v)}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      <SelectItem value="delivery">Mensajería</SelectItem>
-                      <SelectItem value="pickup">Recogida</SelectItem>
-                      <SelectItem value="free">Entrega Gratis</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="productDate">Fecha de creación</Label>
-                  <Input
-                    id="productDate"
-                    type="date"
-                    value={filterProductDate}
-                    onChange={(e) => setFilterProductDate(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilterCategory("");
-                    setFilterDelivery("");
-                    setFilterProductDate("");
-                  }}
-                >
-                  Limpiar filtros
-                </Button>
-              </>
-            )}
-
-            {tabValue === 1 && (
-              <>
-                <div>
-                  <Label htmlFor="orderClient">Cliente</Label>
-                  <Input
-                    id="orderClient"
-                    placeholder="Nombre del cliente..."
-                    value={filterOrderClient}
-                    onChange={(e) => setFilterOrderClient(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label>Estado</Label>
-                  <Select value={filterOrderStatus} onValueChange={setFilterOrderStatus}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="0">Recibida</SelectItem>
-                      <SelectItem value="1">Procesada</SelectItem>
-                      <SelectItem value="2">Entregada</SelectItem>
-                      <SelectItem value="3">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="orderProduct">Producto</Label>
-                  <Input
-                    id="orderProduct"
-                    placeholder="Nombre del producto..."
-                    value={filterOrderProduct}
-                    onChange={(e) => setFilterOrderProduct(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="orderId">Pedido ID</Label>
-                  <Input
-                    id="orderId"
-                    placeholder="Ej. 123"
-                    value={filterOrderId}
-                    onChange={(e) => setFilterOrderId(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="orderDate">Fecha</Label>
-                  <Input
-                    id="orderDate"
-                    type="date"
-                    value={filterOrderDate}
-                    onChange={(e) => setFilterOrderDate(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    setFilterOrderClient("");
-                    setFilterOrderStatus("all");
-                    setFilterOrderProduct("");
-                    setFilterOrderId("");
-                    setFilterOrderDate("");
-                  }}
-                >
-                  Limpiar filtros
-                </Button>
-              </>
-            )}
-          </div>
-        </Card>
-      </div>
-
-      <Card className="p-4 md:p-6 md:w-3/4 shadow-sm border-border">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h2 className="text-xl font-semibold">
-            Gestión de Tienda
-          </h2>
-          <Button
-            className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white"
-            onClick={() => {
-              setEditingProduct(null);
-              setFormData({
-                name: '',
-                description: '',
-                price: '',
-                currency: 'USD',
-                image: null,
-                image_base64: '',
-                has_delivery: false,
-                has_pickup: false,
-                free_delivery: false,
-                discount: '',
-                discount_start_date: '',
-                discount_end_date: '',
-                product_code: '',
-                category: '',
-                city: 'El cerro',
-                state: 'La Habana',
-                enable: true,
-              });
-              setFormErrors({});
-              setFormIsValid(false);
-              setOpenDialog(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Producto
+  if (showSettings) {
+    return (
+      <div className="max-w-[1400px] mx-auto mt-[8rem] mb-8 px-4">
+        <div className="mb-6 flex items-center">
+          <Button variant="outline" onClick={() => setShowSettings(false)}>
+            &larr; Volver a Gestión de Tienda
           </Button>
         </div>
+        <SettingsAccountShop isFromGym={true} handleClose={() => setShowSettings(false)} />
+      </div>
+    );
+  }
 
-        <Tabs
-          value={tabValue.toString()}
-          onValueChange={(v) => setTabValue(parseInt(v))}
-          className="w-full mb-6"
-        >
-          <TabsList className="w-full justify-start h-auto bg-transparent border-b border-border rounded-none p-0 overflow-x-auto flex">
-            <TabsTrigger
-              value="0"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-            >
-              Lista de Productos
-            </TabsTrigger>
-            <TabsTrigger
-              value="1"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-            >
-              Órdenes
-            </TabsTrigger>
-            <TabsTrigger
-              value="2"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-            >
-              Catálogo
-            </TabsTrigger>
-          </TabsList>
+  return (
+    <>
+      <div className="max-w-[1400px] mx-auto mt-[8rem] mb-8 px-4 flex flex-col md:flex-row gap-4 pb-24 md:pb-0">
+        <div className="flex flex-col gap-4 mb-6 md:w-1/4 h-auto">
+          <Card className="p-6 w-full shadow-sm border-border relative">
+            {loading && (
+              <div className="absolute inset-0 bg-background/50 z-10 flex justify-center items-center rounded-lg">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            )}
+            <h2 className="text-lg font-semibold mb-4">Filtros</h2>
 
-          <TabsContent value="0" className="mt-4">
-            <div className="w-full">
-              {!isMobile ? (
-                <div className="bg-card rounded-lg border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-muted/50 text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">Imagen</th>
-                          <th className="px-4 py-3 font-medium">Nombre</th>
-                          <th className="px-4 py-3 font-medium">Precio</th>
-                          <th className="px-4 py-3 font-medium">F. Descuento</th>
-                          <th className="px-4 py-3 font-medium">Vistas</th>
-                          <th className="px-4 py-3 font-medium">Entrega</th>
-                          <th className="px-4 py-3 font-medium">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border relative">
-                        {loading || loadingProducts ? (
+            <div className="space-y-4">
+              {(tabValue === 0 || tabValue === 2) && (
+                <>
+                  <div>
+                    <Label htmlFor="search">Buscar producto</Label>
+                    <Input
+                      id="search"
+                      placeholder="Buscar..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Categoría</Label>
+                    <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.category}>
+                            {cat.category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Entrega</Label>
+                    <Select value={filterDelivery || "all"} onValueChange={(v) => setFilterDelivery(v === "all" ? "" : v)}>
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="delivery">Mensajería</SelectItem>
+                        <SelectItem value="pickup">Recogida</SelectItem>
+                        <SelectItem value="free">Entrega Gratis</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="productDate">Fecha de creación</Label>
+                    <Input
+                      id="productDate"
+                      type="date"
+                      value={filterProductDate}
+                      onChange={(e) => setFilterProductDate(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setFilterCategory("");
+                      setFilterDelivery("");
+                      setFilterProductDate("");
+                    }}
+                  >
+                    Limpiar filtros
+                  </Button>
+                </>
+              )}
+
+              {tabValue === 1 && (
+                <>
+                  <div>
+                    <Label htmlFor="orderClient">Cliente</Label>
+                    <Input
+                      id="orderClient"
+                      placeholder="Nombre del cliente..."
+                      value={filterOrderClient}
+                      onChange={(e) => setFilterOrderClient(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Estado</Label>
+                    <Select value={filterOrderStatus} onValueChange={setFilterOrderStatus}>
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Todos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="0">Recibida</SelectItem>
+                        <SelectItem value="1">Procesada</SelectItem>
+                        <SelectItem value="2">Entregada</SelectItem>
+                        <SelectItem value="3">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="orderProduct">Producto</Label>
+                    <Input
+                      id="orderProduct"
+                      placeholder="Nombre del producto..."
+                      value={filterOrderProduct}
+                      onChange={(e) => setFilterOrderProduct(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="orderId">Pedido ID</Label>
+                    <Input
+                      id="orderId"
+                      placeholder="Ej. 123"
+                      value={filterOrderId}
+                      onChange={(e) => setFilterOrderId(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="orderDate">Fecha</Label>
+                    <Input
+                      id="orderDate"
+                      type="date"
+                      value={filterOrderDate}
+                      onChange={(e) => setFilterOrderDate(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => {
+                      setFilterOrderClient("");
+                      setFilterOrderStatus("all");
+                      setFilterOrderProduct("");
+                      setFilterOrderId("");
+                      setFilterOrderDate("");
+                    }}
+                  >
+                    Limpiar filtros
+                  </Button>
+                </>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        <Card className="p-4 md:p-6 md:w-3/4 shadow-sm border-border">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 className="text-xl font-semibold">
+              Gestión de Tienda
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => setShowSettings(true)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Configurar Perfil
+              </Button>
+              <Button
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white"
+                onClick={() => {
+                  setEditingProduct(null);
+                  setFormData({
+                    name: '',
+                    description: '',
+                    price: '',
+                    currency: 'USD',
+                    image: null,
+                    image_base64: '',
+                    has_delivery: false,
+                    has_pickup: false,
+                    free_delivery: false,
+                    discount: '',
+                    discount_start_date: '',
+                    discount_end_date: '',
+                    product_code: '',
+                    category: '',
+                    city: 'El cerro',
+                    state: 'La Habana',
+                    enable: true,
+                  });
+                  setFormErrors({});
+                  setFormIsValid(false);
+                  setOpenDialog(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo Producto
+              </Button>
+            </div>
+          </div>
+
+          <Tabs
+            value={tabValue.toString()}
+            onValueChange={(v) => setTabValue(parseInt(v))}
+            className="w-full mb-6"
+          >
+            <TabsList className="w-full justify-start h-auto bg-transparent border-b border-border rounded-none p-0 overflow-x-auto flex">
+              <TabsTrigger
+                value="0"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+              >
+                Lista de Productos
+              </TabsTrigger>
+              <TabsTrigger
+                value="1"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+              >
+                Órdenes
+              </TabsTrigger>
+              <TabsTrigger
+                value="2"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+              >
+                Catálogo
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="0" className="mt-4">
+              <div className="w-full">
+                {!isMobile ? (
+                  <div className="bg-card rounded-lg border border-border overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-muted/50 text-muted-foreground">
                           <tr>
-                            <td colSpan={7} className="px-4 py-8 text-center">
-                              <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-                            </td>
+                            <th className="px-4 py-3 font-medium">Imagen</th>
+                            <th className="px-4 py-3 font-medium">Nombre</th>
+                            <th className="px-4 py-3 font-medium">Precio</th>
+                            <th className="px-4 py-3 font-medium">F. Descuento</th>
+                            <th className="px-4 py-3 font-medium">Vistas</th>
+                            <th className="px-4 py-3 font-medium">Entrega</th>
+                            <th className="px-4 py-3 font-medium">Acciones</th>
                           </tr>
-                        ) : currentProducts.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                              No hay productos registrados
-                            </td>
-                          </tr>
-                        ) : (
-                          currentProducts.map((product) => (
-                            <tr key={product.id} className="hover:bg-muted/30">
-                              <td className="px-4 py-3">
-                                <div className="w-12 h-12 rounded-md overflow-hidden bg-muted/20">
-                                  <img
-                                    src={product.image_base64}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 font-medium">{product.name}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <span className={product.discount !== null ? "line-through text-muted-foreground" : ""}>
-                                    {product.price} {product.currency}
-                                  </span>
-                                  {product.discount !== null && (
-                                    <span className="font-bold text-green-600 dark:text-green-500">
-                                      {product.discount} {product.currency}
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-muted-foreground text-xs">
-                                {product.discount !== null ? (
-                                  <div className="flex flex-col items-center justify-center whitespace-nowrap">
-                                    <span>{moment(product.discount_start_date).format("DD-MM-YYYY - HH:mm")}</span>
-                                    <hr className="w-full my-1 border-border" />
-                                    <span>{moment(product.discount_end_date).format("DD-MM-YYYY - HH:mm")}</span>
-                                  </div>
-                                ) : (
-                                  <span className="text-center block">-</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-center">{product.views}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex flex-wrap gap-1">
-                                  {product.has_delivery && (
-                                    <Badge variant="outline" className="text-[10px] h-5 py-0">
-                                      <Truck className="h-3 w-3 mr-1" /> Mensajería
-                                    </Badge>
-                                  )}
-                                  {product.has_pickup && (
-                                    <Badge variant="outline" className="text-[10px] h-5 py-0">
-                                      <PickupIcon className="h-3 w-3 mr-1" /> Recogida
-                                    </Badge>
-                                  )}
-                                  {product.free_delivery && (
-                                    <Badge variant="default" className="text-[10px] h-5 py-0 bg-green-500 hover:bg-green-600">
-                                      <Truck className="h-3 w-3 mr-1" /> Gratis
-                                    </Badge>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex gap-2">
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(product)}>
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteClick(product.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                        </thead>
+                        <tbody className="divide-y divide-border relative">
+                          {loading || loadingProducts ? (
+                            <tr>
+                              <td colSpan={7} className="px-4 py-8 text-center">
+                                <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
                               </td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="flex justify-center p-4 border-t border-border">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(null, Math.max(1, currentPage - 1))}
-                          disabled={currentPage === 1}
-                        >
-                          Anterior
-                        </Button>
-                        <span className="flex items-center text-sm px-2">
-                          Página {currentPage} de {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(null, Math.min(totalPages, currentPage + 1))}
-                          disabled={currentPage === totalPages}
-                        >
-                          Siguiente
-                        </Button>
-                      </div>
+                          ) : currentProducts.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                                No hay productos registrados
+                              </td>
+                            </tr>
+                          ) : (
+                            currentProducts.map((product) => (
+                              <tr key={product.id} className="hover:bg-muted/30">
+                                <td className="px-4 py-3">
+                                  <div className="w-12 h-12 rounded-md overflow-hidden bg-muted/20">
+                                    <img
+                                      src={product.image_base64}
+                                      alt={product.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 font-medium">{product.name}</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className={product.discount !== null ? "line-through text-muted-foreground" : ""}>
+                                      {product.price} {product.currency}
+                                    </span>
+                                    {product.discount !== null && (
+                                      <span className="font-bold text-green-600 dark:text-green-500">
+                                        {product.discount} {product.currency}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-muted-foreground text-xs">
+                                  {product.discount !== null ? (
+                                    <div className="flex flex-col items-center justify-center whitespace-nowrap">
+                                      <span>{moment(product.discount_start_date).format("DD-MM-YYYY - HH:mm")}</span>
+                                      <hr className="w-full my-1 border-border" />
+                                      <span>{moment(product.discount_end_date).format("DD-MM-YYYY - HH:mm")}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-center block">-</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-center">{product.views}</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex flex-wrap gap-1">
+                                    {product.has_delivery && (
+                                      <Badge variant="outline" className="text-[10px] h-5 py-0">
+                                        <Truck className="h-3 w-3 mr-1" /> Mensajería
+                                      </Badge>
+                                    )}
+                                    {product.has_pickup && (
+                                      <Badge variant="outline" className="text-[10px] h-5 py-0">
+                                        <PickupIcon className="h-3 w-3 mr-1" /> Recogida
+                                      </Badge>
+                                    )}
+                                    {product.free_delivery && (
+                                      <Badge variant="default" className="text-[10px] h-5 py-0 bg-green-500 hover:bg-green-600">
+                                        <Truck className="h-3 w-3 mr-1" /> Gratis
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex gap-2">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(product)}>
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteClick(product.id)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4 relative">
-                  {loading || loadingProducts ? (
-                    <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-                  ) : currentProducts.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No hay productos registrados
-                    </div>
-                  ) : (
-                    <>
-                      {currentProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                      ))}
-                      {totalPages > 1 && (
-                        <div className="flex justify-center gap-2 mt-4">
+                    {totalPages > 1 && (
+                      <div className="flex justify-center p-4 border-t border-border">
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -1027,7 +1044,7 @@ const StoreManagmentGym = () => {
                             Anterior
                           </Button>
                           <span className="flex items-center text-sm px-2">
-                            {currentPage} / {totalPages}
+                            Página {currentPage} de {totalPages}
                           </span>
                           <Button
                             variant="outline"
@@ -1038,262 +1055,301 @@ const StoreManagmentGym = () => {
                             Siguiente
                           </Button>
                         </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="1" className="mt-4">
-            <div className="w-full">
-              {!isMobile ? (
-                <div className="bg-card rounded-lg border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-muted/50 text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">Pedido ID</th>
-                          <th className="px-4 py-3 font-medium">Fecha</th>
-                          <th className="px-4 py-3 font-medium">Cliente</th>
-                          <th className="px-4 py-3 font-medium">Productos</th>
-                          <th className="px-4 py-3 font-medium">Precio</th>
-                          <th className="px-4 py-3 font-medium">Total</th>
-                          <th className="px-4 py-3 font-medium">Cantidad</th>
-                          <th className="px-4 py-3 font-medium">Tipo de entrega</th>
-                          <th className="px-4 py-3 font-medium">Dirección</th>
-                          <th className="px-4 py-3 font-medium">Estado</th>
-                          <th className="px-4 py-3 font-medium">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {loadingOrders ? (
-                          <tr>
-                            <td colSpan={11} className="px-4 py-8 text-center">
-                              <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-                            </td>
-                          </tr>
-                        ) : filteredOrders.length === 0 ? (
-                          <tr>
-                            <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
-                              No hay órdenes registradas
-                            </td>
-                          </tr>
-                        ) : (
-                          (() => {
-                            const startIndex = (ordersPage - 1) * ordersItemsPerPage;
-                            const endIndex = startIndex + ordersItemsPerPage;
-                            const currentOrders = filteredOrders.slice(startIndex, endIndex);
-                            return currentOrders.map(order => (
-                              <tr key={order.id} className="hover:bg-muted/30">
-                                <td className="px-4 py-3 font-medium whitespace-nowrap">
-                                  <Badge variant="outline" className="bg-primary/5">No-{order.id_products}</Badge>
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</td>
-                                <td className="px-4 py-3 font-medium">{order.member_name}</td>
-                                <td className="px-4 py-3 max-w-[200px] truncate" title={order.name_products}>{order.name_products}</td>
-                                <td className="px-4 py-3 whitespace-nowrap">{order.price} {order.currency}</td>
-                                <td className="px-4 py-3 whitespace-nowrap font-medium">{order.price_total} {order.currency}</td>
-                                <td className="px-4 py-3 text-center">{order.amount ?? '-'}</td>
-                                <td className="px-4 py-3">{mapPurchaseType(order.purchase_type)}</td>
-                                <td className="px-4 py-3 max-w-[150px] truncate" title={order.delivery_address}>{order.delivery_address ? order.delivery_address : '-'}</td>
-                                <td className="px-4 py-3">
-                                  <Badge {...getStatusBadgeProps(order.status)}>
-                                    {mapStatus(order.status)}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <Select
-                                    value={order.status.toString()}
-                                    onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
-                                    disabled={statusUpdatingId === order.id}
-                                  >
-                                    <SelectTrigger className="w-[130px] h-8 text-xs">
-                                      <SelectValue placeholder="Estado" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="0">Recibida</SelectItem>
-                                      <SelectItem value="1">Procesada</SelectItem>
-                                      <SelectItem value="2">Entregada</SelectItem>
-                                      <SelectItem value="3">Cancelada</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </td>
-                              </tr>
-                            ));
-                          })()
-                        )}
-                      </tbody>
-                    </table>
+                      </div>
+                    )}
                   </div>
-                  {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
-                    <div className="flex justify-center p-4 border-t border-border">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
-                          disabled={ordersPage === 1}
-                        >
-                          Anterior
-                        </Button>
-                        <span className="flex items-center text-sm px-2">
-                          Página {ordersPage} de {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
-                          disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                        >
-                          Siguiente
-                        </Button>
+                ) : (
+                  <div className="flex flex-col gap-4 relative">
+                    {loading || loadingProducts ? (
+                      <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+                    ) : currentProducts.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No hay productos registrados
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {loadingOrders ? (
-                    <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-                  ) : filteredOrders.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No hay órdenes registradas</div>
-                  ) : (
-                          (() => {
-                      const startIndex = (ordersPage - 1) * ordersItemsPerPage;
-                      const endIndex = startIndex + ordersItemsPerPage;
-                      const currentOrders = filteredOrders.slice(startIndex, endIndex);
-                      return (
-                        <>
-                          {currentOrders.map(order => (
-                            <Card key={order.id} className="shadow-sm border-border">
-                              <CardContent className="p-4 space-y-2">
-                                <div className="flex justify-between items-start">
-                                  <div className="flex flex-col">
-                                    <Badge variant="outline" className="w-fit mb-1 bg-primary/5 text-xs text-muted-foreground border-muted">No-{order.id_products}</Badge>
-                                    <h3 className="font-bold">{order.member_name}</h3>
-                                  </div>
-                                  <Badge {...getStatusBadgeProps(order.status)}>
-                                    {mapStatus(order.status)}
-                                  </Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</p>
+                    ) : (
+                      <>
+                        {currentProducts.map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                        {totalPages > 1 && (
+                          <div className="flex justify-center gap-2 mt-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(null, Math.max(1, currentPage - 1))}
+                              disabled={currentPage === 1}
+                            >
+                              Anterior
+                            </Button>
+                            <span className="flex items-center text-sm px-2">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(null, Math.min(totalPages, currentPage + 1))}
+                              disabled={currentPage === totalPages}
+                            >
+                              Siguiente
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
 
-                                <Separator className="my-2" />
-
-                                <div className="text-sm space-y-1">
-                                  <p><span className="font-medium">Productos:</span> {order.name_products}</p>
-                                  <p><span className="font-medium">Monto:</span> <span className="text-primary font-bold">{order.price_total} {order.currency}</span></p>
-                                  <p><span className="font-medium">Cantidad:</span> {order.amount ?? '-'}</p>
-                                  <p><span className="font-medium">Tipo:</span> {mapPurchaseType(order.purchase_type)}</p>
-                                  <p><span className="font-medium">Dirección:</span> {order.delivery_address ? order.delivery_address : '-'}</p>
-                                </div>
-
-                                <div className="pt-2 mt-2 border-t border-border flex justify-end">
-                                  <Select
-                                    value={order.status.toString()}
-                                    onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
-                                    disabled={statusUpdatingId === order.id}
-                                  >
-                                    <SelectTrigger className="w-[140px] h-8 text-xs">
-                                      <SelectValue placeholder="Estado" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="0">Recibida</SelectItem>
-                                      <SelectItem value="1">Procesada</SelectItem>
-                                      <SelectItem value="2">Entregada</SelectItem>
-                                      <SelectItem value="3">Cancelada</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                          {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
-                            <div className="flex justify-center gap-2 mt-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
-                                disabled={ordersPage === 1}
-                              >
-                                Anterior
-                              </Button>
-                              <span className="flex items-center text-sm px-2">
-                                {ordersPage} / {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
-                                disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                              >
-                                Siguiente
-                              </Button>
-                            </div>
+            <TabsContent value="1" className="mt-4">
+              <div className="w-full">
+                {!isMobile ? (
+                  <div className="bg-card rounded-lg border border-border overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-muted/50 text-muted-foreground">
+                          <tr>
+                            <th className="px-4 py-3 font-medium">Pedido ID</th>
+                            <th className="px-4 py-3 font-medium">Fecha</th>
+                            <th className="px-4 py-3 font-medium">Cliente</th>
+                            <th className="px-4 py-3 font-medium">Productos</th>
+                            <th className="px-4 py-3 font-medium">Precio</th>
+                            <th className="px-4 py-3 font-medium">Total</th>
+                            <th className="px-4 py-3 font-medium">Cantidad</th>
+                            <th className="px-4 py-3 font-medium">Tipo de entrega</th>
+                            <th className="px-4 py-3 font-medium">Dirección</th>
+                            <th className="px-4 py-3 font-medium">Estado</th>
+                            <th className="px-4 py-3 font-medium">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {loadingOrders ? (
+                            <tr>
+                              <td colSpan={11} className="px-4 py-8 text-center">
+                                <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
+                              </td>
+                            </tr>
+                          ) : filteredOrders.length === 0 ? (
+                            <tr>
+                              <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
+                                No hay órdenes registradas
+                              </td>
+                            </tr>
+                          ) : (
+                            (() => {
+                              const startIndex = (ordersPage - 1) * ordersItemsPerPage;
+                              const endIndex = startIndex + ordersItemsPerPage;
+                              const currentOrders = filteredOrders.slice(startIndex, endIndex);
+                              return currentOrders.map(order => (
+                                <tr key={order.id} className="hover:bg-muted/30">
+                                  <td className="px-4 py-3 font-medium whitespace-nowrap">
+                                    <Badge variant="outline" className="bg-primary/5">No-{order.id_products}</Badge>
+                                  </td>
+                                  <td className="px-4 py-3 whitespace-nowrap">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</td>
+                                  <td className="px-4 py-3 font-medium">{order.member_name}</td>
+                                  <td className="px-4 py-3 max-w-[200px] truncate" title={order.name_products}>{order.name_products}</td>
+                                  <td className="px-4 py-3 whitespace-nowrap">{order.price} {order.currency}</td>
+                                  <td className="px-4 py-3 whitespace-nowrap font-medium">{order.price_total} {order.currency}</td>
+                                  <td className="px-4 py-3 text-center">{order.amount ?? '-'}</td>
+                                  <td className="px-4 py-3">{mapPurchaseType(order.purchase_type)}</td>
+                                  <td className="px-4 py-3 max-w-[150px] truncate" title={order.delivery_address}>{order.delivery_address ? order.delivery_address : '-'}</td>
+                                  <td className="px-4 py-3">
+                                    <Badge {...getStatusBadgeProps(order.status)}>
+                                      {mapStatus(order.status)}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <Select
+                                      value={order.status.toString()}
+                                      onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
+                                      disabled={statusUpdatingId === order.id}
+                                    >
+                                      <SelectTrigger className="w-[130px] h-8 text-xs">
+                                        <SelectValue placeholder="Estado" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="0">Recibida</SelectItem>
+                                        <SelectItem value="1">Procesada</SelectItem>
+                                        <SelectItem value="2">Entregada</SelectItem>
+                                        <SelectItem value="3">Cancelada</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </td>
+                                </tr>
+                              ));
+                            })()
                           )}
-                        </>
-                      );
-                    })()
-                  )}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="2" className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              {loadingProducts ? (
-                <div className="col-span-full flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : products.length === 0 ? (
-                <div className="col-span-full">
-                  <Alert>
-                    <AlertDescription>No hay productos para mostrar</AlertDescription>
-                  </Alert>
-                </div>
-              ) : (
-                products.map((product) => (
-                  <Card key={product.id} className="h-full flex flex-col shadow-sm border-border overflow-hidden">
-                    <div className="relative aspect-video">
-                      <img
-                        src={product.image_base64}
-                        alt={product.name}
-                        className="w-full h-full object-contain bg-muted/20"
-                      />
+                        </tbody>
+                      </table>
                     </div>
-                    <CardContent className="flex-1 pb-4 pt-4">
-                      <h3 className="font-bold text-lg mb-2">
-                        {product.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {product.description}
-                      </p>
-                      <h4 className="font-bold text-primary text-xl mb-4">
-                        {product.price} {product.currency}
-                      </h4>
-                      <div className="flex gap-2 flex-wrap">
-                        {product.has_delivery && (
-                          <Badge variant="outline" className="text-xs">
-                            <Truck className="h-3 w-3 mr-1" /> Envío
-                          </Badge>
-                        )}
-                        {product.has_pickup && (
-                          <Badge variant="outline" className="text-xs">
-                            <PickupIcon className="h-3 w-3 mr-1" /> Recogida
-                          </Badge>
-                        )}
+                    {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
+                      <div className="flex justify-center p-4 border-t border-border">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
+                            disabled={ordersPage === 1}
+                          >
+                            Anterior
+                          </Button>
+                          <span className="flex items-center text-sm px-2">
+                            Página {ordersPage} de {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
+                            disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
+                          >
+                            Siguiente
+                          </Button>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </Card>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {loadingOrders ? (
+                      <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
+                    ) : filteredOrders.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">No hay órdenes registradas</div>
+                    ) : (
+                      (() => {
+                        const startIndex = (ordersPage - 1) * ordersItemsPerPage;
+                        const endIndex = startIndex + ordersItemsPerPage;
+                        const currentOrders = filteredOrders.slice(startIndex, endIndex);
+                        return (
+                          <>
+                            {currentOrders.map(order => (
+                              <Card key={order.id} className="shadow-sm border-border">
+                                <CardContent className="p-4 space-y-2">
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex flex-col">
+                                      <Badge variant="outline" className="w-fit mb-1 bg-primary/5 text-xs text-muted-foreground border-muted">No-{order.id_products}</Badge>
+                                      <h3 className="font-bold">{order.member_name}</h3>
+                                    </div>
+                                    <Badge {...getStatusBadgeProps(order.status)}>
+                                      {mapStatus(order.status)}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</p>
+
+                                  <Separator className="my-2" />
+
+                                  <div className="text-sm space-y-1">
+                                    <p><span className="font-medium">Productos:</span> {order.name_products}</p>
+                                    <p><span className="font-medium">Monto:</span> <span className="text-primary font-bold">{order.price_total} {order.currency}</span></p>
+                                    <p><span className="font-medium">Cantidad:</span> {order.amount ?? '-'}</p>
+                                    <p><span className="font-medium">Tipo:</span> {mapPurchaseType(order.purchase_type)}</p>
+                                    <p><span className="font-medium">Dirección:</span> {order.delivery_address ? order.delivery_address : '-'}</p>
+                                  </div>
+
+                                  <div className="pt-2 mt-2 border-t border-border flex justify-end">
+                                    <Select
+                                      value={order.status.toString()}
+                                      onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
+                                      disabled={statusUpdatingId === order.id}
+                                    >
+                                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                                        <SelectValue placeholder="Estado" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="0">Recibida</SelectItem>
+                                        <SelectItem value="1">Procesada</SelectItem>
+                                        <SelectItem value="2">Entregada</SelectItem>
+                                        <SelectItem value="3">Cancelada</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                            {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
+                              <div className="flex justify-center gap-2 mt-4">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
+                                  disabled={ordersPage === 1}
+                                >
+                                  Anterior
+                                </Button>
+                                <span className="flex items-center text-sm px-2">
+                                  {ordersPage} / {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
+                                  disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
+                                >
+                                  Siguiente
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="2" className="mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                {loadingProducts ? (
+                  <div className="col-span-full flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : products.length === 0 ? (
+                  <div className="col-span-full">
+                    <Alert>
+                      <AlertDescription>No hay productos para mostrar</AlertDescription>
+                    </Alert>
+                  </div>
+                ) : (
+                  products.map((product) => (
+                    <Card key={product.id} className="h-full flex flex-col shadow-sm border-border overflow-hidden">
+                      <div className="relative aspect-video">
+                        <img
+                          src={product.image_base64}
+                          alt={product.name}
+                          className="w-full h-full object-contain bg-muted/20"
+                        />
+                      </div>
+                      <CardContent className="flex-1 pb-4 pt-4">
+                        <h3 className="font-bold text-lg mb-2">
+                          {product.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {product.description}
+                        </p>
+                        <h4 className="font-bold text-primary text-xl mb-4">
+                          {product.price} {product.currency}
+                        </h4>
+                        <div className="flex gap-2 flex-wrap">
+                          {product.has_delivery && (
+                            <Badge variant="outline" className="text-xs">
+                              <Truck className="h-3 w-3 mr-1" /> Envío
+                            </Badge>
+                          )}
+                          {product.has_pickup && (
+                            <Badge variant="outline" className="text-xs">
+                              <PickupIcon className="h-3 w-3 mr-1" /> Recogida
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </Card>
+      </div>
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -1647,7 +1703,7 @@ const StoreManagmentGym = () => {
         title="Eliminar Producto"
         msg="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
       />
-    </div>
+    </>
   );
 };
 

@@ -52,6 +52,30 @@ const GYM_DEFAULT = {
   image_profile: null
 };
 
+const SHOP_DEFAULT = {
+  owner_id: null,
+  shop_name: "DEFAULT_SHOP_NAME",
+  address: "DEFAULT_ADDRESS",
+  owner_name: "DEFAULT_OWNER_NAME",
+  owner_phone: "DEFAULT_OWNER_PHONE",
+  public_phone: "DEFAULT_PUBLIC_PHONE",
+  next_payment_date: nextPaymentDate,
+  active: null,
+  state: "DEFAULT_STATE",
+  city: "DEFAULT_CITY",
+  schedules: {
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+    sunday: []
+  },
+  theme: true,
+  image_profile: null
+};
+
 // eslint-disable-next-line react/prop-types
 const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading }) => {
   const location = useLocation();
@@ -161,6 +185,25 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
               if (containsDefault) {
                 setCreateProfile(true);
               } else {
+                if (gymData[0].store === true) {
+                  const { data: shopData } = await supabase
+                    .from('info_shops')
+                    .select()
+                    .eq('owner_id', id);
+
+                  if (shopData && shopData.length > 0) {
+                    const shopContainsDefault = Object.values(shopData[0]).some(value =>
+                      typeof value === 'string' && value.includes("DEFAULT_")
+                    );
+                    if (shopContainsDefault) {
+                      navigate('/shop-stepper');
+                      setLoading(false);
+                      if (setIsLoading) setIsLoading(false);
+                      return;
+                    }
+                  }
+                }
+
                 if (members && members.length === 0)
                   navigate('/bienvenido');
                 else
@@ -188,6 +231,12 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
         const { data } = await supabase
           .from('info_general_gym')
           .insert(GYM_DEFAULT);
+
+        if (GYM_DEFAULT.store) {
+          const newShop = { ...SHOP_DEFAULT, owner_id: id };
+          await supabase.from('info_shops').insert(newShop);
+        }
+
         if (data)
           existsUser();
       }, 1000);
@@ -308,6 +357,24 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
           } catch (e) {
             console.error(e);
           }
+
+          if (gymInfo.store === true) {
+            const { data: shopData } = await supabase
+              .from('info_shops')
+              .select()
+              .eq('owner_id', id);
+
+            if (shopData && shopData.length > 0) {
+              const shopContainsDefault = Object.values(shopData[0]).some(value =>
+                typeof value === 'string' && value.includes("DEFAULT_")
+              );
+              if (shopContainsDefault) {
+                navigate('/shop-stepper');
+                return;
+              }
+            }
+          }
+
           navigate('/bienvenido');
         }
       } catch (error) {
@@ -425,9 +492,13 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
       state !== "" && !state.includes("DEFAULT_") &&
       city !== "" && !city.includes("DEFAULT_");
 
-    const step1Valid = (monthly && !isNaN(gymInfo.monthly_payment) && Number(gymInfo.monthly_payment) > 0) ||
-      (daily && !isNaN(gymInfo.daily_payment) && Number(gymInfo.daily_payment) > 0) ||
-      (trainer && !isNaN(gymInfo.trainers_cost) && Number(gymInfo.trainers_cost) > 0);
+    const step1Valid =
+      (!monthly && !daily && !trainer) ? false : // At least one must be checked
+        (
+          (!monthly || (!isNaN(gymInfo.monthly_payment) && Number(gymInfo.monthly_payment) > 0)) &&
+          (!daily || (!isNaN(gymInfo.daily_payment) && Number(gymInfo.daily_payment) > 0)) &&
+          (!trainer || (!isNaN(gymInfo.trainers_cost) && Number(gymInfo.trainers_cost) > 0))
+        );
 
     const step2Valid = Object.values(gymInfo.schedules).some(day => day.length > 0);
 
@@ -481,6 +552,7 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
 
   const logoutUser = async () => {
     await supabase.auth.signOut();
+    sessionStorage.clear();
   };
 
   const generateWhatsAppLink = () => {
@@ -542,6 +614,11 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
 
       {createProfile && (
         <div className="w-full">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold text-primary">Configuración de Gimnasio</h2>
+            <p className="text-sm text-muted-foreground mt-1">Complete los datos de su centro de entrenamiento</p>
+          </div>
+
           {step === 0 && (
             <div className="space-y-6">
               <div className="flex items-start gap-5">

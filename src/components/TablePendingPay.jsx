@@ -20,6 +20,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   const theme = useTheme();
   const { trainersList } = useMembers();
+  const hasTrainers = Array.isArray(trainersList) && trainersList.length > 0;
   const [membersPendingOriginal, setMembersPendingOriginal] = useState([]);
   const [membersPending, setMembersPending] = useState([]);
   const [trainer_name, setTrainerName] = useState("");
@@ -30,16 +31,20 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
-    if (trainersList?.length > 0) {
-      const trainers = [];
-      trainers.push({ value: "Todos", label: "Todos" })
-      trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
-      trainersList.forEach(element => {
-        trainers.push({ value: element.name, label: element.name });
-      });
-      setTrainers(trainers);
+    if (!hasTrainers) {
+      setTrainers([]);
+      setTrainerName("");
+      return;
     }
-  }, [trainersList])
+
+    const trainers = [];
+    trainers.push({ value: "Todos", label: "Todos" })
+    trainers.push({ value: "Sin Entrenador", label: "Sin Entrenador" })
+    trainersList.forEach(element => {
+      trainers.push({ value: element.name, label: element.name });
+    });
+    setTrainers(trainers);
+  }, [hasTrainers, trainersList])
 
   useEffect(() => {
     setMembersPendingOriginal(membersPendingPayment);
@@ -189,22 +194,23 @@ export const TablePendingPay = ({ membersPendingPayment = [] }) => {
   return (
     <div className="w-full mb-10">
       <br />
-      <div className="flex justify-between items-center w-full gap-4">
-        {/* Lado izquierdo: Select (Filtro) */}
-        <div className="w-full max-w-[200px]">
-          <Select value={trainer_name || "Todos"} onValueChange={(val) => setTrainerName(val)}>
-            <SelectTrigger disabled={membersPending.length === 0} className="w-full bg-transparent">
-              <SelectValue placeholder="Entrenador" />
-            </SelectTrigger>
-            <SelectContent>
-              {trainers.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className={cn("flex items-center w-full gap-4", hasTrainers ? "justify-between" : "justify-end")}>
+        {hasTrainers && (
+          <div className="w-full max-w-[200px]">
+            <Select value={trainer_name || "Todos"} onValueChange={(val) => setTrainerName(val)}>
+              <SelectTrigger disabled={membersPending.length === 0} className="w-full bg-transparent">
+                <SelectValue placeholder="Entrenador" />
+              </SelectTrigger>
+              <SelectContent>
+                {trainers.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Lado derecho: Botón Descargar */}
         <div className="flex-shrink-0">
