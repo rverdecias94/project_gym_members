@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-const IMAGE_DEFAULT = '/CI.png';
+const IMAGE_DEFAULT = '/CI.webp';
 
 const ImageUploader = ({ setImageBase64, image }) => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -135,7 +135,7 @@ const ImageUploader = ({ setImageBase64, image }) => {
 
         <TabsContent value="upload" className="space-y-4 m-0">
           <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-dashed border-border bg-muted/20 flex items-center justify-center">
-            <img 
+            <img
               src={imageScr ? imageScr : selectedImage ? selectedImage : IMAGE_DEFAULT}
               alt="Perfil"
               className={cn(
@@ -184,10 +184,10 @@ const ImageUploader = ({ setImageBase64, image }) => {
 
           <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-border bg-muted/20">
             {imageScr ? (
-              <img 
+              <img
                 src={imageScr}
                 alt="Captura"
-                className="w-full h-full object-cover" 
+                className="w-full h-full object-cover"
               />
             ) : (
               <Webcam
@@ -202,8 +202,8 @@ const ImageUploader = ({ setImageBase64, image }) => {
             )}
           </div>
 
-          <Button 
-            variant="default" 
+          <Button
+            variant="default"
             className="w-full flex items-center justify-center gap-2"
             onClick={capture}
           >

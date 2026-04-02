@@ -34,7 +34,7 @@ const SignIn = () => {
   return (
     <div
       className="flex min-h-screen justify-center items-center p-5 bg-cover bg-center bg-no-repeat fixed inset-0"
-      style={{ backgroundImage: "url(/login-bg.jpg)" }}
+      style={{ backgroundImage: "url(/login-bg.webp)" }}
     >
       <div className="text-center bg-[#282b824a] shadow-[0_0_5px_1px_#4f52b2] h-auto rounded-[3%] flex flex-col justify-between p-8 backdrop-blur-md w-full max-w-md">
         <span className="flex items-center justify-center">

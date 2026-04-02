@@ -10,7 +10,7 @@ const NotFound = () => {
       fontFamily: 'Arial, sans-serif',
       marginTop: '-5rem'
     }}>
-      <img src="/404.png" alt="" />
+      <img src="/404.webp" alt="" />
       <p style={{
         fontSize: '1.2rem',
         color: '#666',

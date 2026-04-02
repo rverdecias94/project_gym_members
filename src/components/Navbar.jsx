@@ -96,7 +96,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
         <div className={`fixed top-0 w-full z-50 transition-all duration-300 backdrop-blur-md border-b border-border shadow-sm ${mode ? 'bg-slate-900/80 text-white' : 'bg-primary/90 text-white'} flex flex-col`}>
           <div className="px-4 md:px-8 py-3 flex items-center justify-between w-full">
             <div className="flex items-center gap-4 w-1/3">
-              <img src="/logo_platform.png" alt="Logo" className="w-[120px] h-[30px] object-contain" />
+              <img src="/logo_platform.webp" alt="Logo" className="w-[120px] h-[30px] object-contain" />
             </div>
 
             {!isMobile && navBarOptions && !["/admin", "/admin/panel", "/login", "/redirect", "/general_info",
