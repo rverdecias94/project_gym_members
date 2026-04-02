@@ -38,7 +38,7 @@ const SignIn = () => {
     >
       <div className="text-center bg-[#282b824a] shadow-[0_0_5px_1px_#4f52b2] h-auto rounded-[3%] flex flex-col justify-between p-8 backdrop-blur-md w-full max-w-md">
         <span className="flex items-center justify-center">
-          <img src="/logo_sign_in.png" alt="logo" className="w-[150px] h-[150px] object-contain" />
+          <img src="/logo_sign_in.webp" alt="logo" className="w-[150px] h-[150px] object-contain" />
         </span>
 
         <div className="my-6">
