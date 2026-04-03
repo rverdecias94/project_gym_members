@@ -12,7 +12,7 @@ import QrReader from './QrReader';
 import PaymentRecords from './PaymentRecords';
 import { toast } from 'sonner';
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, FileText, CheckSquare, XCircle, Search, QrCode, Receipt, UserPlus, CalendarDays, CheckSquare as CheckSquareIcon, Square } from 'lucide-react';
+import { Edit, Trash2, FileText, CheckSquare, XCircle, Search, QrCode, Receipt, UserPlus, CalendarDays, CheckSquare as CheckSquareIcon, TriangleAlert, Square } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -256,7 +256,7 @@ export const TableMembersList = ({ membersList = [] }) => {
         </div>
       ),
     },
-    { field: 'first_name', headerName: 'Nombre', width: 180 },
+    { field: 'first_name', headerName: 'Nombre', width: 120 },
     { field: 'last_name', headerName: 'Apellidos', width: 180 },
     {
       field: 'phone',
@@ -433,16 +433,12 @@ export const TableMembersList = ({ membersList = [] }) => {
                 setOpen(true);
                 setShowQrScanner(false); // Asegura que se vea el formulario por defecto
               }}
+              disabled={members.length === 80 && !gymInfo?.store}
             >
               <QrCode className="mr-2 h-4 w-4" />
               <span>Asociar Cliente</span>
             </Button>
 
-            {!gymInfo?.store && members.length >= 95 && members.length <= 100 && (
-              <p className="text-sm mt-4">
-                Recuerda que puedes agregar hasta 100 clientes para tu plan.
-              </p>
-            )}
           </div>
 
           {!isMobile && (
@@ -450,7 +446,8 @@ export const TableMembersList = ({ membersList = [] }) => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={handleOpenMember} // Aquí manejamos la apertura del formulario
+                onClick={handleOpenMember}
+                disabled={members.length === 80 && !gymInfo?.store} // Aquí manejamos la apertura del formulario
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 <span>Cliente</span>
@@ -590,6 +587,14 @@ export const TableMembersList = ({ membersList = [] }) => {
         </div>
       </div>
       <br />
+
+      {!gymInfo?.store && members.length >= 70 && members.length <= 80 && (
+        <p className="text-sm mt-4 mb-4 bg-orange-100 text-orange-600 p-2 rounded-md flex items-center w-full">
+          <TriangleAlert className="h-4 w-4 mr-2 text-orange-600 font-bold" />
+          Recuerda que puedes agregar hasta 80 clientes para tu plan.
+          Si desea agregar clientes adicionales debe mejorar al plan premium
+        </p>
+      )}
 
       {!isMobile ? (
         <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">

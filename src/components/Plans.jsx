@@ -135,10 +135,11 @@ const PlansPage = () => {
         'El segundo mes un 20% de descuento',
       ],
       includes: [
-        { text: 'Registro de hasta 100 clientes', icon: <Group /> },
+        { text: 'Registro de hasta 80 clientes (en promedio los gimnasios tienen 50-60 clientes)', icon: <Group /> },
         { text: 'Agregar y gestionar clientes y entrenadores', icon: <ManageAccounts /> },
         { text: 'Función de Checking en el gym (único en Cuba)', icon: <HowToReg /> },
         { text: 'Estadísticas generales (clientes, entrenadores, relaciones de agrupación)', icon: <BarChart /> },
+        { text: 'Los clientes del gimnasio tendrán acceso a funciones IA en su aplicación de Tronoss para temas fitness (10 solicitudes)', icon: <AutoAwesome /> },
       ],
       color: '#6164c7',
       popular: false
@@ -183,7 +184,7 @@ const PlansPage = () => {
         { text: 'Registro ilimitado de clientes', icon: <Group /> },
         { text: 'Agregar y gestionar clientes y entrenadores', icon: <ManageAccounts /> },
         { text: 'Función de Checking en el gym (único en Cuba)', icon: <HowToReg /> },
-        { text: 'Los clientes del gimnasio tendrán acceso a funciones IA en su aplicación de Tronoss', icon: <AutoAwesome /> },
+        { text: 'Los clientes del gimnasio tendrán acceso a funciones IA en su aplicación de Tronoss para temas fitness (40 solicitudes)', icon: <AutoAwesome /> },
         { text: 'Estadísticas generales (clientes, entrenadores, relaciones de agrupación)', icon: <BarChart /> },
         { text: 'Estadísticas de negocio y estratégicas (retención, ingresos proyectados, rango de edad, pagos y tendencias.)', icon: <Insights /> },
         { text: 'Visibilidad y posicionamiento en la comunidad fitness', icon: <Star /> },
@@ -475,7 +476,7 @@ const PlansPage = () => {
                                 fontWeight: '500'
                               }}
                             >
-                              USD/mes
+                              USD/ 2do mes
                             </Typography>
                           </Box>
 
@@ -499,15 +500,15 @@ const PlansPage = () => {
                             fontWeight: 'bold',
                             mb: 1,
                             color: isDark ? 'white' : theme.palette.text.primary,
-                            fontSize: '0.85rem'
+                            fontSize: '1.25rem'
                           }}
                         >
                           Todo lo que ganas al registrarte
                         </Typography>
 
-                        <List dense sx={{ mb: 2, p: 0 }}>
+                        <List dense sx={{ mb: 2, p: 0 }} className='bg-slate-200/5 rounded'>
                           {plan.features.map((feature, index) => (
-                            <ListItem key={index} sx={{ px: 0, py: 0.25 }}>
+                            <ListItem key={index} sx={{ px: 1, py: 0.25 }}>
                               <ListItemIcon sx={{ minWidth: 28 }}>
                                 <CheckCircle sx={{ color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : '#4caf50', fontSize: 16 }} />
                               </ListItemIcon>
@@ -516,24 +517,12 @@ const PlansPage = () => {
                                 primaryTypographyProps={{
                                   variant: 'body2',
                                   color: isDark ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary,
-                                  sx: { opacity: 0.9, fontSize: '0.8rem', lineHeight: 1.2 }
+                                  sx: { opacity: 0.9, fontSize: '1rem', lineHeight: 1.2 }
                                 }}
                               />
                             </ListItem>
                           ))}
-                          <ListItem sx={{ px: 0, py: 0.25 }}>
-                            <ListItemIcon sx={{ minWidth: 28 }}>
-                              <WhatsApp sx={{ color: plan.popular ? (isDark ? '#ffb700' : '#6164c7') : '#25d366', fontSize: 16 }} />
-                            </ListItemIcon>
-                            <ListItemText
-                              primary="Soporte técnico vía WhatsApp"
-                              primaryTypographyProps={{
-                                variant: 'body2',
-                                color: isDark ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary,
-                                sx: { opacity: 0.9, fontSize: '0.8rem', lineHeight: 1.2 }
-                              }}
-                            />
-                          </ListItem>
+
                         </List>
 
                         {/* Includes */}
