@@ -589,6 +589,7 @@ export const ContextProvider = ({
         gym_currency: currentGymInfo.monthly_currency,
         trainer_cost: member.has_trainer ? currentGymInfo.trainers_cost : null,
         trainer_currency: member.has_trainer ? currentGymInfo.trainer_currency : null,
+        trainer_name: member.has_trainer ? member.trainer_name : null,
       }
     } else {
       memberToSave.gym_id = data?.user?.id;

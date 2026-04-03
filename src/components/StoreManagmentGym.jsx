@@ -1,11 +1,12 @@
 /* eslint-disable react/prop-types */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
 import moment from "moment/moment";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Image as ImageIcon, Truck, Store as PickupIcon, CheckCircle, Store as StoreIcon, Settings } from 'lucide-react';
+import ReactApexChart from "react-apexcharts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -92,6 +93,149 @@ const StoreManagmentGym = () => {
   const [productToDelete, setProductToDelete] = useState(null);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark");
+    setIsDarkMode(isDark);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          setIsDarkMode(document.documentElement.classList.contains("dark"));
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
+
+  const getChartOptions = (categories, isPie = false, customColors = null) => {
+    const textColor = isDarkMode ? "hsl(215 20.2% 65.1%)" : "#64748b";
+    const primaryTextColor = isDarkMode ? "hsl(210 40% 98%)" : "#0f172a";
+
+    const baseOptions = {
+      chart: {
+        toolbar: { show: false },
+        background: "transparent",
+        fontFamily: "Montserrat, sans-serif",
+      },
+      colors: customColors || ["#6164c7", "#e49c10", "#ef74b9", "#10b981"],
+      theme: {
+        mode: isDarkMode ? "dark" : "light",
+      },
+      tooltip: {
+        theme: isDarkMode ? "dark" : "light",
+        style: {
+          fontSize: "12px",
+          fontFamily: "Montserrat, sans-serif",
+        },
+      },
+    };
+
+    if (isPie) {
+      return {
+        ...baseOptions,
+        labels: categories,
+        stroke: { show: false },
+        dataLabels: { enabled: false },
+        legend: {
+          position: "bottom",
+          labels: { colors: textColor },
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "70%",
+              labels: {
+                show: true,
+                name: { color: textColor },
+                value: { color: primaryTextColor, fontSize: "20px", fontWeight: 600 },
+              },
+            },
+          },
+        },
+      };
+    }
+
+    return {
+      ...baseOptions,
+      xaxis: {
+        categories,
+        labels: {
+          style: { colors: textColor },
+        },
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+      },
+      yaxis: {
+        labels: {
+          style: { colors: textColor },
+        },
+      },
+      grid: {
+        borderColor: isDarkMode ? "hsl(var(--border))" : "rgba(0,0,0,0.05)",
+        strokeDashArray: 4,
+        yaxis: { lines: { show: true } },
+        xaxis: { lines: { show: false } },
+      },
+      plotOptions: {
+        bar: {
+          borderRadius: 4,
+          columnWidth: "40%",
+          distributed: true,
+        },
+      },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+    };
+  };
+
+  const storeStats = useMemo(() => {
+    const statusLabels = ["Recibida", "Procesada", "Entregada", "Cancelada"];
+    const ordersByStatus = statusLabels.map((_, idx) => orders.filter((o) => o.status === idx).length);
+
+    const deliveredOrders = orders.filter((o) => o.status === 2);
+    const incomeByCurrency = deliveredOrders.reduce((acc, o) => {
+      const currency = o.currency || "USD";
+      const raw = o.price_total ?? o.price ?? 0;
+      const value = typeof raw === "number" ? raw : parseFloat(raw);
+      if (!Number.isFinite(value)) return acc;
+      acc[currency] = (acc[currency] || 0) + value;
+      return acc;
+    }, {});
+
+    const categoriesMap = products.reduce((acc, p) => {
+      const key = (p.category || "").trim() || "Sin categoría";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const categoryEntries = Object.entries(categoriesMap)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total);
+
+    const maxBars = 8;
+    const main = categoryEntries.slice(0, maxBars);
+    const rest = categoryEntries.slice(maxBars);
+    const restTotal = rest.reduce((sum, e) => sum + e.total, 0);
+
+    const categoryChart = [
+      ...main,
+      ...(restTotal > 0 ? [{ name: "Otros", total: restTotal }] : []),
+    ];
+
+    return {
+      totalOrders: orders.length,
+      totalProducts: products.length,
+      deliveredOrdersCount: deliveredOrders.length,
+      incomeByCurrency,
+      statusLabels,
+      ordersByStatus,
+      categoryChart,
+    };
+  }, [orders, products]);
 
   useEffect(() => {
     const getData = async () => {
@@ -852,6 +996,15 @@ const StoreManagmentGym = () => {
                   </Button>
                 </>
               )}
+
+              {tabValue === 3 && (
+                <Alert>
+                  <AlertTitle>Estadísticas</AlertTitle>
+                  <AlertDescription>
+                    Las estadísticas se calculan con tus productos y órdenes actuales.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </Card>
         </div>
@@ -927,6 +1080,12 @@ const StoreManagmentGym = () => {
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
               >
                 Catálogo
+              </TabsTrigger>
+              <TabsTrigger
+                value="3"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+              >
+                Estadísticas
               </TabsTrigger>
             </TabsList>
 
@@ -1098,6 +1257,106 @@ const StoreManagmentGym = () => {
                     )}
                   </div>
                 )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="3" className="mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <Card className="lg:col-span-4 border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Órdenes</h3>
+                    <p className="text-2xl font-bold text-foreground">{storeStats.totalOrders}</p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-muted-foreground">
+                      Entregadas: <span className="font-medium text-foreground">{storeStats.deliveredOrdersCount}</span>
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-4 border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Productos</h3>
+                    <p className="text-2xl font-bold text-foreground">{storeStats.totalProducts}</p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-muted-foreground">
+                      Categorías: <span className="font-medium text-foreground">{storeStats.categoryChart.length}</span>
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-4 border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Ingresos (Entregadas)</h3>
+                    <p className="text-2xl font-bold text-foreground">
+                      {Object.keys(storeStats.incomeByCurrency).length === 0 ? (
+                        `0`
+                      ) : Object.keys(storeStats.incomeByCurrency).length === 1 ? (
+                        (() => {
+                          const currency = Object.keys(storeStats.incomeByCurrency)[0];
+                          const total = storeStats.incomeByCurrency[currency] || 0;
+                          return `${total.toFixed(2)} ${currency}`;
+                        })()
+                      ) : (
+                        `Multi-moneda`
+                      )}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {Object.keys(storeStats.incomeByCurrency).length > 0 ? (
+                      <div className="space-y-1">
+                        {Object.entries(storeStats.incomeByCurrency).map(([currency, total]) => (
+                          <p key={currency} className="text-xs text-muted-foreground">
+                            {currency}: <span className="font-medium text-foreground">{total.toFixed(2)}</span>
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No hay órdenes entregadas.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-5 border-border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <h3 className="text-sm font-semibold text-foreground">Órdenes por estado</h3>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {storeStats.totalOrders > 0 ? (
+                      <ReactApexChart
+                        options={getChartOptions(storeStats.statusLabels, true, ["#3b82f6", "#f59e0b", "#10b981", "#ef4444"])}
+                        series={storeStats.ordersByStatus}
+                        type="donut"
+                        height={280}
+                      />
+                    ) : (
+                      <div className="flex justify-center items-center h-[280px] text-muted-foreground text-sm">
+                        No hay datos
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-7 border-border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <h3 className="text-sm font-semibold text-foreground">Productos por categoría</h3>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {storeStats.totalProducts > 0 ? (
+                      <ReactApexChart
+                        options={getChartOptions(storeStats.categoryChart.map((c) => (c.name.length > 16 ? `${c.name.slice(0, 16)}...` : c.name)), false, ["#6164c7"])}
+                        series={[{ name: "Productos", data: storeStats.categoryChart.map((c) => c.total) }]}
+                        type="bar"
+                        height={280}
+                      />
+                    ) : (
+                      <div className="flex justify-center items-center h-[280px] text-muted-foreground text-sm">
+                        No hay datos
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
 

@@ -11,7 +11,7 @@ import MembersForm from './MembersForm';
 import QrReader from './QrReader';
 import PaymentRecords from './PaymentRecords';
 import { toast } from 'sonner';
-
+import { Label } from "@/components/ui/label";
 import { Edit, Trash2, FileText, CheckSquare, XCircle, Search, QrCode, Receipt, UserPlus, CalendarDays, CheckSquare as CheckSquareIcon, Square } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,16 +134,17 @@ export const TableMembersList = ({ membersList = [] }) => {
   }, [trainer_name]);
 
   const buscarRegistro = async (value) => {
-    if (value.length !== 36) return
+    if (value.length === 0) return
 
     let scannedId = value !== null && value !== undefined ? value : id;
+    let tb_column = value.length === 36 ? 'member_id' : 'id'
 
     setBackdrop(true);
     setError(null);
     const { data, error } = await supabase
       .from('members')
       .select('*')
-      .eq('member_id', scannedId);
+      .eq(tb_column, scannedId);
 
     setBackdrop(false);
     if (error) {
@@ -227,6 +228,7 @@ export const TableMembersList = ({ membersList = [] }) => {
     setId(scannedId);
     setShowQrScanner(false);
     setResultados([]);
+    setError(null);
     buscarRegistro(scannedId);
   };
 
@@ -639,7 +641,15 @@ export const TableMembersList = ({ membersList = [] }) => {
 
       {adding && <span className="text-sm text-muted-foreground mt-2 block">Aplicando reglas a clientes seleccionados...</span>}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          setOpen(false);
+          setShowQrScanner(false);
+          setId('');
+          setResultados([]);
+          setError(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex justify-between items-center">
@@ -650,36 +660,45 @@ export const TableMembersList = ({ membersList = [] }) => {
           <div className="flex flex-col gap-4 py-4">
             {!showQrScanner ? (
               <>
-                <Input
-                  placeholder="Escribe el ID"
-                  value={id}
-                  onChange={e => setId(e.target.value)}
-                  className="w-full"
-                />
+                {!resultados.length > 0 && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="member_id">ID del Miembro</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="member_id"
+                          placeholder="Escribe el ID"
+                          value={id}
+                          onChange={e => setId(e.target.value)}
+                          className="flex-1"
+                        />
+                        {console.log(id.length !== 0)}
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => buscarRegistro(id ?? null)}
+                          disabled={id.length === 0}
+                          className="shrink-0"
+                        >
+                          <Search className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
 
-                <Button
-                  variant="default"
-                  className="w-full"
-                  onClick={() => {
-                    setShowQrScanner(true);
-                    setId('');
-                    setResultados([]);
-                    setError(null);
-                  }}
-                >
-                  <QrCode className="mr-2 h-4 w-4" />
-                  Escanear QR
-                </Button>
-
-                {id.length === 36 && (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => buscarRegistro(id ?? null)}
-                  >
-                    <Search className="mr-2 h-4 w-4" />
-                    Buscar
-                  </Button>
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={() => {
+                        setShowQrScanner(true);
+                        setId('');
+                        setResultados([]);
+                        setError(null);
+                      }}
+                    >
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Escanear QR
+                    </Button>
+                  </>
                 )}
 
                 {error && (
