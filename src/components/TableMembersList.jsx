@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import dayjs from 'dayjs';
 
 // eslint-disable-next-line react/prop-types
 export const TableMembersList = ({ membersList = [] }) => {
@@ -43,6 +44,7 @@ export const TableMembersList = ({ membersList = [] }) => {
 
   const [open, setOpen] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false); // Nuevo estado para alternar entre formulario y QR
+  const [associated, setAssociated] = useState(false)
 
   const [id, setId] = useState('');
   const [resultados, setResultados] = useState([]);
@@ -183,13 +185,14 @@ export const TableMembersList = ({ membersList = [] }) => {
     setResultados([]);
   };
 
-  const handleOpenEdit = (member) => {
+  const handleOpenEdit = (member, value = false) => {
     const normalized = {
       ...member,
       phone: member?.phone !== undefined && member?.phone !== null ? String(member.phone) : '',
     };
     setOpenEdit(true);
     setMemberInfo(normalized);
+    setAssociated(value)
   };
 
   const handleOpenRule = () => {
@@ -260,6 +263,16 @@ export const TableMembersList = ({ membersList = [] }) => {
       renderCell: (params) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           {params.value ? params.value : <strong style={{ fontSize: 20 }}>-</strong>}
+        </div>
+      ),
+    },
+    {
+      field: 'pay_date',
+      headerName: 'Fecha de Pago',
+      width: 130,
+      renderCell: (params) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {dayjs(params.value).format('DD-MM-YYYY')}
         </div>
       ),
     },
@@ -690,7 +703,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                     <p><strong>Apellido:</strong> {registro.last_name}</p>
                     <Button
                       className="mt-2 bg-[#e49c10] hover:bg-[#c9890e] text-white w-full"
-                      onClick={() => handleOpenEdit(registro)}
+                      onClick={() => handleOpenEdit(registro, true)}
                     >
                       Detalles de Cliente
                     </Button>
@@ -721,6 +734,7 @@ export const TableMembersList = ({ membersList = [] }) => {
         memberInfo={memberInfo}
         open={openEdit}
         virifiedAcount={verifiedAcount}
+        associated={associated}
       />
 
       <PaymentRecords

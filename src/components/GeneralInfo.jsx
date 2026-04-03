@@ -326,17 +326,13 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
     setGymInfo(prev => ({ ...prev, image_profile: null }));
   };
 
-  const handleReload = () => {
-    setReload(true);
-    setWithOutAccount(false);
-  };
-
   const saveGymInfo = () => {
     let infoToSave = {
       ...gymInfo,
       monthly_payment: monthly ? gymInfo.monthly_payment : null,
       daily_payment: daily ? gymInfo.daily_payment : null,
       trainers_cost: trainer ? gymInfo.trainers_cost : null,
+      ai_available_requests: localStorage.getItem("selectedPlanId") === "premium" ? 40 : 10
     };
     setTimeout(async () => {
       try {
@@ -668,7 +664,7 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
                     value={gymInfo.gym_name?.startsWith("DEFAULT_") ? "" : gymInfo.gym_name}
                     onChange={handlerChange}
                     onFocus={handleFocus}
-                    placeholder="El potro salvaje"
+                    placeholder="Fit 24/7"
                     className={errors.gym_name ? "border-destructive" : ""}
                   />
                   {errors.gym_name && <span className="text-xs text-destructive">{errors.gym_name}</span>}

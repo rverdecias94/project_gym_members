@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X, UserPlus, Save } from 'lucide-react';
 import "dayjs/locale/es";
 
-function MembersForm({ member = {}, open, handleClose, virifiedAcount = false }) {
+function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, associated }) {
   const { createNewMember, adding, updateClient, trainersList } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
@@ -44,10 +44,26 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
 
   dayjs.locale("es");
 
+  const today = dayjs().format('YYYY-MM-DD');
+  const minDate = dayjs().subtract(2, 'months').format('YYYY-MM-DD');
+
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
+
+      let new_payment_date = null;
+
+      if (associated) {
+        const fechaSeleccionada = dayjs(today);
+        // 👇 sumamos un mes exacto, respetando el día y el año
+        const fechaFinal = fechaSeleccionada.add(1, "month");
+        // 👇 formateamos
+        new_payment_date = fechaFinal.format("YYYY-MM-DD");
+      }
+      // 👇 tomamos la fecha seleccionada por el usuario
+
       const normalizedMember = {
         ...member,
+        pay_date: associated ? new_payment_date : member.pay_date,
         phone: member?.phone !== undefined && member?.phone !== null ? String(member.phone) : '',
       };
       setMemberData(normalizedMember);
@@ -170,8 +186,7 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
   };
 
   // Get max date for native date input (only for creation)
-  const today = dayjs().format('YYYY-MM-DD');
-  const minDate = dayjs().subtract(2, 'months').format('YYYY-MM-DD');
+
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && clearAndClose()}>
@@ -179,7 +194,7 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false })
         <DialogHeader className="p-4 md:p-6 border-b border-border sticky top-0 bg-card z-10 flex flex-row items-center justify-between">
           <DialogTitle className="flex items-center text-xl font-bold">
             <UserPlus className="w-5 h-5 mr-2 text-primary" />
-            {editing ? "Editar Cliente" : "Nuevo Cliente"}
+            {editing && associated ? "Detalles de Cliente" : editing ? "Editar Cliente" : "Nuevo Cliente"}
           </DialogTitle>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={clearAndClose}>
             <X className="h-4 w-4" />

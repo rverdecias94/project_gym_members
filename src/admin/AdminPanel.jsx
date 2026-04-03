@@ -7,6 +7,7 @@ import ConfirmationDialog from "../components/ConfirmationDialog";
 import ReactApexChart from 'react-apexcharts';
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
 import { RefreshCw, Search, Trash2, FileText, CreditCard } from "lucide-react";
 
 const AdminPanel = () => {
@@ -42,7 +42,8 @@ const AdminPanel = () => {
   const [historyRows, setHistoryRows] = useState([]);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-
+  const [aiRequestsDraft, setAiRequestsDraft] = useState({});
+  const [aiRequestsSaving, setAiRequestsSaving] = useState({});
   const [statistics, setStatistics] = useState({
     gymsByProvince: {},
     shopsByProvince: {},
@@ -91,6 +92,8 @@ const AdminPanel = () => {
       const { data, error } = await supabase.from('info_general_gym').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       setGymInfo(data || []);
+      setAiRequestsDraft({});
+      setAiRequestsSaving({});
       setGymInfoOriginal(data || []);
       showMessage("Listado de gimnasios actualizado", "success");
     } catch (err) {
@@ -241,6 +244,35 @@ const AdminPanel = () => {
       if (dataType === 'gym') getAllGyms(); else getAllShops();
     } catch (error) {
       showMessage("Error al actualizar la fecha de pago.", "error");
+    }
+  };
+  const updateRequests = async (row) => {
+    try {
+      if (!row.owner_id) return;
+      const draftValue = aiRequestsDraft[row.owner_id];
+      if (draftValue === undefined || !/^\d+$/.test(String(draftValue))) {
+        showMessage("Valor inválido para Solicitud AI", "error");
+        return;
+      }
+      const newValue = parseInt(draftValue, 10);
+      setAiRequestsSaving(prev => ({ ...prev, [row.owner_id]: true }));
+      const { error } = await supabase
+        .from("info_general_gym")
+        .update({ ai_available_requests: newValue })
+        .eq("owner_id", row.owner_id);
+      if (error) throw error;
+      showMessage("¡Solicitud de AI actualizada!", "success");
+      setGymInfo(prev => prev.map(g => g.owner_id === row.owner_id ? { ...g, ai_available_requests: newValue } : g));
+      setGymInfoOriginal(prev => prev.map(g => g.owner_id === row.owner_id ? { ...g, ai_available_requests: newValue } : g));
+      setAiRequestsDraft(prev => {
+        const next = { ...prev };
+        delete next[row.owner_id];
+        return next;
+      });
+    } catch (error) {
+      showMessage("Error al actualizar la solicitud.", "error");
+    } finally {
+      setAiRequestsSaving(prev => ({ ...prev, [row.owner_id]: false }));
     }
   };
 
@@ -492,7 +524,7 @@ const AdminPanel = () => {
     <div className="p-4 w-full">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <h2 className="text-2xl font-bold">Panel de Administración</h2>
-        
+
         {tabValue !== "raffles" && tabValue !== "statistics" && (
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -524,7 +556,8 @@ const AdminPanel = () => {
                   <TableHead>Teléfono</TableHead>
                   <TableHead>Prov/Mun</TableHead>
                   <TableHead>Pago Mensual</TableHead>
-                  <TableHead>Fecha Pago</TableHead>
+                  <TableHead>Solicitud AI</TableHead>
+                  <TableHead>Fecha de Pago</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Acciones</TableHead>
@@ -550,8 +583,38 @@ const AdminPanel = () => {
                       })()}
                     </TableCell>
                     <TableCell>
-                      <Input 
-                        type="date" 
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={aiRequestsDraft[gym.owner_id] ?? String(gym.ai_available_requests ?? "")}
+                          onChange={(e) => {
+                            const nextValue = e.target.value;
+                            if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                              setAiRequestsDraft(prev => ({ ...prev, [gym.owner_id]: nextValue }));
+                            }
+                          }}
+                          className="w-24 h-8 text-xs"
+                        />
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-8 px-3"
+                          disabled={
+                            aiRequestsSaving[gym.owner_id] ||
+                            aiRequestsDraft[gym.owner_id] === undefined ||
+                            String(aiRequestsDraft[gym.owner_id]) === String(gym.ai_available_requests ?? "") ||
+                            !/^\d+$/.test(String(aiRequestsDraft[gym.owner_id]))
+                          }
+                          onClick={() => updateRequests(gym)}
+                        >
+                          Guardar
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="date"
                         value={gym.next_payment_date ? dayjs(gym.next_payment_date).format('YYYY-MM-DD') : ''}
                         onChange={(e) => updateNextPaymentDate(gym, e.target.value, 'gym')}
                         className="w-36 h-8 text-xs"
@@ -636,8 +699,8 @@ const AdminPanel = () => {
                       <div className="text-xs text-muted-foreground">{shop.city || "-"}</div>
                     </TableCell>
                     <TableCell>
-                      <Input 
-                        type="date" 
+                      <Input
+                        type="date"
                         value={shop.next_payment_date ? dayjs(shop.next_payment_date).format('YYYY-MM-DD') : ''}
                         onChange={(e) => updateNextPaymentDate(shop, e.target.value, 'shop')}
                         className="w-36 h-8 text-xs"

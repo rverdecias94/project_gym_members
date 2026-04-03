@@ -71,7 +71,7 @@ const PaymentHistoryModal = ({ open, onClose, accountId }) => {
                     <CardContent className="p-4 flex flex-col gap-2">
                       <div className="flex justify-between items-start mb-2">
                         <div className="font-bold text-lg text-primary dark:text-complementary">
-                          {record.quantity_paid} {record.currency}
+                          {record.quantity_paid}
                         </div>
                         {record.active_plan && (
                           <Badge variant="outline" className="bg-background">
@@ -79,7 +79,7 @@ const PaymentHistoryModal = ({ open, onClose, accountId }) => {
                           </Badge>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex flex-col">
                           <span className="text-muted-foreground text-xs">Fecha de Pago</span>

@@ -5,13 +5,37 @@ import { useMembers } from '../context/Context';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from 'lucide-react';
+import { supabase } from '@/supabase/client';
+import { toast } from "sonner";
 
 export default function DialogMessage({ handleClose, info, open, type, fn, msg, title }) {
-  const { deleteMember, deleteTrainer } = useMembers();
+  const { deleteMember, deleteTrainer, deleteMemberReferenceWithGym } = useMembers();
 
   const handleDelete = async () => {
-    await type === 1 ? deleteMember(info?.id) : deleteTrainer(info?.id);
-    handleClose();
+    console.log('=== INICIANDO ELIMINACIÓN ===');
+    console.log('type:', type);
+    console.log('info:', info);
+    console.log('info?.member_id:', info?.member_id);
+
+    try {
+      if (type === 1) {
+        if (info?.member_id) {
+          console.log('Ejecutando deleteMemberReferenceWithGym');
+          await deleteMemberReferenceWithGym(info);
+        } else {
+          console.log('Ejecutando deleteMember con id:', info?.id);
+          await deleteMember(info?.id);
+        }
+      } else {
+        console.log('Ejecutando deleteTrainer con id:', info?.id);
+        await deleteTrainer(info?.id);
+      }
+      console.log('=== ELIMINACIÓN COMPLETADA ===');
+      handleClose();
+    } catch (error) {
+      console.error('Error en handleDelete:', error);
+      toast.error('Error al procesar la eliminación');
+    }
   };
 
   return (

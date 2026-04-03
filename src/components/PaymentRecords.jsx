@@ -41,8 +41,8 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
     }
   }, [memberInfo, open])
 
-  const formatCurrency = (amount, currency) => {
-    return `${Number(amount).toLocaleString()} ${currency}`;
+  const formatCurrency = ({ gym_cost, gym_currency, trainer_cost, trainer_currency }) => {
+    return `Costo Gym: ${gym_cost} ${gym_currency} + Entrenador: ${trainer_cost} ${trainer_currency}`;
   };
 
   const formatDate = (date) => {
@@ -74,7 +74,6 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
                         <th className="px-4 py-3 font-medium border-b border-border">Fecha de Pago</th>
                         <th className="px-4 py-3 font-medium border-b border-border">Próximo Pago</th>
                         <th className="px-4 py-3 font-medium border-b border-border">Cantidad Pagada</th>
-                        <th className="px-4 py-3 font-medium border-b border-border">Moneda</th>
                         <th className="px-4 py-3 font-medium border-b border-border">Incluye Entrenador</th>
                         <th className="px-4 py-3 font-medium border-b border-border">Fecha de Registro</th>
                       </tr>
@@ -89,10 +88,7 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
                             {payment.next_payment ? formatDate(payment.next_payment) : 'N/A'}
                           </td>
                           <td className="px-4 py-3 font-bold text-foreground">
-                            {formatCurrency(payment.quantity_paid, payment.currency)}
-                          </td>
-                          <td className="px-4 py-3 text-foreground">
-                            {payment.currency}
+                            {formatCurrency(payment.quantity_paid)}
                           </td>
                           <td className="px-4 py-3">
                             {payment.trainer_included ? (
@@ -113,19 +109,6 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
                     </tbody>
                   </table>
                 </div>
-              </div>
-
-              {/* Información resumida */}
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-                <span className="text-foreground">
-                  <strong>Resumen:</strong> {paymentsList.length} pago(s) registrado(s)
-                </span>
-                <span className="text-lg font-bold text-primary dark:text-complementary">
-                  Total pagado: {formatCurrency(
-                    paymentsList.reduce((sum, payment) => sum + Number(payment.quantity_paid), 0),
-                    paymentsList[0]?.currency || 'CUP'
-                  )}
-                </span>
               </div>
             </div>
           ) : (
