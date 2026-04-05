@@ -42,7 +42,11 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
   }, [memberInfo, open])
 
   const formatCurrency = ({ gym_cost, gym_currency, trainer_cost, trainer_currency }) => {
-    return `Costo Gym: ${gym_cost} ${gym_currency} + Entrenador: ${trainer_cost} ${trainer_currency}`;
+    let message = "";
+    if (trainer_cost !== null) {
+      message += ` + Entrenador: ${trainer_cost} ${trainer_currency}`;
+    }
+    return `Costo Gym: ${gym_cost} ${gym_currency} ${message}`;
   };
 
   const formatDate = (date) => {

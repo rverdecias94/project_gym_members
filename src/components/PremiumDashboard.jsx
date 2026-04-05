@@ -3,6 +3,11 @@ import ReactApexChart from 'react-apexcharts';
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CalendarDays } from "lucide-react";
+import dayjs from "dayjs";
 
 export default function PremiumDashboard({
   membersList,
@@ -11,6 +16,8 @@ export default function PremiumDashboard({
   const [ageRanges, setAgeRanges] = useState({});
   const [paymentStatus, setPaymentStatus] = useState({ upToDate: 0, delayed: 0 });
   const [birthdays, setBirthdays] = useState({ thisMonth: 0, otherMonths: 0 });
+  const [birthdayClientsThisMonth, setBirthdayClientsThisMonth] = useState([]);
+  const [openBirthdays, setOpenBirthdays] = useState(false);
   const [weeklyPayers, setWeeklyPayers] = useState(0);
   const [paymentsByMonth, setPaymentsByMonth] = useState(Array(12).fill(0));
   const [last7DaysData, setLast7DaysData] = useState([]);
@@ -177,18 +184,34 @@ export default function PremiumDashboard({
       // ---- Cumpleaños del mes ----
       let birthdaysThisMonth = 0;
       let birthdaysOtherMonths = 0;
+      const birthdayClientsMonth = [];
       const currentMonth = today.getMonth();
       membersList.forEach((m) => {
         if (m.ci && m.ci.length >= 6) {
+          let year = parseInt(m.ci.substring(0, 2), 10);
           let month = parseInt(m.ci.substring(2, 4), 10) - 1;
           if (month === currentMonth) {
             birthdaysThisMonth++;
+            let day = parseInt(m.ci.substring(4, 6), 10);
+            year = year < 25 ? 2000 + year : 1900 + year;
+            const birthDate = new Date(year, month, day);
+            birthdayClientsMonth.push({
+              key: m.id ?? m.member_id ?? m.ci ?? `${m.first_name ?? ""}-${m.last_name ?? ""}-${m.ci ?? ""}`,
+              first_name: m.first_name ?? "",
+              last_name: m.last_name ?? "",
+              ci: m.ci,
+              birthDate,
+            });
           } else {
             birthdaysOtherMonths++;
           }
         }
       });
       setBirthdays({ thisMonth: birthdaysThisMonth, otherMonths: birthdaysOtherMonths });
+      setBirthdayClientsThisMonth(
+        birthdayClientsMonth
+          .sort((a, b) => a.birthDate.getDate() - b.birthDate.getDate())
+      );
 
       // ---- Clientes que pagan esta semana ----
       const startOfWeek = new Date(today);
@@ -308,6 +331,16 @@ export default function PremiumDashboard({
         <Card className="col-span-1 bg-card border-border shadow-sm">
           <CardContent className="p-5 h-full transition-all duration-300">
             <div className="w-full">
+              <div className="flex justify-end mb-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setOpenBirthdays(true)}
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </Button>
+              </div>
               <ReactApexChart
                 options={getChartOptions(["Este mes", "Resto del año"], true, ['#32aaf4', '#6157d6'])}
                 series={[birthdays.thisMonth, birthdays.otherMonths]}
@@ -347,6 +380,40 @@ export default function PremiumDashboard({
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={openBirthdays} onOpenChange={setOpenBirthdays}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Cumpleaños del mes</DialogTitle>
+          </DialogHeader>
+          {birthdayClientsThisMonth.length > 0 ? (
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead className="text-right">Fecha</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {birthdayClientsThisMonth.map((c) => (
+                    <TableRow key={c.key}>
+                      <TableCell className="font-medium">
+                        {[c.first_name, c.last_name].filter(Boolean).join(" ").trim() || "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {dayjs(c.birthDate).format("DD/MM/YYYY")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">No hay cumpleaños este mes.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

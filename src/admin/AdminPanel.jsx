@@ -37,7 +37,7 @@ const AdminPanel = () => {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentCurrency, setPaymentCurrency] = useState("USD");
   const [paymentNextDate, setPaymentNextDate] = useState("");
-  const [paymentPlan, setPaymentPlan] = useState("Estándar");
+  const [paymentPlan, setPaymentPlan] = useState("Standard");
   const [savingPayment, setSavingPayment] = useState(false);
   const [historyRows, setHistoryRows] = useState([]);
   const [openConfirm, setOpenConfirm] = useState(false);
@@ -52,6 +52,7 @@ const AdminPanel = () => {
     upcomingPayments: [],
     premiumGyms: 0,
     standardGyms: 0,
+    shops: 0,
     shopsWithProducts: {},
     totalProductsByShop: {},
     shopWithMostProducts: null,
@@ -59,6 +60,14 @@ const AdminPanel = () => {
     totalShops: 0,
     totalProducts: 0
   });
+
+  const [monthlyIncome, setMonthlyIncome] = useState({
+    gym: Array(12).fill(0),
+    shop: Array(12).fill(0)
+  });
+  const [incomeCurrency, setIncomeCurrency] = useState('USD');
+  const [availableCurrencies, setAvailableCurrencies] = useState(['USD']);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -80,10 +89,15 @@ const AdminPanel = () => {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    loadMonthlyIncome();
+  }, [incomeCurrency, selectedYear]);
+
   const fetchAllData = () => {
     getAllGyms();
     getAllShops();
     getStatistics();
+    loadMonthlyIncome();
   };
 
   const getAllGyms = async () => {
@@ -125,38 +139,40 @@ const AdminPanel = () => {
       const { data: gymsData } = await supabase.from('info_general_gym').select('*');
       const { data: shopsData } = await supabase.from('info_shops').select('*');
       const { data: productsData } = await supabase.from('products').select('user_store_id');
-      const { data: membersData } = await supabase.from('members').select('gym_id');
+
 
       const storeNamesMap = {};
+      const gymsNamesMap = {};
+
       gymsData?.forEach(gym => {
-        if (gym.owner_id) storeNamesMap[gym.owner_id] = gym.gym_name || 'Gimnasio Desconocido';
+        if (gym.owner_id) gymsNamesMap[gym.owner_id] = gym.gym_name;
       });
       shopsData?.forEach(shop => {
-        if (shop.owner_id) storeNamesMap[shop.owner_id] = shop.shop_name || 'Tienda Desconocida';
+        if (shop.owner_id) storeNamesMap[shop.owner_id] = shop.shop_name;
       });
 
       const gymsByProvince = {};
       gymsData?.forEach(gym => {
-        const province = gym.state || 'Sin provincia';
+        const province = gym.state;
         gymsByProvince[province] = (gymsByProvince[province] || 0) + 1;
       });
 
       const shopsByProvince = {};
       shopsData?.forEach(shop => {
-        const province = shop.state || 'Sin provincia';
+        const province = shop.state;
         shopsByProvince[province] = (shopsByProvince[province] || 0) + 1;
       });
 
       const clientsByGym = {};
-      membersData?.forEach(member => {
-        if (member.gym_id) {
-          clientsByGym[member.gym_id] = (clientsByGym[member.gym_id] || 0) + 1;
+      gymsData?.forEach(gym => {
+        if (gym.owner_id) {
+          clientsByGym[gym.owner_id] = gym.clients;
         }
       });
 
       const membersByGymName = {};
       Object.entries(clientsByGym).forEach(([gymId, count]) => {
-        const gymName = storeNamesMap[gymId] || 'Gimnasio Desconocido';
+        const gymName = gymsNamesMap[gymId];
         membersByGymName[gymName] = count;
       });
 
@@ -184,6 +200,8 @@ const AdminPanel = () => {
 
       let premiumGyms = 0;
       let standardGyms = 0;
+      let shops = shopsData?.length || 0;
+
       gymsData?.forEach(gym => {
         if (gym.store) premiumGyms++;
         else standardGyms++;
@@ -207,6 +225,8 @@ const AdminPanel = () => {
         }
       });
 
+      console.log(clientsByGym)
+
       setStatistics({
         gymsByProvince,
         shopsByProvince,
@@ -215,6 +235,7 @@ const AdminPanel = () => {
         upcomingPayments,
         premiumGyms,
         standardGyms,
+        shops,
         shopsWithProducts: productsByShop,
         totalProductsByShop: productsByShop,
         shopWithMostProducts,
@@ -276,6 +297,59 @@ const AdminPanel = () => {
     }
   };
 
+  const loadMonthlyIncome = async () => {
+    try {
+      const currentYear = parseInt(selectedYear);
+
+      // Obtener pagos de gimnasios
+      const { data: payments, error: gymError } = await supabase
+        .from('payment_history_customer')
+        .select('quantity_paid, currency, next_payment_date, active_plan')
+        .gte('next_payment_date', `${currentYear}-01-01`)
+        .lte('next_payment_date', `${currentYear}-12-31`);
+
+      if (gymError) {
+        console.error('Error al cargar pagos de gimnasios:', gymError);
+        return;
+      }
+      // Procesar pagos por mes y tipo
+      const gymIncomeByMonth = Array(12).fill(0);
+      const shopIncomeByMonth = Array(12).fill(0);
+      const standardIncomeByMonth = Array(12).fill(0);
+      const currenciesFound = new Set(['USD']);
+
+      // Procesar pagos de gimnasios
+      payments?.forEach(payment => {
+        const paymentDate = new Date(payment.next_payment_date);
+        const month = paymentDate.getMonth() - 1;
+        const amount = parseFloat(payment.quantity_paid) || 0;
+        const currency = payment.currency;
+
+        currenciesFound.add(currency);
+
+        if (payment.active_plan === 'Premium') {
+          gymIncomeByMonth[month] += amount;
+        } else if (payment.active_plan === 'Standard') {
+          standardIncomeByMonth[month] += amount;
+        } else if (payment.active_plan === 'Store') {
+          shopIncomeByMonth[month] += amount;
+        }
+      });
+
+      setMonthlyIncome({
+        gym: gymIncomeByMonth,
+        shop: shopIncomeByMonth,
+        standard: standardIncomeByMonth
+      });
+
+      setAvailableCurrencies(Array.from(currenciesFound).sort());
+
+    } catch (error) {
+      console.error('Error al cargar ingresos mensuales:', error);
+      showMessage('Error al cargar ingresos mensuales', 'error');
+    }
+  };
+
   const updateActiveStatus = async (row, dataType) => {
     const tableName = dataType === 'gym' ? 'info_general_gym' : 'info_shops';
     const updatedRow = { ...row, active: !row.active };
@@ -314,7 +388,7 @@ const AdminPanel = () => {
     setPaymentAmount("");
     setPaymentCurrency("USD");
     setPaymentNextDate(row?.next_payment_date ? dayjs(row.next_payment_date).format('YYYY-MM-DD') : "");
-    setPaymentPlan(row?.store ? "Premium" : "Estándar");
+    setPaymentPlan(row?.store ? "Premium" : "Standard");
     setOpenPayment(true);
   };
 
@@ -337,7 +411,7 @@ const AdminPanel = () => {
         quantity_paid: parseFloat(paymentAmount),
         currency: paymentCurrency,
         next_payment_date: paymentNextDate ? dayjs(paymentNextDate).format("YYYY-MM-DD") : null,
-        active_plan: selectedType === 'gym' ? paymentPlan : null,
+        active_plan: selectedType === 'gym' ? paymentPlan : 'Store',
       };
       const { error } = await supabase.from('payment_history_customer').insert(payload);
       if (error) throw error;
@@ -783,89 +857,77 @@ const AdminPanel = () => {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Gráfico de Ingresos Mensuales */}
+            <Card className="md:col-span-2 lg:col-span-1">
               <CardHeader>
-                <CardTitle className="text-lg">Gimnasios por Provincia</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-lg">Ingresos Mensuales</CardTitle>
+                  <Select value={incomeCurrency} onValueChange={setIncomeCurrency}>
+                    <SelectTrigger className="h-8 text-xs w-20">
+                      <SelectValue placeholder="Moneda" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCurrencies.map(currency => (
+                        <SelectItem key={currency} value={currency} className="text-xs">
+                          {currency}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
-                {Object.keys(statistics.gymsByProvince).length > 0 ? (
+                {monthlyIncome?.gym?.some(amount => amount > 0) || monthlyIncome?.shop?.some(amount => amount > 0) || monthlyIncome?.standard?.some(amount => amount > 0) ? (
                   <ReactApexChart
-                    options={getChartOptions(Object.keys(statistics.gymsByProvince))}
-                    series={[{ name: 'Gimnasios', data: Object.values(statistics.gymsByProvince) }]}
+                    options={{
+                      chart: {
+                        toolbar: { show: false },
+                        background: 'transparent',
+                        fontFamily: 'Montserrat, sans-serif',
+                      },
+                      colors: ['#6157d6', '#f278b6', '#c4941d'],
+                      theme: {
+                        mode: isDarkMode ? 'dark' : 'light',
+                      },
+                      xaxis: {
+                        categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                        labels: {
+                          style: { colors: isDarkMode ? 'hsl(215 20.2% 65.1%)' : '#64748b' }
+                        }
+                      },
+                      yaxis: {
+                        labels: {
+                          style: { colors: isDarkMode ? 'hsl(215 20.2% 65.1%)' : '#64748b' },
+                          formatter: (value) => `${incomeCurrency} ${value.toFixed(2)}`
+                        }
+                      },
+                      grid: {
+                        borderColor: isDarkMode ? 'hsl(var(--border))' : 'rgba(0,0,0,0.05)',
+                        strokeDashArray: 4,
+                      },
+                      plotOptions: {
+                        bar: {
+                          borderRadius: 1,
+                          columnWidth: '70%',
+                          gap: 2,
+                        }
+                      },
+                      dataLabels: { enabled: false },
+                      legend: { show: true, position: 'bottom' }
+                    }}
+                    series={[
+                      { name: 'Premium (Gym)', data: monthlyIncome.gym },
+                      { name: 'Tiendas', data: monthlyIncome.shop },
+                      { name: 'Estándar (Gym)', data: monthlyIncome.standard },
+                    ]}
                     type="bar"
-                    height={250}
+                    height={300}
                   />
                 ) : (
-                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Miembros por Gimnasio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.keys(statistics.membersByGymName || {}).length > 0 ? (
-                  <ReactApexChart
-                    options={getChartOptions(Object.keys(statistics.membersByGymName).map(name => name.length > 15 ? name.substring(0, 15) + '...' : name))}
-                    series={[{ name: 'Miembros', data: Object.values(statistics.membersByGymName) }]}
-                    type="bar"
-                    height={250}
-                  />
-                ) : (
-                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Tipos de Cuentas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ReactApexChart
-                  options={getChartOptions(['Premium', 'Estándar'], true, ['#10b981', '#f43f5e'])}
-                  series={[statistics.premiumGyms, statistics.standardGyms]}
-                  type="donut"
-                  height={250}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Tiendas por Provincia</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.keys(statistics.shopsByProvince || {}).length > 0 ? (
-                  <ReactApexChart
-                    options={getChartOptions(Object.keys(statistics.shopsByProvince))}
-                    series={[{ name: 'Tiendas', data: Object.values(statistics.shopsByProvince) }]}
-                    type="bar"
-                    height={250}
-                  />
-                ) : (
-                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Productos por Tienda</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.keys(statistics.totalProductsByShop).length > 0 ? (
-                  <ReactApexChart
-                    options={getChartOptions(Object.keys(statistics.totalProductsByShop))}
-                    series={[{ name: 'Productos', data: Object.values(statistics.totalProductsByShop) }]}
-                    type="bar"
-                    height={250}
-                  />
-                ) : (
-                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
+                  <div className="flex justify-center items-center h-[300px] text-muted-foreground text-sm">
+                    No hay datos de ingresos para {selectedYear}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -894,6 +956,88 @@ const AdminPanel = () => {
                 )}
               </CardContent>
             </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Gimnasios por Provincia</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(statistics.gymsByProvince).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.gymsByProvince))}
+                    series={[{ name: 'Gimnasios', data: Object.values(statistics.gymsByProvince) }]}
+                    type="bar"
+                    height={250}
+                  />
+                ) : (
+                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Miembros por Gimnasio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(statistics.membersByGymName || {}).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.membersByGymName).map(name => name.length > 15 ? name.substring(0, 15) + '...' : name))}
+                    series={[{ name: 'Miembros', data: Object.values(statistics.membersByGymName) }]}
+                    type="bar"
+                    height={250}
+                  />
+                ) : (
+                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Tiendas por Provincia</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(statistics.shopsByProvince || {}).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.shopsByProvince))}
+                    series={[{ name: 'Tiendas', data: Object.values(statistics.shopsByProvince) }]}
+                    type="bar"
+                    height={250}
+                  />
+                ) : (
+                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Productos por Tienda</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(statistics.totalProductsByShop).length > 0 ? (
+                  <ReactApexChart
+                    options={getChartOptions(Object.keys(statistics.totalProductsByShop))}
+                    series={[{ name: 'Productos', data: Object.values(statistics.totalProductsByShop) }]}
+                    type="bar"
+                    height={250}
+                  />
+                ) : (
+                  <div className="flex justify-center items-center h-[250px] text-muted-foreground text-sm">No hay datos</div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Tipos de Cuentas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ReactApexChart
+                  options={getChartOptions(['Premium', 'Estándar', 'Tiendas'], true, ['#10b981', '#f43f5e', '#3399cc'])}
+                  series={[statistics.premiumGyms, statistics.standardGyms, statistics.shops]}
+                  type="donut"
+                  height={250}
+                />
+              </CardContent>
+            </Card>
+
           </div>
         </TabsContent>
       </Tabs>
@@ -942,7 +1086,7 @@ const AdminPanel = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Estándar">Estándar</SelectItem>
+                    <SelectItem value="Standard">Standard</SelectItem>
                     <SelectItem value="Premium">Premium</SelectItem>
                   </SelectContent>
                 </Select>

@@ -226,6 +226,108 @@ const StoreManagmentGym = () => {
       ...(restTotal > 0 ? [{ name: "Otros", total: restTotal }] : []),
     ];
 
+    // Nuevos cálculos para gráficos adicionales
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    // Productos olvidados (disponibles pero sin ventas en el último mes)
+    const forgottenProducts = products.filter(product => {
+      const hasSales = orders.some(order =>
+        order.status === 2 && // Entregadas
+        new Date(order.created_at) >= oneMonthAgo &&
+        order.products?.some(p => p.id_products === product.id_products)
+      );
+      return !hasSales && new Date(product.created_at) <= oneMonthAgo;
+    });
+
+    // Ranking de productos por ventas
+    const productSalesMap = {};
+    orders.forEach(order => {
+      if (order.status === 2 && order.products) { // Solo órdenes entregadas
+        order.products.forEach(product => {
+          const id = product.id_products;
+          productSalesMap[id] = (productSalesMap[id] || 0) + (product.quantity || 1);
+        });
+      }
+    });
+
+    const productRanking = products
+      .map(product => ({
+        ...product,
+        totalSales: productSalesMap[product.id_products] || 0
+      }))
+      .sort((a, b) => b.totalSales - a.totalSales)
+      .slice(0, 10); // Top 10 productos
+
+    // Predicción simple: categoría con más ventas históricas
+    const categorySalesMap = {};
+    orders.forEach(order => {
+      if (order.status === 2 && order.products) {
+        order.products.forEach(product => {
+          const productData = products.find(p => p.id_products === product.id_products);
+          if (productData) {
+            const category = productData.category || "Sin categoría";
+            categorySalesMap[category] = (categorySalesMap[category] || 0) + (product.quantity || 1);
+          }
+        });
+      }
+    });
+
+    const topCategory = Object.entries(categorySalesMap)
+      .sort(([, a], [, b]) => b - a)[0]?.[0] || "Sin datos";
+
+    // Alertas inteligentes
+    const alerts = [];
+
+    // Ventas de esta semana vs semana pasada
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    const thisWeekSales = orders.filter(o =>
+      o.status === 2 &&
+      new Date(o.created_at) >= oneWeekAgo
+    ).length;
+
+    const lastWeekSales = orders.filter(o =>
+      o.status === 2 &&
+      new Date(o.created_at) >= twoWeeksAgo &&
+      new Date(o.created_at) < oneWeekAgo
+    ).length;
+
+    if (thisWeekSales < lastWeekSales * 0.8) {
+      alerts.push("Tus ventas bajaron esta semana");
+    }
+
+    // Productos en crecimiento (más ventas esta semana que la semana pasada)
+    const growingProducts = products.filter(product => {
+      const thisWeekProductSales = orders.filter(order =>
+        order.status === 2 &&
+        new Date(order.created_at) >= oneWeekAgo &&
+        order.products?.some(p => p.id_products === product.id_products)
+      ).reduce((sum, order) => {
+        const productInOrder = order.products?.find(p => p.id_products === product.id_products);
+        return sum + (productInOrder?.quantity || 0);
+      }, 0);
+
+      const lastWeekProductSales = orders.filter(order =>
+        order.status === 2 &&
+        new Date(order.created_at) >= twoWeeksAgo &&
+        new Date(order.created_at) < oneWeekAgo &&
+        order.products?.some(p => p.id_products === product.id_products)
+      ).reduce((sum, order) => {
+        const productInOrder = order.products?.find(p => p.id_products === product.id_products);
+        return sum + (productInOrder?.quantity || 0);
+      }, 0);
+
+      return thisWeekProductSales > lastWeekProductSales * 1.5;
+    });
+
+    if (growingProducts.length > 0) {
+      alerts.push(`Este producto está creciendo rápido: ${growingProducts[0]?.name_products || "Producto"}`);
+    }
+
     return {
       totalOrders: orders.length,
       totalProducts: products.length,
@@ -234,6 +336,14 @@ const StoreManagmentGym = () => {
       statusLabels,
       ordersByStatus,
       categoryChart,
+      // Nuevos datos
+      forgottenProducts,
+      productRanking,
+      topCategory,
+      alerts,
+      thisWeekSales,
+      lastWeekSales,
+      growingProducts
     };
   }, [orders, products]);
 
@@ -1261,6 +1371,54 @@ const StoreManagmentGym = () => {
             </TabsContent>
 
             <TabsContent value="3" className="mt-4">
+              {/* Alertas inteligentes */}
+              {storeStats.alerts.length > 0 && (
+                <div className="lg:col-span-12 mb-4">
+                  <Alert className="border-l-4 border-l-yellow-500">
+                    <AlertTitle>Alertas Inteligentes</AlertTitle>
+                    <AlertDescription>
+                      <ul className="list-disc list-inside space-y-1">
+                        {storeStats.alerts.map((alert, index) => (
+                          <li key={index} className="text-sm">{alert}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+
+              {/* Recomendaciones */}
+              {storeStats.forgottenProducts.length > 0 && (
+                <div className="lg:col-span-12 mb-4">
+                  <Alert className="border-l-4 border-l-blue-500">
+                    <AlertTitle>Recomendaciones Automáticas</AlertTitle>
+                    <AlertDescription>
+                      <p className="text-sm mb-2">
+                        <strong>{storeStats.forgottenProducts.length} productos</strong> sin ventas en el último mes deberían considerar descuento o promoción.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        💡 Sugerencia: Aplica un 10-20% de descuento en estos productos para impulsar sus ventas.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+
+              {/* Predicción */}
+              <div className="lg:col-span-12 mb-4">
+                <Alert className="border-l-4 border-l-green-500">
+                  <AlertTitle>Predicción de Ventas</AlertTitle>
+                  <AlertDescription>
+                    <p className="text-sm">
+                      📈 La categoría <strong>{storeStats.topCategory}</strong> ha tenido el mejor desempeño histórico.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Sugerencia: Considera aumentar el inventario en esta categoría.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <Card className="lg:col-span-4 border-border shadow-sm">
                   <CardHeader className="pb-3">
@@ -1353,6 +1511,59 @@ const StoreManagmentGym = () => {
                     ) : (
                       <div className="flex justify-center items-center h-[280px] text-muted-foreground text-sm">
                         No hay datos
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Nuevos gráficos */}
+                <Card className="lg:col-span-6 border-border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <h3 className="text-sm font-semibold text-foreground">Productos olvidados</h3>
+                    <p className="text-xs text-muted-foreground">Sin ventas en el último mes</p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {storeStats.forgottenProducts.length > 0 ? (
+                      <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                        {storeStats.forgottenProducts.slice(0, 5).map((product) => (
+                          <div key={product.id_products} className="flex justify-between items-center p-2 bg-muted/30 rounded">
+                            <span className="text-sm font-medium truncate">{product.name_products}</span>
+                            <Badge variant="outline" className="text-xs">Sin ventas</Badge>
+                          </div>
+                        ))}
+                        {storeStats.forgottenProducts.length > 5 && (
+                          <p className="text-xs text-muted-foreground text-center">+{storeStats.forgottenProducts.length - 5} más</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex justify-center items-center h-[200px] text-muted-foreground text-sm">
+                        No hay productos olvidados
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-6 border-border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <h3 className="text-sm font-semibold text-foreground">Ranking de productos</h3>
+                    <p className="text-xs text-muted-foreground">Top 5 más vendidos</p>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    {storeStats.productRanking.length > 0 ? (
+                      <div className="space-y-2">
+                        {storeStats.productRanking.slice(0, 5).map((product, index) => (
+                          <div key={product.id_products} className="flex justify-between items-center p-2 bg-muted/30 rounded">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">#{index + 1}</Badge>
+                              <span className="text-sm font-medium truncate">{product.name_products}</span>
+                            </div>
+                            <Badge variant="outline" className="text-xs">{product.totalSales} ventas</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex justify-center items-center h-[200px] text-muted-foreground text-sm">
+                        No hay ventas registradas
                       </div>
                     )}
                   </CardContent>

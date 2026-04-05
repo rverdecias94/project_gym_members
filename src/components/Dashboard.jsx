@@ -21,6 +21,9 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [membersByYear, setMembersByYear] = useState({});
   const [years, setYears] = useState([]);
+  const [monthlyIncome, setMonthlyIncome] = useState({ gym: Array(12).fill(0), trainer: Array(12).fill(0) });
+  const [incomeCurrency, setIncomeCurrency] = useState('USD');
+  const [availableCurrencies, setAvailableCurrencies] = useState(['USD']);
   const isMobile = window.innerWidth <= 768;
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -209,6 +212,9 @@ export default function Dashboard() {
           const defaultYear = yearsFounded.length > 0 ? Math.max(...yearsFounded) : new Date().getFullYear();
           setSelectedYear(defaultYear.toString());
           setMembersByMonth(membersTrainers.membersByYear[defaultYear] || Array(12).fill(0));
+
+          // Cargar datos de ingresos mensuales
+          await loadMonthlyIncome();
         }
       }, 1000);
     };
@@ -220,7 +226,12 @@ export default function Dashboard() {
     const year = parseInt(value, 10);
     setSelectedYear(value);
     setMembersByMonth(membersByYear[year] || Array(12).fill(0));
+    loadMonthlyIncome();
   };
+
+  useEffect(() => {
+    loadMonthlyIncome();
+  }, [incomeCurrency]);
 
   const handlerElemntsByTrainer = (membersTrainers) => {
     if (membersTrainers?.groupByTrainer) {
@@ -232,6 +243,60 @@ export default function Dashboard() {
       setElemntsByTrainer(clientsByTrainer)
     }
   }
+
+  const loadMonthlyIncome = async () => {
+    try {
+      const { data } = await getAuthUser();
+      const currentYear = parseInt(selectedYear);
+
+      // Obtener pagos del gimnasio
+      const { data: gymPayments, error: gymError } = await supabase
+        .from('payment_history_members')
+        .select('quantity_paid, created_at, next_payment')
+        .eq('gym_id', data?.user?.id)
+        .gte('next_payment', `${currentYear}-01-01`)
+        .lte('next_payment', `${currentYear}-12-31`);
+
+      if (gymError) {
+        console.error('Error al cargar pagos del gimnasio:', gymError);
+        return;
+      }
+      // Procesar pagos por mes y tipo
+      const gymIncomeByMonth = Array(12).fill(0);
+      const trainerIncomeByMonth = Array(12).fill(0);
+      const currenciesFound = new Set(['USD']);
+
+      gymPayments?.forEach(payment => {
+        const paymentDate = new Date(payment.next_payment);
+        const month = paymentDate.getMonth() - 1;
+        const amountGym = parseFloat(payment.quantity_paid.gym_cost) || 0;
+        const amountTrainer = parseFloat(payment.quantity_paid.trainer_cost) || 0;
+        const currencyGym = payment.quantity_paid.gym_currency || 'USD';
+        const currencyTrainer = payment.quantity_paid.trainer_currency || 'USD';
+
+        if (currencyGym !== null)
+          currenciesFound.add(currencyGym);
+        if (currencyTrainer !== null)
+          currenciesFound.add(currencyTrainer);
+        if (currencyGym === incomeCurrency) {
+          gymIncomeByMonth[month] += amountGym;
+        }
+        if (currencyTrainer === incomeCurrency) {
+          trainerIncomeByMonth[month] += amountTrainer;
+        }
+      });
+
+      setMonthlyIncome({
+        gym: gymIncomeByMonth,
+        trainer: trainerIncomeByMonth
+      });
+
+      setAvailableCurrencies(Array.from(currenciesFound).sort());
+
+    } catch (error) {
+      console.error('Error al cargar ingresos mensuales:', error);
+    }
+  };
   const columns = [
     { field: 'first_name', headerName: 'Nombre', width: 240 },
     { field: 'last_name', headerName: 'Apellidos', width: 240 },
@@ -387,6 +452,76 @@ export default function Dashboard() {
                     <Skeleton className="w-full h-[250px] rounded-xl" />
                     <Skeleton className="w-2/5 h-4 mt-2.5 mx-auto" />
                   </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Gráfico de Ingresos Mensuales */}
+          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4 mb-4">
+            <Card className={`bg-card border-border shadow-sm`}>
+              <CardContent className="p-5">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Ingresos Mensuales</h3>
+                  <div className="flex gap-2">
+                    <Select value={incomeCurrency} onValueChange={setIncomeCurrency}>
+                      <SelectTrigger className="h-8 text-xs w-20">
+                        <SelectValue placeholder="Moneda" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCurrencies.map(currency => (
+                          <SelectItem key={currency} value={currency} className="text-xs">
+                            {currency}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedYear} onValueChange={handleYearChange}>
+                      <SelectTrigger className="h-8 text-xs w-20">
+                        <SelectValue placeholder="Año" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {years.length > 0 && years.map(year => (
+                          <SelectItem key={year} value={year.toString()} className="text-xs">
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {monthlyIncome.gym.some(amount => amount > 0) || monthlyIncome.trainer.some(amount => amount > 0) ? (
+                  <div className="w-full">
+                    <ReactApexChart
+                      options={{
+                        ...getChartOptions(['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'], false),
+                        colors: ['#6157d6', '#e49c10'],
+                        plotOptions: {
+                          bar: {
+                            borderRadius: 1,
+                            columnWidth: '70%',
+                            distributed: false,
+                          },
+                        },
+                        yaxis: {
+                          labels: {
+                            style: { colors: isDarkMode ? 'hsl(215 20.2% 65.1%)' : '#64748b' },
+                            formatter: (value) => `${incomeCurrency} ${value.toFixed(0)}`
+                          }
+                        }
+                      }}
+                      series={[
+                        { name: 'Clientes', data: monthlyIncome.gym },
+                        ...(trainersList.length > 0 ? [{ name: 'Entrenadores', data: monthlyIncome.trainer }] : [])
+                      ]}
+                      type={isMobile ? "bar" : "bar"}
+                      height={300}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex justify-center items-center h-[300px] text-muted-foreground">
+                    No hay datos de ingresos para {selectedYear}
+                  </div>
                 )}
               </CardContent>
             </Card>

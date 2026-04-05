@@ -75,7 +75,7 @@ export const ContextProvider = ({
       const nextPayment = dayjs(userData.next_payment_date);
       const today = dayjs();
       if (today.isAfter(nextPayment, 'day')) {
-        console.log("Payment overdue for user:", userId);
+
         try {
           const {
             error
@@ -83,9 +83,9 @@ export const ContextProvider = ({
             enable: false
           }).eq('user_store_id', userId);
           if (error) throw error;
-          console.log("Products disabled successfully");
+          showMessage("Productos desactivados exitosamente", "success");
         } catch (err) {
-          console.error("Error disabling products:", err);
+          showMessage("Error al desactivar los productos", "error");
         }
       }
     }
@@ -190,7 +190,6 @@ export const ContextProvider = ({
       if (data) {
         sessionStorage.setItem("shop_info", JSON.stringify(data));
         setShopInfo(data); // Update state
-        console.log(data);
         // Check overdue payment
         await checkPaymentAndDisableProducts(data, user.id);
       }
@@ -382,7 +381,7 @@ export const ContextProvider = ({
           const months = 1; // Primer pago es siempre de 1 mes
           const trainerIncluded = newMember.has_trainer;
           const monthlyPayment = currentGymInfo?.monthly_payment || 0;
-          const trainerCost = currentGymInfo?.trainers_cost || 0;
+          const trainerCost = newMember.has_trainer ? currentGymInfo?.trainers_cost : null;
           let totalAmount = monthlyPayment * months;
 
           const {
@@ -392,9 +391,9 @@ export const ContextProvider = ({
             gym_id: gymId,
             quantity_paid: {
               gym_cost: totalAmount,
-              gym_currency: currentGymInfo?.monthly_currency || 'CUP',
+              gym_currency: currentGymInfo?.monthly_currency,
               trainer_cost: trainerCost,
-              trainer_currency: currentGymInfo?.trainers_currency || 'CUP',
+              trainer_currency: newMember.has_trainer ? currentGymInfo?.trainer_currency : null,
             },
             trainer_included: trainerIncluded,
             next_payment: new_payment_date
@@ -450,9 +449,6 @@ export const ContextProvider = ({
     }, 200);
   };
   const deleteMember = async id => {
-    console.log('=== deleteMember INICIADO ===');
-    console.log('id recibido:', id);
-
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
         try {
@@ -460,15 +456,11 @@ export const ContextProvider = ({
           await handlerNeedUpdateClients(true);
 
           const { data } = await getAuthUser();
-          console.log('Usuario autenticado:', data?.user?.id);
-
           // Delete payment history first to satisfy foreign key constraint
           const { error: historyError } = await supabase
             .from("payment_history_members")
             .delete()
             .eq("member_id", id);
-
-          console.log('Resultado de eliminar historial:', historyError ? 'error' : 'éxito');
 
           if (historyError) throw historyError;
 
@@ -478,17 +470,13 @@ export const ContextProvider = ({
             .eq("gym_id", data?.user?.id)
             .eq("id", id);
 
-          console.log('Resultado de eliminar miembro:', error ? 'error' : 'éxito');
-
           if (error) throw error;
 
           showMessage("Registro eliminado satisfactoriamente", "success");
           await getMembers(true);
-          console.log('=== deleteMember COMPLETADO ===');
           resolve();
         } catch (error) {
           showMessage("Error al eliminar el registro", "error");
-          console.error('Error en deleteMember:', error);
           reject(error);
         } finally {
           setBackdrop(false);
@@ -498,10 +486,6 @@ export const ContextProvider = ({
   };
 
   const deleteMemberReferenceWithGym = async (member) => {
-    console.log('=== deleteMemberReferenceWithGym INICIADO ===');
-    console.log('member recibido:', member);
-    console.log('member.id:', member?.id);
-
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
         try {
@@ -509,7 +493,6 @@ export const ContextProvider = ({
           await handlerNeedUpdateClients(true);
 
           const { data } = await getAuthUser();
-          console.log('Usuario autenticado:', data?.user?.id);
 
           const updateItem = {
             gym_id: null,
@@ -523,8 +506,6 @@ export const ContextProvider = ({
             .delete()
             .eq("member_id", member.id);
 
-          console.log('Resultado de eliminar historial:', deleteError ? 'error' : 'éxito');
-
           if (deleteError) throw deleteError;
 
           const { error } = await supabase
@@ -533,13 +514,10 @@ export const ContextProvider = ({
             .eq("gym_id", data?.user?.id)
             .eq("id", member.id);
 
-          console.log('Resultado de actualizar miembro:', error ? 'error' : 'éxito');
-
           if (error) throw error;
 
           showMessage("Registro desvinculado satisfactoriamente", "success");
           await getMembers(true);
-          console.log('=== deleteMemberReferenceWithGym COMPLETADO ===');
           resolve();
         } catch (error) {
           showMessage("Error al desvincular el registro", "error");
@@ -581,7 +559,6 @@ export const ContextProvider = ({
       const fechaActual = dayjs().add(1, "month"); // si lo necesitas
       memberToSave.initial_gym_date = fechaActual.format("YYYY-MM-DD");
       const currentGymInfo = await getGymInfo(true);
-      console.log(currentGymInfo)
       memberToSave.verified_account = {
         gym_id: data?.user?.id,
         trainer: member.has_trainer,
@@ -889,7 +866,6 @@ export const ContextProvider = ({
         if (trainerIncluded && memberData.trainer_name) {
           totalAmount += trainerCost * months;
         }
-        console.log(newPayDate, memberData.trainer_name, memberData.trainer_name !== null && memberData.trainer_name !== '');
         // Actualizar el miembro con la nueva fecha de pago y entrenador
         const {
           error: updateError

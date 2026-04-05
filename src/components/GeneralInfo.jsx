@@ -558,8 +558,6 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
     else if (selectedPlanId === "estandar") planName = "Estandar";
     else if (selectedPlanId === "market-fit") planName = "Tienda Fitness";
 
-    console.log("Plan ID from context/local:", selectedPlanId);
-
     const message = `Hola, mi nombre es ${userInfo.name || "Usuario"}. He solicitado el plan "${planName}" con el correo ${userInfo.email || "No especificado"}. Deseo finalizar la creación de mi cuenta.`;
     return `https://wa.me/5356408532?text=${encodeURIComponent(message)}`;
   };

@@ -677,7 +677,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                           onChange={e => setId(e.target.value)}
                           className="flex-1"
                         />
-                        {console.log(id.length !== 0)}
+
                         <Button
                           variant="outline"
                           size="icon"

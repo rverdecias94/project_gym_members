@@ -65,6 +65,9 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, a
         ...member,
         pay_date: associated ? new_payment_date : member.pay_date,
         phone: member?.phone !== undefined && member?.phone !== null ? String(member.phone) : '',
+        // Asegurar que clientes asociados lleguen sin entrenador marcado
+        has_trainer: associated ? false : member.has_trainer,
+        trainer_name: associated ? null : member.trainer_name,
       };
       setMemberData(normalizedMember);
       setImageBase64(member?.image_profile ?? null);

@@ -5,6 +5,9 @@ import { MembersInactive } from './MembersInactive';
 import { TablePendingPay } from './TablePendingPay';
 import { TablePagoRetardado } from './TablePagoRetardado';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 function MembersList() {
   const { membersList, getMembers, getTrainers } = useMembers();
@@ -12,11 +15,25 @@ function MembersList() {
   const [membersStatus, setMembersStatus] = useState({ active: [], inactive: [] });
   const [membersPendingPayment, setMembersPendingPayment] = useState([]);
   const [membersPaymentDelayed, setMembersPaymentDelayed] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     getMembers();
     getTrainers();
   }, [])
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await getMembers(true);
+      await getTrainers(true);
+      toast.success("Datos actualizados correctamente");
+    } catch (error) {
+      toast.error("Error al actualizar los datos");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   function getStartOfWeek(date) {
     const day = date.getDay();
@@ -77,6 +94,18 @@ function MembersList() {
 
   return (
     <div className="w-full p-4 max-w-[1400px] mx-auto mt-20 md:mt-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-foreground">Gestión de Clientes</h1>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="h-10 w-10"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
       <Tabs value={value} onValueChange={setValue} className="w-full">
         <TabsList className="w-full md:w-auto flex overflow-x-auto justify-start h-auto bg-transparent border-b border-border rounded-none p-0">
           <TabsTrigger
