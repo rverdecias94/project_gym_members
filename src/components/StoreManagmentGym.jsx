@@ -1405,19 +1405,22 @@ const StoreManagmentGym = () => {
               )}
 
               {/* Predicción */}
-              <div className="lg:col-span-12 mb-4">
-                <Alert className="border-l-4 border-l-green-500">
-                  <AlertTitle>Predicción de Ventas</AlertTitle>
-                  <AlertDescription>
-                    <p className="text-sm">
-                      📈 La categoría <strong>{storeStats.topCategory}</strong> ha tenido el mejor desempeño histórico.
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Sugerencia: Considera aumentar el inventario en esta categoría.
-                    </p>
-                  </AlertDescription>
-                </Alert>
-              </div>
+
+              {storeStats.topCategory !== "Sin datos" &&
+                <div className="lg:col-span-12 mb-4">
+                  <Alert className="border-l-4 border-l-green-500">
+                    <AlertTitle>Predicción de Ventas</AlertTitle>
+                    <AlertDescription>
+                      <p className="text-sm">
+                        📈 La categoría <strong>{storeStats.topCategory}</strong> ha tenido el mejor desempeño histórico.
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Sugerencia: Considera aumentar el inventario en esta categoría.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              }
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <Card className="lg:col-span-4 border-border shadow-sm">

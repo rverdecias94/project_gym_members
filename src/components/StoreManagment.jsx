@@ -29,6 +29,67 @@ const StoreManagment = () => {
   const { showMessage } = useSnackbar();
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  const [showDiscount, setShowDiscount] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [formIsValid, setFormIsValid] = useState(false);
+  const isMobile = window.innerWidth <= 768;
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterDelivery, setFilterDelivery] = useState("");
+  const [filterProductDate, setFilterProductDate] = useState("");
+
+  const [filterOrderClient, setFilterOrderClient] = useState("");
+  const [filterOrderStatus, setFilterOrderStatus] = useState("all");
+  const [filterOrderProduct, setFilterOrderProduct] = useState("");
+  const [filterOrderId, setFilterOrderId] = useState("");
+  const [filterOrderDate, setFilterOrderDate] = useState("");
+
+  const now = new Date();
+
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersItemsPerPage] = useState(5);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [cancelOrder, setCancelOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+
+  const [deleteDialogOpen, setDeleteDialog] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+
+  // Estados para el formulario
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    currency: 'USD',
+    image_base64: '',
+    product_code: '',
+    has_delivery: false,
+    has_pickup: false,
+    free_delivery: false,
+    category: '',
+    city: 'El cerro',
+    state: 'La Habana',
+    discount: '',
+    discount_start_date: null,
+    discount_end_date: null,
+    enable: true,
+  });
+
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
     setIsDarkMode(isDark);
@@ -259,66 +320,9 @@ const StoreManagment = () => {
   }, [orders, products]);
 
   // Estados para productos
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
 
-  // Estados para paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5);
 
-  // Estados para el formulario
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    currency: 'USD',
-    image_base64: '',
-    product_code: '',
-    has_delivery: false,
-    has_pickup: false,
-    free_delivery: false,
-    category: '',
-    city: 'El cerro',
-    state: 'La Habana',
-    discount: '',
-    discount_start_date: null,
-    discount_end_date: null,
-    enable: true,
-  });
 
-  const [showDiscount, setShowDiscount] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [formIsValid, setFormIsValid] = useState(false);
-  const isMobile = window.innerWidth <= 768;
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [filterDelivery, setFilterDelivery] = useState("");
-  const [filterProductDate, setFilterProductDate] = useState("");
-
-  const [filterOrderClient, setFilterOrderClient] = useState("");
-  const [filterOrderStatus, setFilterOrderStatus] = useState("all");
-  const [filterOrderProduct, setFilterOrderProduct] = useState("");
-  const [filterOrderId, setFilterOrderId] = useState("");
-  const [filterOrderDate, setFilterOrderDate] = useState("");
-
-  const now = new Date();
-
-  const [orders, setOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [ordersItemsPerPage] = useState(5);
-  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
-  const [openCancelDialog, setOpenCancelDialog] = useState(false);
-  const [cancelOrder, setCancelOrder] = useState(null);
-  const [cancelReason, setCancelReason] = useState("");
-
-  const [deleteDialogOpen, setDeleteDialog] = useState(false);
-  const [productToDelete, setProductToDelete] = useState(null);
 
   useEffect(() => {
     const getData = async () => {
@@ -1372,7 +1376,7 @@ const StoreManagment = () => {
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {storeStats.alerts.map((alert, index) => (
                         <div key={index} className={`flex items-center gap-2 text-xs p-2 rounded-lg ${alert.type === "warning" ? "bg-yellow-500/10 border border-yellow-500/20" :
-                            alert.type === "success" ? "bg-green-500/10 border border-green-500/20" : ""
+                          alert.type === "success" ? "bg-green-500/10 border border-green-500/20" : ""
                           }`}>
                           <span>{alert.icon}</span>
                           <span className="text-muted-foreground">{alert.message}</span>

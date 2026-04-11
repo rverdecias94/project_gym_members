@@ -1,258 +1,249 @@
 /* eslint-disable react/prop-types */
-// PaymentModal.jsx
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
+import { Loader2 } from "lucide-react";
+
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  TextField,
-  MenuItem,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Button,
-  Grid,
-  Typography,
-  Divider
-} from '@mui/material';
-import { useMembers } from '../context/Context';
-import dayjs from 'dayjs';
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useMembers } from "../context/Context";
 
 const PaymentModal = ({ open, handleClose, member }) => {
   const { registerPayment, gymInfo, trainersList, adding } = useMembers();
-  const [paymentData, setPaymentData] = useState({
-    trainer_name: '',
-    months: 1,
-    pay_date: ''
-  });
-  const [totalAmount, setTotalAmount] = useState(0);
 
-  // Precios reales del gimnasio
-  const gymPrice = gymInfo?.monthly_payment || 0;
-  const trainerPrice = gymInfo?.trainers_cost || 0;
-  const gymCurrency = gymInfo?.monthly_currency || 'CUP';
-  const trainerCurrency = gymInfo?.trainer_currency || 'CUP';
+  const [trainerName, setTrainerName] = useState("");
+  const [months, setMonths] = useState(1);
+  const [paymentDate, setPaymentDate] = useState(() => dayjs().format("YYYY-MM-DD"));
+
+  const gymPrice = Number(gymInfo?.monthly_payment ?? 0);
+  const trainerPrice = Number(gymInfo?.trainers_cost ?? 0);
+  const gymCurrency = gymInfo?.monthly_currency || "CUP";
+  const trainerCurrency = gymInfo?.trainer_currency || "CUP";
 
   useEffect(() => {
-    if (member) {
-      setPaymentData({
-        trainer_name: member.trainer_name || '',
-        months: 1,
-        pay_date: dayjs(new Date()).format('YYYY-MM-DD') || member.pay_date
-      });
-    }
-  }, [member]);
+    if (!open) return;
+    setTrainerName(member?.trainer_name || "");
+    setMonths(1);
+    setPaymentDate(dayjs().format("YYYY-MM-DD"));
+  }, [open, member]);
 
-  useEffect(() => {
-    // Calcular el total basado en los precios reales
-    const hasTrainer = paymentData.trainer_name && paymentData.trainer_name !== '';
-    const baseAmount = gymPrice * paymentData.months;
-    const trainerAmount = hasTrainer ? trainerPrice * paymentData.months : 0;
-    setTotalAmount(baseAmount + trainerAmount);
-  }, [paymentData.months, paymentData.trainer_name, gymPrice, trainerPrice]);
+  const trainers = Array.isArray(trainersList) ? trainersList : [];
+  const hasTrainer = Boolean(trainerName);
+
+  const computedNextPayDate = useMemo(() => {
+    return dayjs(paymentDate).add(Number(months) || 1, "month");
+  }, [paymentDate, months]);
+
+  const totals = useMemo(() => {
+    const baseAmount = gymPrice * (Number(months) || 1);
+    const trainerAmount = hasTrainer ? trainerPrice * (Number(months) || 1) : 0;
+    return {
+      baseAmount,
+      trainerAmount,
+      totalAmount: baseAmount + trainerAmount,
+    };
+  }, [gymPrice, trainerPrice, months, hasTrainer]);
+
+  const trainerOptionMissing =
+    trainerName && !trainers.some((t) => t?.name === trainerName);
 
   const handleSubmit = async () => {
-    const hasTrainer = paymentData.trainer_name && paymentData.trainer_name !== '';
-
+    if (!member) return;
     await registerPayment(
-      { ...member, trainer_name: paymentData.trainer_name },
-      paymentData.months,
-      hasTrainer
+      { ...member, trainer_name: trainerName || null },
+      Number(months) || 1,
+      Boolean(trainerName)
     );
     handleClose();
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setPaymentData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid #e0e0e090',
-      }}>
-        Registrar Pago
-      </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          {/* Información del cliente */}
-          <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              Información del Cliente
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Nombre"
-                  value={member?.first_name || ''}
-                  InputProps={{ readOnly: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Apellidos"
-                  value={member?.last_name || ''}
-                  InputProps={{ readOnly: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="CI"
-                  value={member?.ci || ''}
-                  InputProps={{ readOnly: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Teléfono"
-                  value={member?.phone || ''}
-                  InputProps={{ readOnly: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Fecha de último pago"
-                  value={member?.pay_date ? dayjs(member.pay_date).format('DD/MM/YYYY') : ''}
-                  InputProps={{ readOnly: true }}
-                  size="small"
-                />
-              </Grid>
-            </Grid>
-          </Grid>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) handleClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden flex flex-col max-h-[85vh] text-foreground">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle className="text-xl">Registrar Pago</DialogTitle>
+        </DialogHeader>
 
-          <Grid item xs={12}>
-            <Divider />
-          </Grid>
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20">
+          <div className="grid gap-4">
+            <div>
+              <div className="text-base font-semibold text-foreground">
+                Información del Cliente
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label>Nombre</Label>
+                  <Input readOnly value={member?.first_name || ""} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Apellidos</Label>
+                  <Input readOnly value={member?.last_name || ""} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>CI</Label>
+                  <Input readOnly value={member?.ci || ""} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Teléfono</Label>
+                  <Input readOnly value={member?.phone || ""} />
+                </div>
+                <div className="grid gap-2 sm:col-span-2">
+                  <Label>Fecha de último pago</Label>
+                  <Input
+                    readOnly
+                    value={
+                      member?.pay_date
+                        ? dayjs(member.pay_date).format("DD/MM/YYYY")
+                        : ""
+                    }
+                  />
+                </div>
+              </div>
+            </div>
 
-          {/* Configuración del pago */}
-          <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              Configuración del Pago
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Entrenador"
-                  name="trainer_name"
-                  value={paymentData.trainer_name}
-                  onChange={handleChange}
-                  size="small"
-                >
-                  <MenuItem value="">Sin Entrenador</MenuItem>
-                  {trainersList.map((trainer) => (
-                    <MenuItem key={trainer.id} value={trainer.name}>
-                      {trainer.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
+            <Separator />
 
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Meses a pagar:
-                </Typography>
-                <RadioGroup
-                  row
-                  name="months"
-                  value={paymentData.months}
-                  onChange={handleChange}
-                >
-                  <FormControlLabel value={1} control={<Radio />} label="1 mes" />
-                  <FormControlLabel value={2} control={<Radio />} label="2 meses" />
-                  <FormControlLabel value={3} control={<Radio />} label="3 meses" />
-                </RadioGroup>
-              </Grid>
+            <div>
+              <div className="text-base font-semibold text-foreground">
+                Configuración del Pago
+              </div>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Nueva Fecha de Pago"
-                  value={paymentData.pay_date ?
-                    dayjs(paymentData.pay_date).add(paymentData.months, 'month').format('DD/MM/YYYY') : ''}
-                  InputProps={{ readOnly: true }}
-                  size="small"
-                  helperText={`Fecha calculada automáticamente (un mes posterior a la fecha actual)`}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
+              <div className="mt-3 grid gap-4">
+                <div className="grid gap-2">
+                  <Label>Entrenador</Label>
+                  <Select
+                    value={trainerName || "none"}
+                    onValueChange={(val) => setTrainerName(val === "none" ? "" : val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar entrenador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sin entrenador</SelectItem>
+                      {trainerOptionMissing && (
+                        <SelectItem value={trainerName}>{trainerName} (actual)</SelectItem>
+                      )}
+                      {trainers.map((trainer) => (
+                        <SelectItem key={trainer.id} value={trainer.name}>
+                          {trainer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <Grid item xs={12}>
-            <Divider />
-          </Grid>
+                <div className="grid gap-2">
+                  <Label>Meses a pagar</Label>
+                  <RadioGroup
+                    value={String(months)}
+                    onValueChange={(val) => setMonths(Number(val))}
+                    className="flex flex-wrap gap-6"
+                  >
+                    <Label className="flex items-center gap-2 font-normal">
+                      <RadioGroupItem value="1" />
+                      1 mes
+                    </Label>
+                    <Label className="flex items-center gap-2 font-normal">
+                      <RadioGroupItem value="2" />
+                      2 meses
+                    </Label>
+                    <Label className="flex items-center gap-2 font-normal">
+                      <RadioGroupItem value="3" />
+                      3 meses
+                    </Label>
+                  </RadioGroup>
+                </div>
 
-          {/* Resumen del pago */}
-          <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              Resumen del Pago
-            </Typography>
-            <Grid container spacing={1}>
-              <Grid item xs={6}>
-                <Typography>Membresía ({paymentData.months} mes):</Typography>
-              </Grid>
-              <Grid item xs={6} textAlign="right">
-                <Typography>{gymPrice * paymentData.months} {gymCurrency}</Typography>
-              </Grid>
+                <div className="grid gap-2">
+                  <Label>Nueva Fecha de Pago</Label>
+                  <Input
+                    readOnly
+                    value={computedNextPayDate.format("DD/MM/YYYY")}
+                  />
+                  <div className="text-xs text-muted-foreground">
+                    Fecha calculada automáticamente (desde la fecha del registro del pago)
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              {paymentData.trainer_name && (
-                <>
-                  <Grid item xs={6}>
-                    <Typography>Entrenador ({paymentData.months} mes):</Typography>
-                  </Grid>
-                  <Grid item xs={6} textAlign="right">
-                    <Typography>{trainerPrice * paymentData.months} {trainerCurrency}</Typography>
-                  </Grid>
-                </>
-              )}
+            <Separator />
 
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
+            <div>
+              <div className="text-base font-semibold text-foreground">
+                Resumen del Pago
+              </div>
 
-              <Grid item xs={6}>
-                <Typography variant="h6">Total:</Typography>
-              </Grid>
-              <Grid item xs={6} textAlign="right">
-                <Typography variant="h6" color="primary">
-                  {totalAmount} {gymCurrency}
-                </Typography>
-              </Grid>
-            </Grid>
-          </Grid>
+              <div className="mt-3 grid gap-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <div className="text-muted-foreground">
+                    Membresía ({months} {Number(months) === 1 ? "mes" : "meses"})
+                  </div>
+                  <div className="font-medium text-foreground">
+                    {totals.baseAmount} {gymCurrency}
+                  </div>
+                </div>
 
-          {/* Botones de acción */}
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-            <Button onClick={handleClose} variant="outlined">
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-              disabled={adding}
-              sx={{ backgroundColor: '#e49c10', color: 'white' }}
-            >
-              {adding ? 'Registrando...' : 'Registrar Pago'}
-            </Button>
-          </Grid>
-        </Grid>
+                {hasTrainer && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-muted-foreground">
+                      Entrenador ({months} {Number(months) === 1 ? "mes" : "meses"})
+                    </div>
+                    <div className="font-medium text-foreground">
+                      {totals.trainerAmount} {trainerCurrency}
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-semibold text-foreground">Total</div>
+                  <div className="text-base font-semibold text-primary">
+                    {totals.totalAmount} {gymCurrency}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="px-6 py-4 border-t bg-background flex-col sm:flex-row gap-2 sm:gap-2">
+          <Button variant="outline" onClick={handleClose} disabled={adding}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={adding || !member}>
+            {adding ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Registrando...
+              </span>
+            ) : (
+              "Registrar Pago"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

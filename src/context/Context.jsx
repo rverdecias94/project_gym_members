@@ -378,11 +378,12 @@ export const ContextProvider = ({
         }
         if (newMembers && newMembers.length > 0) {
           const newMember = newMembers[0];
-          const months = 1; // Primer pago es siempre de 1 mes
+          const months = 1;
           const trainerIncluded = newMember.has_trainer;
-          const monthlyPayment = currentGymInfo?.monthly_payment || 0;
-          const trainerCost = newMember.has_trainer ? currentGymInfo?.trainers_cost : null;
-          let totalAmount = monthlyPayment * months;
+          const monthlyPayment = Number(currentGymInfo?.monthly_payment ?? 0);
+          const trainerCost = newMember.has_trainer ? Number(currentGymInfo?.trainers_cost ?? 0) : null;
+          const totalAmount = monthlyPayment * months;
+          const trainerCostTotal = newMember.has_trainer ? (trainerCost * months) : null;
 
           const {
             error: historyError
@@ -392,7 +393,7 @@ export const ContextProvider = ({
             quantity_paid: {
               gym_cost: totalAmount,
               gym_currency: currentGymInfo?.monthly_currency,
-              trainer_cost: trainerCost,
+              trainer_cost: trainerCostTotal,
               trainer_currency: newMember.has_trainer ? currentGymInfo?.trainer_currency : null,
             },
             trainer_included: trainerIncluded,
@@ -837,69 +838,71 @@ export const ContextProvider = ({
     }, 200);
   };
   const registerPayment = async (memberData, months, trainerIncluded) => {
-    setTimeout(async () => {
-      setBackdrop(true);
-      setAdding(true);
-      try {
-        const {
-          data: {
-            user
-          }
-        } = await getAuthUser();
-
-        // Obtener información actualizada del gimnasio
-        const currentGymInfo = await getGymInfo(true); // forceUpdate = true
-        const gymId = currentGymInfo?.owner_id || user?.id;
-
-        if (!gymId) {
-          throw new Error("Usuario no autenticado");
+    setBackdrop(true);
+    setAdding(true);
+    try {
+      const {
+        data: {
+          user
         }
+      } = await getAuthUser();
 
-        // Calcular nueva fecha de pago sumando los meses
-        const currentPayDate = dayjs(memberData.pay_date);
-        const newPayDate = currentPayDate.add(months, 'month').format('YYYY-MM-DD');
+      const currentGymInfo = await getGymInfo(true);
+      const gymId = currentGymInfo?.owner_id || user?.id;
 
-        // Calcular el monto total basado en los precios del gimnasio
-        const monthlyPayment = currentGymInfo?.monthly_payment || 0;
-        const trainerCost = currentGymInfo?.trainers_cost || 0;
-        let totalAmount = monthlyPayment * months;
-        if (trainerIncluded && memberData.trainer_name) {
-          totalAmount += trainerCost * months;
-        }
-        // Actualizar el miembro con la nueva fecha de pago y entrenador
-        const {
-          error: updateError
-        } = await supabase.from('members').update({
-          pay_date: newPayDate,
-          trainer_name: memberData.trainer_name,
-          has_trainer: memberData.trainer_name !== null && memberData.trainer_name !== ''
-        }).eq('id', memberData.id).eq('gym_id', gymId);
-        if (updateError) throw updateError;
-
-        // Registrar en el historial de pagos (con el esquema ajustado)
-        const {
-          error: historyError
-        } = await supabase.from('payment_history_members').insert({
-          member_id: memberData.id,
-          // bigint de members.id
-          gym_id: gymId,
-          // uuid del gimnasio
-          quantity_paid: totalAmount,
-          currency: currentGymInfo?.monthly_currency || 'CUP',
-          trainer_included: trainerIncluded,
-          next_payment: newPayDate
-        });
-        if (historyError) throw historyError;
-        showMessage("Pago registrado exitosamente", "success");
-        await getMembers(true);
-      } catch (error) {
-        console.error('Error registering payment:', error);
-        showMessage("Error al registrar el pago", "error");
-      } finally {
-        setBackdrop(false);
-        setAdding(false);
+      if (!gymId) {
+        throw new Error("Usuario no autenticado");
       }
-    }, 200);
+
+      const safeMonths = Number(months) || 1;
+
+      const newPayDate = dayjs().add(safeMonths, "month").format("YYYY-MM-DD");
+
+      const monthlyPayment = Number(currentGymInfo?.monthly_payment ?? 0);
+      const trainerCost = Number(currentGymInfo?.trainers_cost ?? 0);
+      const gymCurrency = currentGymInfo?.monthly_currency || "CUP";
+      const trainerCurrency = currentGymInfo?.trainer_currency || null;
+
+      const hasTrainer = Boolean(memberData?.trainer_name);
+      const includeTrainer = Boolean(trainerIncluded && hasTrainer);
+
+      const gymCostTotal = monthlyPayment * safeMonths;
+      const trainerCostTotal = includeTrainer ? trainerCost * safeMonths : null;
+
+      const {
+        error: updateError
+      } = await supabase.from("members").update({
+        pay_date: newPayDate,
+        trainer_name: memberData?.trainer_name || null,
+        has_trainer: hasTrainer
+      }).eq("id", memberData.id).eq("gym_id", gymId);
+      if (updateError) throw updateError;
+
+      const {
+        error: historyError
+      } = await supabase.from("payment_history_members").insert({
+        member_id: memberData.id,
+        gym_id: gymId,
+        quantity_paid: {
+          gym_cost: gymCostTotal,
+          gym_currency: gymCurrency,
+          trainer_cost: trainerCostTotal,
+          trainer_currency: includeTrainer ? trainerCurrency : null,
+        },
+        trainer_included: includeTrainer,
+        next_payment: newPayDate
+      });
+      if (historyError) throw historyError;
+
+      showMessage("Pago registrado exitosamente", "success");
+      await getMembers(true);
+    } catch (error) {
+      console.error("Error registering payment:", error);
+      showMessage("Error al registrar el pago", "error");
+    } finally {
+      setBackdrop(false);
+      setAdding(false);
+    }
   };
   return <Context.Provider value={{
     gymInfo,

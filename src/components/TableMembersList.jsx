@@ -12,14 +12,13 @@ import QrReader from './QrReader';
 import PaymentRecords from './PaymentRecords';
 import { toast } from 'sonner';
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, FileText, CheckSquare, XCircle, Search, QrCode, Receipt, UserPlus, CalendarDays, CheckSquare as CheckSquareIcon, TriangleAlert, Square } from 'lucide-react';
+import { Edit, Trash2, FileText, Search, QrCode, Receipt, UserPlus, CalendarDays, CheckSquare as CheckSquareIcon, TriangleAlert, Square } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import dayjs from 'dayjs';
@@ -73,7 +72,6 @@ export const TableMembersList = ({ membersList = [] }) => {
   };
 
   const isMobile = window.innerWidth <= 768;
-  const isDark = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
     if (!hasTrainers) {
@@ -220,10 +218,6 @@ export const TableMembersList = ({ membersList = [] }) => {
       setAmountDays(e);
   }
 
-  const handlePageChange = (event, value) => {
-    setCurrentPage(value);
-  };
-
   const handleQrScanSuccess = (scannedId) => {
     setId(scannedId);
     setShowQrScanner(false);
@@ -317,7 +311,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">Dar de Baja</TooltipContent>
+              <TooltipContent side="left">Dar de Baja</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
