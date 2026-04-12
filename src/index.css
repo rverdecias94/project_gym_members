@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -71,7 +73,77 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans",
+      "Apple Color Emoji", "Segoe UI Emoji";
   }
+}
+
+.landing .section-title {
+  text-align: center;
+}
+
+.landing .title-left {
+  text-align: left;
+}
+
+.landing .text-gradient {
+  background-image: linear-gradient(90deg,
+      rgb(108, 92, 146),
+      rgba(206, 186, 99, 0.978));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.landing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(135deg, rgba(56, 49, 18, 0.107), #82739417);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-card:hover {
+  border-color: rgba(228, 156, 16, 0.9);
+}
+
+.landing-card:hover::before {
+  opacity: 1;
+}
+
+.landing-card>* {
+  position: relative;
+  z-index: 1;
+}
+
+.elev-1 {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.elev-2 {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+}
+
+.elev-3 {
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+}
+
+.hover-elev-2:hover {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+}
+
+.hover-elev-3:hover {
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
 }
 
 /* Material UI DataGrid Dark Mode Overrides */
@@ -255,6 +327,12 @@
 .main-content {
   margin-top: 6rem;
 }
+
+.main-content-lading {
+  margin-top: -6rem;
+}
+
+
 
 .navbar-light {
   background-color: #4f52b2d0;
@@ -478,6 +556,7 @@
       -2em 2em 0 0, -3em 0em 0 0, -2em -2em 0 0.2em;
   }
 }
+
 /* Resaltar asterisco de campos requeridos en Material UI */
 .MuiFormLabel-asterisk {
   color: #e11d48 !important;
@@ -493,14 +572,15 @@
   color: hsl(var(--foreground)) !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
 }
+
 .dark .apexcharts-tooltip-title {
   background: hsl(var(--muted)) !important;
   border-bottom: 1px solid hsl(var(--border)) !important;
   color: hsl(var(--foreground)) !important;
   font-weight: bold !important;
 }
+
 .dark .apexcharts-tooltip-text-y-value,
 .dark .apexcharts-tooltip-text-y-label {
   color: hsl(var(--foreground)) !important;
 }
-

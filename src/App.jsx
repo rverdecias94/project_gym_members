@@ -2,6 +2,8 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from './supabase/client';
 import Login from './components/Login';
+import Landing from './components/Landing';
+import Register from './components/Register';
 import NotFound from './components/NotFound';
 import Navbar from './components/Navbar';
 import { ContextProvider } from './context/Context';
@@ -39,7 +41,7 @@ function App() {
     phone: null,
   });
   const [darkMode, setDarkMode] = useState(true);
-  const validPath = ['/shop-stepper', '/redirect', '/planes', '/tienda', '/tienda-gym', '/terms-conditions', '/admin/panel', '/new_trainer', '/new_member', '/general_info', '/entrenadores', '/bienvenido', '/clientes', '/login', '/panel']
+  const validPath = ['/', '/registro', '/shop-stepper', '/redirect', '/planes', '/tienda', '/tienda-gym', '/terms-conditions', '/admin/panel', '/new_trainer', '/new_member', '/general_info', '/entrenadores', '/bienvenido', '/clientes', '/login', '/panel']
 
   useEffect(() => {
     const fetchTheme = async (userId) => {
@@ -148,13 +150,14 @@ function App() {
     <div style={{ width: "100%", minHeight: "86vh", padding: "0px !important" }}>
       <ContextProvider>
         <BackdropProvider>
-          {event && window.location.pathname !== '/login' && window.location.pathname !== '/terms-conditions' && !is404 && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
+          {event && window.location.pathname !== '/' && window.location.pathname !== '/login' && window.location.pathname !== '/registro' && window.location.pathname !== '/terms-conditions' && !is404 && <Navbar profile={profile} mode={darkMode} toggleTheme={toggleTheme} />}
           {userId && <SessionManager />}
           <div className='main-content'>
             <Routes>
               {/* Rutas Públicas */}
-              <Route path='/' element={<Login id={userId} />} />
+              <Route path='/' element={<Landing />} />
               <Route path='/login' element={<Login id={userId} />} />
+              <Route path='/registro' element={<Register />} />
               <Route path='/terms-conditions' element={<TermsAndConditions />} />
               <Route path='/redirect' element={<Redirect />} />
 
