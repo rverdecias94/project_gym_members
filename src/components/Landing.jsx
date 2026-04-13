@@ -35,10 +35,10 @@ function Landing() {
   }, []);
 
   const cardInteractive =
-    "landing-card relative overflow-hidden border border-white/10 bg-[#0A0A0A] elev-1 hover-elev-2 transition-all duration-300 ease-out hover:-translate-y-1";
+    "landing-card relative overflow-hidden border border-white/10 bg-[#0A0A0A] elev-1 hover-elev-2 transition-all duration-300 ease-out justify-center hover:-translate-y-1";
 
   const iconBox =
-    "absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#111111] ring-1 ring-white/10";
+    "landing-card-icon absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#111111] ring-1 ring-white/10";
 
   const iconClass = "h-6 w-6 text-secondary";
 
@@ -123,7 +123,7 @@ function Landing() {
         "Agregar y gestionar clientes y entrenadores",
         "Función de Checking en el gym",
         "Estadísticas generales (clientes, entrenadores y relaciones)",
-        "Acceso a funciones IA en app móvil (10 solicitudes)",
+        "Los clientes del gimnasio tendrán acceso a funciones IA en su aplicación de Tronoss para temas fitness (10 solicitudes)",
       ],
       accent: "primary",
       popular: false,
@@ -229,7 +229,7 @@ function Landing() {
               variant="outline"
               className="hidden border-white/20 bg-white/0 text-white hover:bg-white/10 hover:text-white sm:inline-flex"
             >
-              <Link to="/login">Iniciar sesión</Link>
+              <Link to="/login">Entrar al sistema</Link>
             </Button>
             <Button
               asChild
@@ -525,10 +525,10 @@ function Landing() {
                       <div className={iconBox}>
                         <Trophy className={iconClass} aria-hidden="true" />
                       </div>
-                      <CardTitle className="text-lg">Torneos</CardTitle>
+                      <CardTitle className="text-lg">Sorteos</CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm text-white/70">
-                      Participación en torneos creados por los gimnasios.
+                      Participación en sorteos creados por los gimnasios.
                     </CardContent>
                   </Card>
                   <Card className={cardInteractive}>
@@ -569,7 +569,7 @@ function Landing() {
                 <div
                   key={plan.id}
                   className={[
-                    "landing-card relative overflow-hidden rounded-2xl border border-white/10 bg-[#0A0A0A] p-6",
+                    "relative overflow-hidden rounded-2xl border border-white/10 bg-[#0A0A0A] p-6",
                     "elev-1 hover-elev-2 transition-all duration-300 ease-out hover:-translate-y-1",
                     plan.popular ? "border-[#D4AF37]/40" : "",
                   ].join(" ")}
@@ -652,18 +652,17 @@ function Landing() {
                 variant="outline"
                 className="w-full border-white/20 bg-white/0 text-white hover:bg-white/10 hover:text-white sm:w-auto"
               >
-                <Link to="/planes">Ver planes</Link>
+                <Link to="/login">Entrar al sistema</Link>
               </Button>
             </div>
           </div>
         </section>
 
         <section id="beneficios" className="border-t border-white/10 bg-[#0A0A0A] py-16">
-          <div className="container ml-0">
-
+          <div className="container">
             <div className="grid gap-10 lg:grid-cols-2">
-              <div className="space-y-4">
-                <h2 className="title-left text-gradient text-4xl font-semibold tracking-tight">
+              <div className="space-y-4 p-16">
+                <h2 className="title-center sm:text-left xs:text-center text-4xl font-semibold tracking-tight">
                   Beneficios que impulsan tu negocio
                 </h2>
                 <p className="text-white/70 w-full">
@@ -737,7 +736,7 @@ function Landing() {
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row justify-center">
                 <Button asChild size="lg" className="w-full bg-white text-black hover:bg-white/90 sm:w-auto">
-                  <Link to="/login">Iniciar sesión</Link>
+                  <Link to="/login">Entrar al sistema</Link>
                 </Button>
                 <Button
                   asChild

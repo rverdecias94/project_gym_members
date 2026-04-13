@@ -126,6 +126,25 @@
   z-index: 1;
 }
 
+@media (max-width: 1024px) {
+  .landing .landing-card {
+    text-align: center;
+  }
+
+  .landing .landing-card .landing-card-icon {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .landing .landing-card .flex-col {
+    align-items: center;
+  }
+
+  .landing .landing-card ul li {
+    justify-content: center;
+  }
+}
+
 .elev-1 {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
