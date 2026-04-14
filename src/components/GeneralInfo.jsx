@@ -10,6 +10,7 @@ import { processImage } from "../utils/imageProcessor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -559,7 +560,7 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
     else if (selectedPlanId === "market-fit") planName = "Tienda Fitness";
 
     const message = `Hola, mi nombre es ${userInfo.name || "Usuario"}. He solicitado el plan "${planName}" con el correo ${userInfo.email || "No especificado"}. Deseo finalizar la creación de mi cuenta.`;
-    return `https://wa.me/5356408532?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/5355161765?text=${encodeURIComponent(message)}`;
   };
 
   if (loading) {
@@ -905,11 +906,11 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
                       <div key={idx} className="flex items-end gap-3">
                         <div className="grid gap-1 flex-1">
                           <Label className="text-xs">Inicio</Label>
-                          <Input type="time" value={slot.start} onChange={(e) => handleTemplateScheduleChange(idx, "start", e.target.value)} />
+                          <TimePicker value={slot.start} onChange={(val) => handleTemplateScheduleChange(idx, "start", val)} />
                         </div>
                         <div className="grid gap-1 flex-1">
                           <Label className="text-xs">Fin</Label>
-                          <Input type="time" value={slot.end} onChange={(e) => handleTemplateScheduleChange(idx, "end", e.target.value)} />
+                          <TimePicker value={slot.end} onChange={(val) => handleTemplateScheduleChange(idx, "end", val)} />
                         </div>
                         <Button variant="destructive" size="icon" onClick={() => removeTemplateTimeSlot(idx)}>
                           <Trash2 className="h-4 w-4" />
@@ -938,11 +939,11 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
                         <div key={idx} className="flex items-end gap-3">
                           <div className="grid gap-1 flex-1">
                             <Label className="text-xs">Inicio</Label>
-                            <Input type="time" value={slot.start} onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)} />
+                            <TimePicker value={slot.start} onChange={(val) => handleScheduleChange(key, idx, "start", val)} />
                           </div>
                           <div className="grid gap-1 flex-1">
                             <Label className="text-xs">Fin</Label>
-                            <Input type="time" value={slot.end} onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)} />
+                            <TimePicker value={slot.end} onChange={(val) => handleScheduleChange(key, idx, "end", val)} />
                           </div>
                           <Button variant="destructive" size="icon" onClick={() => removeTimeSlot(key, idx)}>
                             <Trash2 className="h-4 w-4" />

@@ -92,9 +92,9 @@ La landing está compuesta por:
      - Términos → `/terms-conditions`
 
 9) **Contacto con el Equipo (`#contacto`)**
-   - Teléfono clickeable: `tel:+5356408532` y acceso a WhatsApp: `https://wa.me/5356408532`
+   - Teléfono clickeable: `tel:+5355161765` y acceso a WhatsApp: `https://wa.me/5355161765`
    - Formulario (nombre, email, asunto, mensaje) con validación (requeridos + email válido)
-   - Envío vía `mailto:robertoverdeciasanchez@gmail.com` (usa el cliente de correo del usuario)
+   - Envío vía `mailto:tronossed@gmail.com` (usa el cliente de correo del usuario)
 
 ## Puntos de acceso al sistema (CTAs) y ubicación exacta
 
@@ -110,7 +110,7 @@ La landing está compuesta por:
 | Características | Bloque CTA | Entrar / Registrarme | `/login` y `/registro` |
 | Planes | Botón | Ver planes | `/planes` |
 | Acceso | Botones grandes | Iniciar sesión / Crear cuenta / Ver términos | `/login`, `/registro`, `/terms-conditions` |
-| Contacto | Enlaces | Teléfono / WhatsApp / Email | `tel:+5356408532`, `https://wa.me/5356408532`, `mailto:robertoverdeciasanchez@gmail.com` |
+| Contacto | Enlaces | Teléfono / WhatsApp / Email | `tel:+5355161765`, `https://wa.me/5355161765`, `mailto:tronossed@gmail.com` |
 | Footer | Links | Acceder / Registro / Términos | `/login`, `/registro`, `/terms-conditions` |
 
 ## Estructura HTML propuesta (referencia)

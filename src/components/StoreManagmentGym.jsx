@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Image as ImageIcon, Truck, Store as PickupIcon, Che
 import ReactApexChart from "react-apexcharts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -1005,12 +1006,11 @@ const StoreManagmentGym = () => {
 
                   <div>
                     <Label htmlFor="productDate">Fecha de creación</Label>
-                    <Input
+                    <DatePicker
                       id="productDate"
-                      type="date"
                       value={filterProductDate}
-                      onChange={(e) => setFilterProductDate(e.target.value)}
-                      className="mt-1.5"
+                      onChange={setFilterProductDate}
+                      buttonClassName="mt-1.5 w-full"
                     />
                   </div>
 
@@ -1082,12 +1082,11 @@ const StoreManagmentGym = () => {
 
                   <div>
                     <Label htmlFor="orderDate">Fecha</Label>
-                    <Input
+                    <DatePicker
                       id="orderDate"
-                      type="date"
                       value={filterOrderDate}
-                      onChange={(e) => setFilterOrderDate(e.target.value)}
-                      className="mt-1.5"
+                      onChange={setFilterOrderDate}
+                      buttonClassName="mt-1.5 w-full"
                     />
                   </div>
 

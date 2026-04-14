@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { DatePicker } from "@/components/ui/date-picker";
 
 import { Trophy, Plus, Search, CalendarDays, Users, Play, RefreshCw, MoreVertical } from "lucide-react";
 
@@ -347,20 +348,20 @@ const AdminRaffle = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="start_date">Fecha de Inicio *</Label>
-                <Input
+                <DatePicker
                   id="start_date"
-                  type="date"
                   value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  max={formData.expiration_date || undefined}
+                  onChange={(val) => setFormData({ ...formData, start_date: val })}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="expiration_date">Fecha de Expiración *</Label>
-                <Input
+                <DatePicker
                   id="expiration_date"
-                  type="date"
                   value={formData.expiration_date}
-                  onChange={(e) => setFormData({ ...formData, expiration_date: e.target.value })}
+                  min={formData.start_date || undefined}
+                  onChange={(val) => setFormData({ ...formData, expiration_date: val })}
                 />
               </div>
             </div>

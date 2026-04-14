@@ -109,7 +109,7 @@ const PaymentModal = ({ open, handleClose, member }) => {
                   <Input readOnly value={member?.phone || ""} />
                 </div>
                 <div className="grid gap-2 sm:col-span-2">
-                  <Label>Fecha de último pago</Label>
+                  <Label>Fecha de pago</Label>
                   <Input
                     readOnly
                     value={
@@ -216,14 +216,14 @@ const PaymentModal = ({ open, handleClose, member }) => {
                   </div>
                 )}
 
-                <Separator />
+                {/* <Separator />
 
                 <div className="flex items-center justify-between">
                   <div className="text-base font-semibold text-foreground">Total</div>
                   <div className="text-base font-semibold text-primary">
                     {totals.totalAmount} {gymCurrency}
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

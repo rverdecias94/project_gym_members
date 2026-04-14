@@ -856,7 +856,8 @@ export const ContextProvider = ({
 
       const safeMonths = Number(months) || 1;
 
-      const newPayDate = dayjs().add(safeMonths, "month").format("YYYY-MM-DD");
+      const nextPayDate = dayjs().add(safeMonths, "month");
+      const newPayDate = nextPayDate.format("YYYY-MM-DD");
 
       const monthlyPayment = Number(currentGymInfo?.monthly_payment ?? 0);
       const trainerCost = Number(currentGymInfo?.trainers_cost ?? 0);
@@ -869,13 +870,61 @@ export const ContextProvider = ({
       const gymCostTotal = monthlyPayment * safeMonths;
       const trainerCostTotal = includeTrainer ? trainerCost * safeMonths : null;
 
-      const {
-        error: updateError
-      } = await supabase.from("members").update({
+      const shouldResetAi = Boolean(memberData?.member_id);
+
+      const aiRequestsPerMonthRaw = Number(currentGymInfo?.ai_available_requests ?? 10);
+      const aiRequestsPerMonth = Number.isFinite(aiRequestsPerMonthRaw)
+        ? aiRequestsPerMonthRaw
+        : 10;
+
+      const existingAiSetting =
+        memberData?.ai_setting && typeof memberData.ai_setting === "object"
+          ? memberData.ai_setting
+          : {};
+
+      const totalRequests = existingAiSetting?.total_requests ?? 0;
+      const contractedPlan = existingAiSetting?.contracted_plan ?? "0";
+
+      const currentAiStatusRaw = Number(memberData?.ai_status_requests);
+      const currentAiStatus = Number.isFinite(currentAiStatusRaw)
+        ? currentAiStatusRaw
+        : 0;
+      const nextAiStatus = currentAiStatus >= 3 ? 0 : currentAiStatus;
+
+      const nextAiSetting = {
+        ...existingAiSetting,
+        pay_date_ai: [
+          {
+            d: nextPayDate.format("DD"),
+            m: nextPayDate.format("MM"),
+            y: nextPayDate.format("YYYY"),
+          },
+        ],
+        used_requests: 0,
+        total_requests: totalRequests,
+        contracted_plan: contractedPlan,
+        available_requests: String(aiRequestsPerMonth * safeMonths),
+      };
+
+      const memberUpdate = {
         pay_date: newPayDate,
         trainer_name: memberData?.trainer_name || null,
-        has_trainer: hasTrainer
-      }).eq("id", memberData.id).eq("gym_id", gymId);
+        has_trainer: hasTrainer,
+        ...(shouldResetAi
+          ? {
+            ai_setting: nextAiSetting,
+            ai_status_requests: nextAiStatus,
+          }
+          : {}),
+      };
+
+      const {
+        error: updateError
+      } = await supabase
+        .from("members")
+        .update(memberUpdate)
+        .eq("id", memberData.id)
+        .eq("gym_id", gymId);
       if (updateError) throw updateError;
 
       const {

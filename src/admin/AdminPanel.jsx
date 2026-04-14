@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DatePicker } from "@/components/ui/date-picker";
 import { RefreshCw, Search, Trash2, FileText, CreditCard } from "lucide-react";
 
 const AdminPanel = () => {
@@ -687,11 +688,10 @@ const AdminPanel = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={gym.next_payment_date ? dayjs(gym.next_payment_date).format('YYYY-MM-DD') : ''}
-                        onChange={(e) => updateNextPaymentDate(gym, e.target.value, 'gym')}
-                        className="w-36 h-8 text-xs"
+                        onChange={(val) => updateNextPaymentDate(gym, val, 'gym')}
+                        buttonClassName="w-36 h-8 text-xs"
                       />
                     </TableCell>
                     <TableCell>
@@ -773,11 +773,10 @@ const AdminPanel = () => {
                       <div className="text-xs text-muted-foreground">{shop.city || "-"}</div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="date"
+                      <DatePicker
                         value={shop.next_payment_date ? dayjs(shop.next_payment_date).format('YYYY-MM-DD') : ''}
-                        onChange={(e) => updateNextPaymentDate(shop, e.target.value, 'shop')}
-                        className="w-36 h-8 text-xs"
+                        onChange={(val) => updateNextPaymentDate(shop, val, 'shop')}
+                        buttonClassName="w-36 h-8 text-xs"
                       />
                     </TableCell>
                     <TableCell>
@@ -1072,11 +1071,7 @@ const AdminPanel = () => {
             </div>
             <div className="grid gap-2">
               <Label>Próxima fecha de pago</Label>
-              <Input
-                type="date"
-                value={paymentNextDate}
-                onChange={(e) => setPaymentNextDate(e.target.value)}
-              />
+              <DatePicker value={paymentNextDate} onChange={setPaymentNextDate} />
             </div>
             {selectedType === 'gym' && (
               <div className="grid gap-2">

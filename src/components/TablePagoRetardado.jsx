@@ -99,7 +99,23 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         </Tooltip>
       ),
     },
-
+    {
+      field: 'payment',
+      headerName: 'Pago',
+      sortable: false,
+      width: 100,
+      renderCell: (params) => (
+        <Tooltip title="Registrar Pago" placement='top'>
+          <IconButton
+            sx={{ color: "green" }}
+            onClick={() => handleOpenPayment(params?.row)}
+            size="small"
+          >
+            <PaymentIcon />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
     { field: 'first_name', headerName: 'Nombre', width: 130 },
     { field: 'last_name', headerName: 'Apellidos', width: 130 },
     {
@@ -150,23 +166,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         </div>
       ),
     },
-    {
-      field: 'payment',
-      headerName: 'Pago',
-      sortable: false,
-      width: 100,
-      renderCell: (params) => (
-        <Tooltip title="Registrar Pago" placement='top'>
-          <IconButton
-            sx={{ color: "green" }}
-            onClick={() => handleOpenPayment(params?.row)}
-            size="small"
-          >
-            <PaymentIcon />
-          </IconButton>
-        </Tooltip>
-      ),
-    },
+
   ];
 
   const enviarNotificacion = ({ first_name, last_name, pay_date, phone }) => {

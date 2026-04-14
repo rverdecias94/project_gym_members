@@ -242,7 +242,7 @@ const PlansPage = () => {
   };
 
   const handlerSendMessage = () => {
-    const phoneNumber = '+5356408532';
+    const phoneNumber = '+5355161765';
     const message = encodeURIComponent(`Me gustaría cambiar al plan ${(selectedPlan === 'estandar' ? 'Estandar' : selectedPlan === 'market-fit' ? 'Tienda Fitness' : 'Premium')}. Nombre de mi gimnasio: ${accountData?.gym_name}.`);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');

@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TimePicker } from "@/components/ui/time-picker";
 import {
   Select,
   SelectContent,
@@ -435,18 +436,16 @@ export default function SettingsAccountShop({ handleClose, open, profile, isFrom
                         <div key={idx} className="flex items-center gap-3">
                           <div className="space-y-1 flex-1">
                             <Label className="text-xs text-muted-foreground">Inicio</Label>
-                            <Input
-                              type="time"
+                            <TimePicker
                               value={slot.start}
-                              onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)}
+                              onChange={(val) => handleScheduleChange(key, idx, "start", val)}
                             />
                           </div>
                           <div className="space-y-1 flex-1">
                             <Label className="text-xs text-muted-foreground">Fin</Label>
-                            <Input
-                              type="time"
+                            <TimePicker
                               value={slot.end}
-                              onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)}
+                              onChange={(val) => handleScheduleChange(key, idx, "end", val)}
                             />
                           </div>
                           <div className="mt-5">
@@ -611,18 +610,16 @@ export default function SettingsAccountShop({ handleClose, open, profile, isFrom
                         <div key={idx} className="flex items-center gap-3">
                           <div className="space-y-1 flex-1">
                             <Label className="text-xs text-muted-foreground">Inicio</Label>
-                            <Input
-                              type="time"
+                            <TimePicker
                               value={slot.start}
-                              onChange={(e) => handleScheduleChange(key, idx, "start", e.target.value)}
+                              onChange={(val) => handleScheduleChange(key, idx, "start", val)}
                             />
                           </div>
                           <div className="space-y-1 flex-1">
                             <Label className="text-xs text-muted-foreground">Fin</Label>
-                            <Input
-                              type="time"
+                            <TimePicker
                               value={slot.end}
-                              onChange={(e) => handleScheduleChange(key, idx, "end", e.target.value)}
+                              onChange={(val) => handleScheduleChange(key, idx, "end", val)}
                             />
                           </div>
                           <div className="mt-5">

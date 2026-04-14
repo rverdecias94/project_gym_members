@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { X, UserPlus, Save } from 'lucide-react';
 import "dayjs/locale/es";
 
@@ -149,10 +150,6 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, a
 
   const handleSelectChange = (name, value) => {
     setMemberData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleDateChange = (e) => {
-    setMemberData(prev => ({ ...prev, pay_date: e.target.value }));
   };
 
   const isFormValid = () => {
@@ -364,15 +361,14 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, a
                   <Label htmlFor="pay_date">
                     {editing ? "Próxima fecha de pago" : "Fecha de pago inicial"} <span className="text-red-600 font-extrabold text-lg ml-1">*</span>
                   </Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     id="pay_date"
-                    name="pay_date"
                     value={memberData?.pay_date ? dayjs(memberData.pay_date).format('YYYY-MM-DD') : ''}
-                    onChange={handleDateChange}
+                    onChange={(val) => setMemberData(prev => ({ ...prev, pay_date: val }))}
                     max={!editing ? today : undefined}
                     min={!editing ? minDate : undefined}
-                    className="w-full flex-1"
+                    disabled={adding}
+                    buttonClassName="w-full flex-1"
                   />
 
                   {!editing && (

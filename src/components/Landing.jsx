@@ -91,7 +91,7 @@ function Landing() {
     setContactTouched({ name: true, email: true, subject: true, message: true });
     if (!contactIsValid) return;
 
-    const to = "robertoverdeciasanchez@gmail.com";
+    const to = "tronossed@gmail.com";
     const subject = contact.subject.trim();
     const body = [
       `Nombre: ${contact.name.trim()}`,
@@ -751,7 +751,7 @@ function Landing() {
           </div>
         </section>
 
-        <section id="contacto" className="border-t border-white/10 bg-[#0A0A0A] py-16">
+        {/* <section id="contacto" className="border-t border-white/10 bg-[#0A0A0A] py-16">
           <div className="container">
             <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-black p-8 elev-3">
@@ -770,13 +770,13 @@ function Landing() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Teléfono</p>
                       <a
-                        href="tel:+5356408532"
+                        href="tel:+5355161765"
                         className="mt-1 block text-sm text-white/80 underline underline-offset-4 hover:text-white"
                       >
-                        +53 56408532
+                        +53 55161765
                       </a>
                       <a
-                        href="https://wa.me/5356408532"
+                        href="https://wa.me/5355161765"
                         target="_blank"
                         rel="noreferrer"
                         className="mt-1 block text-sm text-white/80 underline underline-offset-4 hover:text-white"
@@ -793,10 +793,10 @@ function Landing() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium">Email</p>
                       <a
-                        href="mailto:robertoverdeciasanchez@gmail.com"
+                        href="mailto:tronossed@gmail.com"
                         className="mt-1 block break-all text-sm text-white/80 underline underline-offset-4 hover:text-white"
                       >
-                        robertoverdeciasanchez@gmail.com
+                        tronossed@gmail.com
                       </a>
                     </div>
                   </div>
@@ -892,7 +892,7 @@ function Landing() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
       </main>
 
       <footer id="copyright" className="border-t border-white/10 bg-black py-10">
