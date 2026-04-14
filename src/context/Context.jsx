@@ -240,37 +240,35 @@ export const ContextProvider = ({
   const getMembers = async value => {
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
+        let activatedLoading = false;
         try {
           if (needsUpdateClients || value) {
             setLoadingMembersList(true);
             setBackdrop(true);
+            activatedLoading = true;
             const {
               data
             } = await getAuthUser();
             const { data: membersData, error } = await supabase.from("members").select().eq("gym_id", data?.user?.id);
 
-            setLoadingMembersList(false);
-            await handlerNeedUpdateClients(false);
-
             if (error) {
-              setBackdrop(false);
-              console.error("Error fetching data:", error);
-              reject(error);
-              return;
+              throw error;
             }
 
-            if (membersData?.length > 0) {
-              await handlerFillMembersList(membersData);
-            }
-            setBackdrop(false);
-            resolve(membersData);
+            await handlerFillMembersList(Array.isArray(membersData) ? membersData : []);
+            await handlerNeedUpdateClients(false);
+            resolve(Array.isArray(membersData) ? membersData : []);
           } else {
             resolve([]);
           }
         } catch (error) {
-          setBackdrop(false);
           console.error("Error in getMembers:", error);
           reject(error);
+        } finally {
+          if (activatedLoading) {
+            setLoadingMembersList(false);
+            setBackdrop(false);
+          }
         }
       }, 200);
     });

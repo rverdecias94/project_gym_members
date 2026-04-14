@@ -17,7 +17,7 @@ import { X, UserPlus, Save } from 'lucide-react';
 import "dayjs/locale/es";
 
 function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, associated }) {
-  const { createNewMember, adding, updateClient, trainersList } = useMembers();
+  const { createNewMember, adding, updateClient, trainersList, gymInfo, getGymInfo } = useMembers();
   const [memberData, setMemberData] = useState({
     first_name: '',
     last_name: '',
@@ -43,10 +43,18 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, a
   const location = useLocation();
   const from = location.state?.from || "/clientes";
 
+  const isPremiumGym = gymInfo?.store === true;
+
   dayjs.locale("es");
 
   const today = dayjs().format('YYYY-MM-DD');
   const minDate = dayjs().subtract(2, 'months').format('YYYY-MM-DD');
+
+  useEffect(() => {
+    if (open && (!gymInfo || Object.keys(gymInfo).length === 0)) {
+      getGymInfo();
+    }
+  }, [open, gymInfo, getGymInfo]);
 
   useEffect(() => {
     if (member && Object.keys(member).length > 0) {
@@ -71,10 +79,20 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, a
         trainer_name: associated ? null : member.trainer_name,
       };
       setMemberData(normalizedMember);
-      setImageBase64(member?.image_profile ?? null);
+      setImageBase64(isPremiumGym ? (member?.image_profile ?? null) : null);
       setEditing(true);
     }
-  }, [member]);
+  }, [member, associated, isPremiumGym, today]);
+
+  useEffect(() => {
+    if (!isPremiumGym) {
+      setImageBase64(null);
+      return;
+    }
+    if (editing) {
+      setImageBase64(member?.image_profile ?? null);
+    }
+  }, [isPremiumGym, editing, member]);
 
   useEffect(() => {
     if (trainersList?.length > 0) {
@@ -90,7 +108,7 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, a
     e.preventDefault();
     let updatedMember = { ...memberData };
 
-    updatedMember.image_profile = imageBase64;
+    updatedMember.image_profile = isPremiumGym ? imageBase64 : null;
 
     if (virifiedAcount) {
       updatedMember.active = true;
@@ -206,9 +224,11 @@ function MembersForm({ member = {}, open, handleClose, virifiedAcount = false, a
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Image Column */}
               <div className="w-full lg:w-[400px] flex flex-col items-center gap-4 shrink-0">
-                <div className="w-full bg-card rounded-xl">
-                  <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
-                </div>
+                {isPremiumGym && (
+                  <div className="w-full bg-card rounded-xl">
+                    <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
+                  </div>
+                )}
 
                 {editing && (
                   <div className="flex items-center space-x-2 bg-muted/50 p-3 rounded-lg w-full border border-border">

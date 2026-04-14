@@ -110,27 +110,36 @@ function MembersList() {
         <TabsList className="w-full md:w-auto flex overflow-x-auto justify-start h-auto bg-transparent border-b border-border rounded-none p-0">
           <TabsTrigger
             value="activos"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
           >
             Activos
           </TabsTrigger>
           <TabsTrigger
             value="por-pagar"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
           >
             Por pagar
+            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
+              {membersPendingPayment.length}
+            </span>
           </TabsTrigger>
           <TabsTrigger
             value="atrasado"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
           >
             Pago atrasado
+            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
+              {membersPaymentDelayed.length}
+            </span>
           </TabsTrigger>
           <TabsTrigger
             value="inactivos"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
           >
             Inactivos
+            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
+              {membersStatus?.inactive?.length ?? 0}
+            </span>
           </TabsTrigger>
         </TabsList>
 
