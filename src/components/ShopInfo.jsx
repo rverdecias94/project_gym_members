@@ -5,6 +5,12 @@ import { provincias } from "./Provincias";
 import { useSnackbar } from "../context/Snackbar";
 import { useMembers } from "../context/Context";
 import { processImage } from "../utils/imageProcessor";
+import {
+  getSelectedPlanForUser,
+  migrateLegacySelectedPlanForUser,
+  markPlanStorageUser,
+  onPlanStorageLogoutCleanup,
+} from "../utils/planStorage";
 
 // Shadcn UI components
 import { Button } from "@/components/ui/button";
@@ -60,6 +66,7 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
   const [loading, setLoading] = useState(true);
   const fileRef = useRef(null);
   const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+  const [storedPlanId, setStoredPlanId] = useState(null);
 
   const [shopInfo, setShopInfoState] = useState({
     shop_name: "",
@@ -439,13 +446,31 @@ const ShopInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoading 
     });
   };
 
+  useEffect(() => {
+    const loadPlan = async () => {
+      try {
+        const { data: { user } } = await getAuthUser();
+        const userId = user?.id;
+        if (!userId) return;
+        markPlanStorageUser(userId);
+        const plan = migrateLegacySelectedPlanForUser({ userId }) || getSelectedPlanForUser({ userId });
+        setStoredPlanId(plan);
+      } catch {
+        setStoredPlanId(null);
+      }
+    };
+
+    loadPlan();
+  }, [getAuthUser]);
+
   const logoutUser = async () => {
+    onPlanStorageLogoutCleanup();
     await supabase.auth.signOut();
   };
 
   const generateWhatsAppLink = () => {
     let planName = "No especificado";
-    const selectedPlanId = planId || localStorage.getItem('selectedPlanId');
+    const selectedPlanId = planId || storedPlanId;
     if (selectedPlanId === "premium") planName = "Premium";
     else if (selectedPlanId === "estandar") planName = "Estandar";
     else if (selectedPlanId === "market-fit") planName = "Tienda Fitness";

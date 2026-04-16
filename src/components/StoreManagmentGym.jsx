@@ -23,13 +23,17 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import DialogMessage from './DialogMessage';
 import SettingsAccountShop from "./SettingsAccountShop";
+import {
+  getSelectedPlanForUser,
+  migrateLegacySelectedPlanForUser,
+  markPlanStorageUser,
+} from "../utils/planStorage";
 
 const StoreManagmentGym = () => {
   const { getGymInfo, getAuthUser } = useMembers();
   const [store, setStore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
-  const selectedPlanId = localStorage.getItem('selectedPlanId');
 
   // Estados para productos
   const [products, setProducts] = useState([]);
@@ -361,7 +365,19 @@ const StoreManagmentGym = () => {
         cachedGymHasStore = false;
       }
 
-      if (selectedPlanId === 'estandar' && !cachedGymHasStore) {
+      let planFromStorage = null;
+      try {
+        const { data: { user } } = await getAuthUser();
+        const userId = user?.id;
+        if (userId) {
+          markPlanStorageUser(userId);
+          planFromStorage = migrateLegacySelectedPlanForUser({ userId }) || getSelectedPlanForUser({ userId });
+        }
+      } catch {
+        planFromStorage = null;
+      }
+
+      if (planFromStorage === 'estandar' && !cachedGymHasStore) {
         setStore(false);
         setLoading(false);
         return;

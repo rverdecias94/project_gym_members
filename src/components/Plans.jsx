@@ -45,6 +45,12 @@ import { useSnackbar } from '../context/Snackbar';
 /* import { useMembers } from '../context/Context'; */
 import DialogMessage from './DialogMessage';
 import { identifyAccountType } from '../services/accountType';
+import {
+  getSelectedPlanForUser,
+  migrateLegacySelectedPlanForUser,
+  setSelectedPlanForUser,
+  markPlanStorageUser,
+} from '../utils/planStorage';
 
 
 
@@ -59,7 +65,7 @@ const PlansPage = () => {
   const [accountType, setAccountType] = useState('none');
   const [accountData, setAccountData] = useState({});
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
-  const selectedPlanId = localStorage.getItem('selectedPlanId');
+  const [storedPlanId, setStoredPlanId] = useState(null);
   /* const [isLoading, setIsLoading] = useState(true); */
 
   useEffect(() => {
@@ -79,40 +85,48 @@ const PlansPage = () => {
     const inferredAccountType = storedAccountType === 'shop' || storedAccountType === 'gym' ? storedAccountType : 'gym';
     setAccountType(inferredAccountType);
 
-    if (selectedPlanId) {
-      setSelectedPlan(selectedPlanId);
-    }
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
 
-    const storageKey = inferredAccountType === 'shop' ? 'shop_info' : 'gym_info';
-    try {
-      const cached = sessionStorage.getItem(storageKey);
-      if (cached) {
-        setAccountData(JSON.parse(cached));
+      let planFromStorage = null;
+      if (userId) {
+        markPlanStorageUser(userId);
+        planFromStorage = migrateLegacySelectedPlanForUser({ userId }) || getSelectedPlanForUser({ userId });
+        setStoredPlanId(planFromStorage);
+        if (planFromStorage) {
+          setSelectedPlan(planFromStorage);
+        }
+      }
+
+      const storageKey = inferredAccountType === 'shop' ? 'shop_info' : 'gym_info';
+      try {
+        const cached = sessionStorage.getItem(storageKey);
+        if (cached) {
+          setAccountData(JSON.parse(cached));
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      if (planFromStorage) {
+        setAccountData(prev => ({
+          ...prev,
+          active: prev?.active ?? true,
+          store: planFromStorage === 'premium'
+        }));
         return;
       }
-    } catch (e) {
-      console.error(e);
-    }
 
-    if (selectedPlanId) {
-      setAccountData(prev => ({
-        ...prev,
-        active: prev?.active ?? true,
-        store: selectedPlanId === 'premium'
-      }));
-      return;
-    }
-
-    const checkAccountType = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { type, data } = await identifyAccountType(user.id);
+      if (userId) {
+        const { type, data } = await identifyAccountType(userId);
         setAccountType(type);
         setAccountData(data);
       }
     };
 
-    checkAccountType();
+    init();
   }, []);
 
   const premiumColor = isDark ? '#ffb777' : '#6164c7';
@@ -201,10 +215,15 @@ const PlansPage = () => {
 
   const handlePlanSelect = async (planId) => {
     setSelectedPlan(planId);
-    localStorage.setItem('selectedPlanId', planId);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("Usuario no autenticado");
+    }
+
+    const writeRes = setSelectedPlanForUser({ userId: user.id, planId });
+    if (writeRes.ok) {
+      setStoredPlanId(planId);
+      showMessage("Plan seleccionado", "success");
     }
 
     const storedAccountType = localStorage.getItem('accountType');
@@ -255,7 +274,7 @@ const PlansPage = () => {
   const getButtonConfig = (planId) => {
     const effectiveActive = accountData?.active ?? true;
     const effectiveStore = accountType === 'gym'
-      ? (accountData?.store ?? (selectedPlanId === 'premium'))
+      ? (accountData?.store ?? (storedPlanId === 'premium'))
       : accountData?.store;
 
     if (!effectiveActive) return { label: "Seleccionar", isActive: false };

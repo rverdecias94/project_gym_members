@@ -5,6 +5,12 @@ import { provincias } from "./Provincias";
 import { useSnackbar } from "../context/Snackbar";
 import { useMembers } from "../context/Context";
 import { processImage } from "../utils/imageProcessor";
+import {
+  getSelectedPlanForUser,
+  migrateLegacySelectedPlanForUser,
+  markPlanStorageUser,
+  onPlanStorageLogoutCleanup,
+} from "../utils/planStorage";
 
 // Shadcn UI components
 import { Button } from "@/components/ui/button";
@@ -91,6 +97,7 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
   const [loading, setLoading] = useState(true);
   const fileRef = useRef(null);
   const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+  const [storedPlanId, setStoredPlanId] = useState(null);
 
   const [gymInfo, setGymInfo] = useState({
     gym_name: "",
@@ -327,13 +334,31 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
     setGymInfo(prev => ({ ...prev, image_profile: null }));
   };
 
+  useEffect(() => {
+    const loadPlan = async () => {
+      try {
+        const { data: { user } } = await getAuthUser();
+        const userId = user?.id;
+        if (!userId) return;
+        markPlanStorageUser(userId);
+        const plan = migrateLegacySelectedPlanForUser({ userId }) || getSelectedPlanForUser({ userId });
+        setStoredPlanId(plan);
+      } catch {
+        setStoredPlanId(null);
+      }
+    };
+
+    loadPlan();
+  }, [getAuthUser]);
+
   const saveGymInfo = () => {
+    const effectivePlanId = planId || storedPlanId;
     let infoToSave = {
       ...gymInfo,
       monthly_payment: monthly ? gymInfo.monthly_payment : null,
       daily_payment: daily ? gymInfo.daily_payment : null,
       trainers_cost: trainer ? gymInfo.trainers_cost : null,
-      ai_available_requests: localStorage.getItem("selectedPlanId") === "premium" ? 40 : 10
+      ai_available_requests: effectivePlanId === "premium" ? 40 : 10
     };
     setTimeout(async () => {
       try {
@@ -548,13 +573,14 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
   };
 
   const logoutUser = async () => {
+    onPlanStorageLogoutCleanup();
     await supabase.auth.signOut();
     sessionStorage.clear();
   };
 
   const generateWhatsAppLink = () => {
     let planName = "No especificado";
-    const selectedPlanId = planId || localStorage.getItem('selectedPlanId');
+    const selectedPlanId = planId || storedPlanId;
     if (selectedPlanId === "premium") planName = "Premium";
     else if (selectedPlanId === "estandar") planName = "Estandar";
     else if (selectedPlanId === "market-fit") planName = "Tienda Fitness";

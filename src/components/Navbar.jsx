@@ -19,6 +19,7 @@ import MobileBottomNav from './MobileBottomNav';
 import SettingsAccountGym from './SettingsAccountGym';
 import SettingsAccountShop from './SettingsAccountShop';
 import PaymentHistoryModal from './PaymentHistoryModal';
+import { onPlanStorageLogoutCleanup } from '../utils/planStorage';
 
 const settings = [
   { name: 'Perfil', action: 'profile', icon: <Settings className="mr-2 h-4 w-4" /> },
@@ -53,6 +54,7 @@ export default function Navbar({ profile, mode, toggleTheme }) {
 
   const logoutUser = async () => {
     try {
+      onPlanStorageLogoutCleanup();
       let { error } = await supabase.auth.signOut();
       sessionStorage.clear();
       setNavBarOptions(false);

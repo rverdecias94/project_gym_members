@@ -12,6 +12,7 @@ import {
   LinearProgress
 } from '@mui/material';
 import { useSnackbar } from '../context/Snackbar';
+import { onPlanStorageLogoutCleanup } from '../utils/planStorage';
 
 const INACTIVITY_TIME = 4 * 60 * 60 * 1000; // 4h en milisegundos (para pruebas)
 const COUNTDOWN_TIME = 5 * 60; // 5 minutos en segundos
@@ -30,7 +31,13 @@ const SessionManager = () => {
 
     isLoggingOutRef.current = true;
     try {
+      onPlanStorageLogoutCleanup();
       await supabase.auth.signOut();
+      try {
+        sessionStorage.clear();
+      } catch {
+        return;
+      }
       showMessage('Sesión cerrada por inactividad', 'info');
       navigate('/login');
     } catch (error) {
