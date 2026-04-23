@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { UserCheck } from "lucide-react";
 import { useMembers } from '../context/Context';
 import ViewDetails from './ViewDetails';
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 // eslint-disable-next-line react/prop-types
 export const MembersInactive = ({ membersList = [] }) => {
@@ -14,6 +15,7 @@ export const MembersInactive = ({ membersList = [] }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(false);
+  const isMobile = window.innerWidth <= 768;
 
   const handlerActivateRows = async () => {
     if (selectedRows.length > 0) {
@@ -87,7 +89,7 @@ export const MembersInactive = ({ membersList = [] }) => {
   };
 
   return (
-    <div className="w-full mb-10">
+    <div className="w-full min-h-[400px] mb-10 pb-20 md:pb-0">
       <br />
       <div className="flex justify-end items-center w-full gap-4">
         {/* Lado derecho: Botón Activar usuarios */}
@@ -104,38 +106,75 @@ export const MembersInactive = ({ membersList = [] }) => {
         </div>
       </div>
       <br />
-      <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">
-        <DataGrid
-          autoHeight
-          rows={membersList}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 5 },
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-          sx={{
-            border: 'none',
-            '& .MuiDataGrid-cell': {
-              borderColor: 'hsl(var(--border))',
-              color: 'hsl(var(--foreground))',
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: 'hsl(var(--muted))',
-              color: 'hsl(var(--muted-foreground))',
-              borderBottom: '1px solid hsl(var(--border))',
-            },
-            '& .MuiDataGrid-footerContainer': {
-              borderTop: '1px solid hsl(var(--border))',
-              color: 'hsl(var(--foreground))',
-            },
-            '& .MuiTablePagination-root': {
-              color: 'hsl(var(--foreground))',
-            },
-          }}
-        />
-      </div>
+      {!isMobile ? (
+        <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">
+          <DataGrid
+            autoHeight
+            rows={membersList}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 5 },
+              },
+            }}
+            pageSizeOptions={[5, 10]}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-cell': {
+                borderColor: 'hsl(var(--border))',
+                color: 'hsl(var(--foreground))',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: 'hsl(var(--muted))',
+                color: 'hsl(var(--muted-foreground))',
+                borderBottom: '1px solid hsl(var(--border))',
+              },
+              '& .MuiDataGrid-footerContainer': {
+                borderTop: '1px solid hsl(var(--border))',
+                color: 'hsl(var(--foreground))',
+              },
+              '& .MuiTablePagination-root': {
+                color: 'hsl(var(--foreground))',
+              },
+            }}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {membersList.length === 0 ? (
+            <div className="text-center text-muted-foreground py-10">Sin registros</div>
+          ) : (
+            membersList.map((member) => (
+              <Card key={member.id} className="shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start gap-3">
+                    <h3 className="font-bold text-lg">
+                      {member.first_name} {member.last_name}
+                    </h3>
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 cursor-pointer accent-primary"
+                      checked={selectedRows?.some((row) => row.id === member.id)}
+                      onChange={(e) => handlerChangeStatus(e, member)}
+                      name="active"
+                    />
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    <p><strong>CI:</strong> {member.ci || '-'}</p>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex justify-end gap-2 p-4 pt-0">
+                  <Button variant="outline" size="icon" onClick={() => handleOpenEdit(member)}>
+                    <ContactPageIcon fontSize="small" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
       <ViewDetails
         handleClose={handleClose}
         open={open}

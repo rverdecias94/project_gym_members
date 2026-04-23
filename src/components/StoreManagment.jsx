@@ -1,27 +1,21 @@
 /* eslint-disable react/prop-types */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
 import moment from "moment/moment";
-import { Plus, Edit, Trash2, Image as ImageIcon, Truck, Store as PickupIcon } from 'lucide-react';
-import ReactApexChart from "react-apexcharts";
+import { Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import DialogMessage from './DialogMessage';
 import { useSnackbar } from "../context/Snackbar";
+import StoreFiltersCard from "./store/StoreFiltersCard";
+import ProductsTab from "./store/ProductsTab";
+import OrdersTab from "./store/OrdersTab";
+import ProductUpsertDialog from "./store/ProductUpsertDialog";
+import CancelOrderDialog from "./store/CancelOrderDialog";
+import StoreStatsTab from "./store/StoreStatsTab";
 
 const StoreManagment = () => {
   const { getShopInfo, getAuthUser } = useMembers();
@@ -35,6 +29,7 @@ const StoreManagment = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formIsValid, setFormIsValid] = useState(false);
   const isMobile = window.innerWidth <= 768;
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -46,8 +41,6 @@ const StoreManagment = () => {
   const [filterOrderProduct, setFilterOrderProduct] = useState("");
   const [filterOrderId, setFilterOrderId] = useState("");
   const [filterOrderDate, setFilterOrderDate] = useState("");
-
-  const now = new Date();
 
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -90,6 +83,14 @@ const StoreManagment = () => {
     discount_end_date: null,
     enable: true,
   });
+
+  const getShopInfoRef = useRef(getShopInfo);
+  const getProductsRef = useRef(null);
+  const getOrdersRef = useRef(null);
+  const validateFormRef = useRef(null);
+  const hasLoadedInitialDataRef = useRef(false);
+
+  getShopInfoRef.current = getShopInfo;
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -320,27 +321,26 @@ const StoreManagment = () => {
     };
   }, [orders, products]);
 
-  // Estados para productos
-
-
-
-
   useEffect(() => {
+    if (hasLoadedInitialDataRef.current) return;
+    hasLoadedInitialDataRef.current = true;
+
     const getData = async () => {
       try {
-        let data = await getShopInfo();
+        const data = await getShopInfoRef.current?.();
         if (data) {
-          await getProducts();
-          await getOrders();
+          await getProductsRef.current?.();
+          await getOrdersRef.current?.();
         }
       } catch (error) {
         console.error('Error getting shop info:', error);
       } finally {
-        let result = await supabase.from('categories').select('*');
+        const result = await supabase.from('categories').select('*');
         setCategories(result.data || []);
         setLoading(false);
       }
     };
+
     getData();
   }, []);
 
@@ -350,7 +350,7 @@ const StoreManagment = () => {
 
   useEffect(() => {
     if (openDialog) {
-      validateForm(formData, false); // Do not update errors initially
+      validateFormRef.current?.(formData, false); // Do not update errors initially
     }
   }, [formData, openDialog, showDiscount]);
 
@@ -432,6 +432,9 @@ const StoreManagment = () => {
       setLoadingOrders(false);
     }
   };
+
+  getProductsRef.current = getProducts;
+  getOrdersRef.current = getOrders;
 
   const handleChangeOrderStatus = async (order, newStatus) => {
     if (newStatus === 3) {
@@ -545,6 +548,8 @@ const StoreManagment = () => {
     setFormIsValid(Object.keys(errors).length === 0);
     return Object.keys(errors).length === 0;
   };
+
+  validateFormRef.current = validateForm;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -744,231 +749,47 @@ const StoreManagment = () => {
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  const ProductCard = ({ product }) => (
-    <Card className="mb-4 shadow-sm">
-      <div className="relative">
-        <img
-          src={product.image_base64}
-          alt={product.name}
-          className="w-full h-[120px] object-cover rounded-t-lg"
-        />
-      </div>
-      <CardContent className="pb-2 pt-4">
-        <h3 className="font-bold text-base mb-1">
-          {product.name}
-        </h3>
-
-        <p className="text-xs text-muted-foreground mb-2">
-          <strong>Código:</strong> {product.product_code || '-'}
-        </p>
-
-        <p className="text-xs text-muted-foreground mb-2 leading-tight">
-          {product.description?.length > 80 ? `${product.description.substring(0, 80)}...` : product.description}
-        </p>
-
-        <h4 className="font-bold text-primary text-base mb-2">
-          {product.price} {product.currency}
-        </h4>
-
-        <div className="flex gap-1 mb-2 flex-wrap">
-          {product.has_delivery && (
-            <Badge variant="outline" className="text-[10px] h-5 py-0">
-              <Truck className="h-3 w-3 mr-1" /> Mensajería
-            </Badge>
-          )}
-          {product.has_pickup && (
-            <Badge variant="outline" className="text-[10px] h-5 py-0">
-              <PickupIcon className="h-3 w-3 mr-1" /> Recogida
-            </Badge>
-          )}
-          {product.free_delivery && (
-            <Badge variant="default" className="text-[10px] h-5 py-0 bg-green-500 hover:bg-green-600">
-              <Truck className="h-3 w-3 mr-1" /> Gratis
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-
-      <CardFooter className="justify-end pb-2 pt-0 gap-2">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(product)}>
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteClick(product.id)}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
   return (
     <div className="max-w-[1400px] mx-auto mt-[8rem] mb-8 px-4 flex flex-col md:flex-row gap-4 pb-24 md:pb-0">
-      <div className="flex flex-col gap-4 mb-6 md:w-1/4 h-auto">
-        <Card className="p-6 w-full shadow-sm border-border relative">
-          {loading && (
-            <div className="absolute inset-0 bg-background/50 z-10 flex justify-center items-center rounded-lg">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            </div>
-          )}
-          <h2 className="text-lg font-semibold mb-4">Filtros</h2>
+      {isMobile && (
+        <div className="md:hidden">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setShowFiltersMobile((prev) => !prev)}
+          >
+            {showFiltersMobile ? "Ocultar filtros" : "Mostrar filtros"}
+          </Button>
+        </div>
+      )}
 
-          <div className="space-y-4">
-            {(tabValue === 0 || tabValue === 2) && (
-              <>
-                <div>
-                  <Label htmlFor="search">Buscar producto</Label>
-                  <Input
-                    id="search"
-                    placeholder="Buscar..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label>Categoría</Label>
-                  <Select value={filterCategory || "all"} onValueChange={(v) => setFilterCategory(v === "all" ? "" : v)}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.category}>
-                          {cat.category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Entrega</Label>
-                  <Select value={filterDelivery || "all"} onValueChange={(v) => setFilterDelivery(v === "all" ? "" : v)}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      <SelectItem value="delivery">Mensajería</SelectItem>
-                      <SelectItem value="pickup">Recogida</SelectItem>
-                      <SelectItem value="free">Entrega Gratis</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="productDate">Fecha de creación</Label>
-                  <DatePicker
-                    id="productDate"
-                    value={filterProductDate}
-                    onChange={setFilterProductDate}
-                    buttonClassName="mt-1.5 w-full"
-                  />
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilterCategory("");
-                    setFilterDelivery("");
-                    setFilterProductDate("");
-                  }}
-                >
-                  Limpiar filtros
-                </Button>
-              </>
-            )}
-
-            {tabValue === 1 && (
-              <>
-                <div>
-                  <Label htmlFor="orderClient">Cliente</Label>
-                  <Input
-                    id="orderClient"
-                    placeholder="Nombre del cliente..."
-                    value={filterOrderClient}
-                    onChange={(e) => setFilterOrderClient(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label>Estado</Label>
-                  <Select value={filterOrderStatus} onValueChange={setFilterOrderStatus}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="0">Recibida</SelectItem>
-                      <SelectItem value="1">Procesada</SelectItem>
-                      <SelectItem value="2">Entregada</SelectItem>
-                      <SelectItem value="3">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="orderProduct">Producto</Label>
-                  <Input
-                    id="orderProduct"
-                    placeholder="Nombre del producto..."
-                    value={filterOrderProduct}
-                    onChange={(e) => setFilterOrderProduct(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="orderId">Pedido ID</Label>
-                  <Input
-                    id="orderId"
-                    placeholder="Ej. 123"
-                    value={filterOrderId}
-                    onChange={(e) => setFilterOrderId(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="orderDate">Fecha</Label>
-                  <DatePicker
-                    id="orderDate"
-                    value={filterOrderDate}
-                    onChange={setFilterOrderDate}
-                    buttonClassName="mt-1.5 w-full"
-                  />
-                </div>
-
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    setFilterOrderClient("");
-                    setFilterOrderStatus("all");
-                    setFilterOrderProduct("");
-                    setFilterOrderId("");
-                    setFilterOrderDate("");
-                  }}
-                >
-                  Limpiar filtros
-                </Button>
-              </>
-            )}
-
-            {tabValue === 3 && (
-              <Alert>
-                <AlertDescription>
-                  Las estadísticas se calculan con tus productos y órdenes actuales.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </Card>
-      </div>
+      {(showFiltersMobile || !isMobile) && (
+        <div className="flex flex-col gap-4 mb-6 md:w-1/4 h-auto">
+          <StoreFiltersCard
+            loading={loading}
+            tabValue={tabValue}
+            categories={categories}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            filterDelivery={filterDelivery}
+            setFilterDelivery={setFilterDelivery}
+            filterProductDate={filterProductDate}
+            setFilterProductDate={setFilterProductDate}
+            filterOrderClient={filterOrderClient}
+            setFilterOrderClient={setFilterOrderClient}
+            filterOrderStatus={filterOrderStatus}
+            setFilterOrderStatus={setFilterOrderStatus}
+            filterOrderProduct={filterOrderProduct}
+            setFilterOrderProduct={setFilterOrderProduct}
+            filterOrderId={filterOrderId}
+            setFilterOrderId={setFilterOrderId}
+            filterOrderDate={filterOrderDate}
+            setFilterOrderDate={setFilterOrderDate}
+          />
+        </div>
+      )}
 
       <Card className="p-4 md:p-6 md:w-3/4 shadow-sm border-border">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -1011,1000 +832,89 @@ const StoreManagment = () => {
         <Tabs
           value={tabValue.toString()}
           onValueChange={(v) => setTabValue(parseInt(v))}
-          className="w-full mb-6"
+          className="w-full"
         >
-          <TabsList className="w-full justify-start h-auto bg-transparent border-b border-border rounded-none p-0 overflow-x-auto flex">
-            <TabsTrigger
-              value="0"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-            >
+          <TabsList className="grid w-full grid-cols-3 md:w-[560px] mb-6">
+            <TabsTrigger value="0">
               Lista de Productos
             </TabsTrigger>
-            <TabsTrigger
-              value="1"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-            >
+            <TabsTrigger value="1">
               Órdenes
             </TabsTrigger>
-            <TabsTrigger
-              value="2"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-            >
-              Catálogo
-            </TabsTrigger>
-            <TabsTrigger
-              value="3"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
-            >
+            <TabsTrigger value="3">
               Estadísticas
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="0" className="mt-4">
-            <div className="w-full">
-              {!isMobile ? (
-                <div className="bg-card rounded-lg border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-muted/50 text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">Imagen</th>
-                          <th className="px-4 py-3 font-medium">Nombre</th>
-                          <th className="px-4 py-3 font-medium">Precio</th>
-                          <th className="px-4 py-3 font-medium">F. Descuento</th>
-                          <th className="px-4 py-3 font-medium">Vistas</th>
-                          <th className="px-4 py-3 font-medium">Entrega</th>
-                          <th className="px-4 py-3 font-medium">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border relative">
-                        {loading || loadingProducts ? (
-                          <tr>
-                            <td colSpan={7} className="px-4 py-8 text-center">
-                              <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-                            </td>
-                          </tr>
-                        ) : currentProducts.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                              No hay productos registrados
-                            </td>
-                          </tr>
-                        ) : (
-                          currentProducts.map((product) => (
-                            <tr key={product.id} className="hover:bg-muted/30">
-                              <td className="px-4 py-3">
-                                <div className="w-12 h-12 rounded-md overflow-hidden bg-muted/20">
-                                  <img
-                                    src={product.image_base64}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 font-medium">{product.name}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <span className={product.discount !== null ? "line-through text-muted-foreground" : ""}>
-                                    {product.price} {product.currency}
-                                  </span>
-                                  {product.discount !== null && (
-                                    <span className="font-bold text-green-600 dark:text-green-500">
-                                      {product.discount} {product.currency}
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-muted-foreground text-xs">
-                                {product.discount !== null ? (
-                                  <div className="flex flex-col items-center justify-center whitespace-nowrap">
-                                    <span>{moment(product.discount_start_date).format("DD-MM-YYYY - HH:mm")}</span>
-                                    <hr className="w-full my-1 border-border" />
-                                    <span>{moment(product.discount_end_date).format("DD-MM-YYYY - HH:mm")}</span>
-                                  </div>
-                                ) : (
-                                  <span className="text-center block">-</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-center">{product.views}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex flex-wrap gap-1">
-                                  {product.has_delivery && (
-                                    <Badge variant="outline" className="text-[10px] h-5 py-0">
-                                      <Truck className="h-3 w-3 mr-1" /> Mensajería
-                                    </Badge>
-                                  )}
-                                  {product.has_pickup && (
-                                    <Badge variant="outline" className="text-[10px] h-5 py-0">
-                                      <PickupIcon className="h-3 w-3 mr-1" /> Recogida
-                                    </Badge>
-                                  )}
-                                  {product.free_delivery && (
-                                    <Badge variant="default" className="text-[10px] h-5 py-0 bg-green-500 hover:bg-green-600">
-                                      <Truck className="h-3 w-3 mr-1" /> Gratis
-                                    </Badge>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex gap-2">
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(product)}>
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteClick(product.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="flex justify-center p-4 border-t border-border">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(null, Math.max(1, currentPage - 1))}
-                          disabled={currentPage === 1}
-                        >
-                          Anterior
-                        </Button>
-                        <span className="flex items-center text-sm px-2">
-                          Página {currentPage} de {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(null, Math.min(totalPages, currentPage + 1))}
-                          disabled={currentPage === totalPages}
-                        >
-                          Siguiente
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4 relative">
-                  {loading || loadingProducts ? (
-                    <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-                  ) : currentProducts.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No hay productos registrados
-                    </div>
-                  ) : (
-                    <>
-                      {currentProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                      ))}
-                      {totalPages > 1 && (
-                        <div className="flex justify-center gap-2 mt-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(null, Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                          >
-                            Anterior
-                          </Button>
-                          <span className="flex items-center text-sm px-2">
-                            {currentPage} / {totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(null, Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                          >
-                            Siguiente
-                          </Button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+            <ProductsTab
+              isMobile={isMobile}
+              loading={loading || loadingProducts}
+              products={currentProducts}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => handlePageChange(null, page)}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+            />
           </TabsContent>
 
           <TabsContent value="3" className="mt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-              <Card className="lg:col-span-4 border-border shadow-sm">
-                <div className="p-6 pb-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Órdenes</h3>
-                  <p className="text-2xl font-bold text-foreground">{storeStats.totalOrders}</p>
-                </div>
-                <CardContent className="pt-0">
-                  <p className="text-xs text-muted-foreground">
-                    Entregadas: <span className="font-medium text-foreground">{storeStats.deliveredOrdersCount}</span>
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="lg:col-span-4 border-border shadow-sm">
-                <div className="p-6 pb-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Productos</h3>
-                  <p className="text-2xl font-bold text-foreground">{storeStats.totalProducts}</p>
-                </div>
-                <CardContent className="pt-0">
-                  <p className="text-xs text-muted-foreground">
-                    Categorías: <span className="font-medium text-foreground">{storeStats.categoryChart.length}</span>
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="lg:col-span-4 border-border shadow-sm">
-                <div className="p-6 pb-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Ingresos (Entregadas)</h3>
-                  <p className="text-2xl font-bold text-foreground">
-                    {Object.keys(storeStats.incomeByCurrency).length === 0 ? (
-                      `0`
-                    ) : Object.keys(storeStats.incomeByCurrency).length === 1 ? (
-                      (() => {
-                        const currency = Object.keys(storeStats.incomeByCurrency)[0];
-                        const total = storeStats.incomeByCurrency[currency] || 0;
-                        return `${total.toFixed(2)} ${currency}`;
-                      })()
-                    ) : (
-                      `Multi-moneda`
-                    )}
-                  </p>
-                </div>
-                <CardContent className="pt-0">
-                  {Object.keys(storeStats.incomeByCurrency).length > 0 ? (
-                    <div className="space-y-1">
-                      {Object.entries(storeStats.incomeByCurrency).map(([currency, total]) => (
-                        <p key={currency} className="text-xs text-muted-foreground">
-                          {currency}: <span className="font-medium text-foreground">{total.toFixed(2)}</span>
-                        </p>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No hay órdenes entregadas.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="lg:col-span-5 border-border shadow-sm">
-                <div className="p-6 pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">Órdenes por estado</h3>
-                </div>
-                <CardContent className="pt-0">
-                  {storeStats.totalOrders > 0 ? (
-                    <ReactApexChart
-                      options={getChartOptions(storeStats.statusLabels, true, ["#3b82f6", "#f59e0b", "#10b981", "#ef4444"])}
-                      series={storeStats.ordersByStatus}
-                      type="donut"
-                      height={280}
-                    />
-                  ) : (
-                    <div className="flex justify-center items-center h-[280px] text-muted-foreground text-sm">
-                      No hay datos
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="lg:col-span-7 border-border shadow-sm">
-                <div className="p-6 pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">Productos por categoría</h3>
-                </div>
-                <CardContent className="pt-0">
-                  {storeStats.totalProducts > 0 ? (
-                    <ReactApexChart
-                      options={getChartOptions(storeStats.categoryChart.map((c) => (c.name.length > 16 ? `${c.name.slice(0, 16)}...` : c.name)), false, ["#6164c7"])}
-                      series={[{ name: "Productos", data: storeStats.categoryChart.map((c) => c.total) }]}
-                      type="bar"
-                      height={280}
-                    />
-                  ) : (
-                    <div className="flex justify-center items-center h-[280px] text-muted-foreground text-sm">
-                      No hay datos
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Productos olvidados */}
-              <Card className="lg:col-span-6 border-border shadow-sm">
-                <div className="p-6 pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">Productos olvidados</h3>
-                  <p className="text-2xl font-bold text-foreground">{storeStats.forgottenProducts.length}</p>
-                </div>
-                <CardContent className="pt-0">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Productos sin ventas en el último mes
-                  </p>
-                  {storeStats.forgottenProducts.length > 0 ? (
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {storeStats.forgottenProducts.slice(0, 5).map((product) => (
-                        <div key={product.id_products} className="flex justify-between items-center text-xs">
-                          <span className="text-muted-foreground truncate">{product.name_products}</span>
-                          <Badge variant="outline" className="text-xs">Sin ventas</Badge>
-                        </div>
-                      ))}
-                      {storeStats.forgottenProducts.length > 5 && (
-                        <p className="text-xs text-muted-foreground text-center">
-                          +{storeStats.forgottenProducts.length - 5} más
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No hay productos olvidados</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Ranking de productos */}
-              <Card className="lg:col-span-6 border-border shadow-sm">
-                <div className="p-6 pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">Top Productos</h3>
-                  <p className="text-xs text-muted-foreground">Más vendidos</p>
-                </div>
-                <CardContent className="pt-0">
-                  {storeStats.productRanking.length > 0 ? (
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {storeStats.productRanking.map((product, index) => (
-                        <div key={product.id_products} className="flex justify-between items-center text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-primary">#{index + 1}</span>
-                            <span className="text-muted-foreground truncate">{product.name_products}</span>
-                          </div>
-                          <Badge variant="secondary" className="text-xs">{product.totalSales} ventas</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No hay datos de ventas</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Alertas inteligentes */}
-              <Card className="lg:col-span-6 border-border shadow-sm">
-                <div className="p-6 pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">Alertas Inteligentes</h3>
-                  <p className="text-xs text-muted-foreground">Recomendaciones automáticas</p>
-                </div>
-                <CardContent className="pt-0">
-                  {storeStats.alerts.length > 0 ? (
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {storeStats.alerts.map((alert, index) => (
-                        <div key={index} className={`flex items-center gap-2 text-xs p-2 rounded-lg ${alert.type === "warning" ? "bg-yellow-500/10 border border-yellow-500/20" :
-                          alert.type === "success" ? "bg-green-500/10 border border-green-500/20" : ""
-                          }`}>
-                          <span>{alert.icon}</span>
-                          <span className="text-muted-foreground">{alert.message}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No hay alertas</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Predicción de categoría */}
-              <Card className="lg:col-span-6 border-border shadow-sm">
-                <div className="p-6 pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">Predicción</h3>
-                  <p className="text-xs text-muted-foreground">Categoría con mejor desempeño</p>
-                </div>
-                <CardContent className="pt-0">
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-primary">{storeStats.predictedTopCategory}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Basado en el histórico de ventas
-                    </p>
-                  </div>
-                  {storeStats.forgottenProducts.length > 0 && (
-                    <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-                      <p className="text-xs text-muted-foreground">
-                        💡 <strong>Recomendación:</strong> Considera aplicar descuentos a productos olvidados
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            <StoreStatsTab storeStats={storeStats} getChartOptions={getChartOptions} />
           </TabsContent>
 
           <TabsContent value="1" className="mt-4">
-            <div className="w-full">
-              {!isMobile ? (
-                <div className="bg-card rounded-lg border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-muted/50 text-muted-foreground">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">Pedido ID</th>
-                          <th className="px-4 py-3 font-medium">Fecha</th>
-                          <th className="px-4 py-3 font-medium">Cliente</th>
-                          <th className="px-4 py-3 font-medium">Productos</th>
-                          <th className="px-4 py-3 font-medium">Precio</th>
-                          <th className="px-4 py-3 font-medium">Total</th>
-                          <th className="px-4 py-3 font-medium">Cantidad</th>
-                          <th className="px-4 py-3 font-medium">Tipo de entrega</th>
-                          <th className="px-4 py-3 font-medium">Dirección</th>
-                          <th className="px-4 py-3 font-medium">Estado</th>
-                          <th className="px-4 py-3 font-medium">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {loadingOrders ? (
-                          <tr>
-                            <td colSpan={11} className="px-4 py-8 text-center">
-                              <div className="flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-                            </td>
-                          </tr>
-                        ) : filteredOrders.length === 0 ? (
-                          <tr>
-                            <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
-                              No hay órdenes registradas
-                            </td>
-                          </tr>
-                        ) : (
-                          (() => {
-                            const startIndex = (ordersPage - 1) * ordersItemsPerPage;
-                            const endIndex = startIndex + ordersItemsPerPage;
-                            const currentOrders = filteredOrders.slice(startIndex, endIndex);
-                            return currentOrders.map(order => (
-                              <tr key={order.id} className="hover:bg-muted/30">
-                                <td className="px-4 py-3 font-medium whitespace-nowrap">
-                                  <Badge variant="outline" className="bg-primary/5">No-{order.id_products}</Badge>
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</td>
-                                <td className="px-4 py-3 font-medium">{order.member_name}</td>
-                                <td className="px-4 py-3 max-w-[200px] truncate" title={order.name_products}>{order.name_products}</td>
-                                <td className="px-4 py-3 whitespace-nowrap">{order.price} {order.currency}</td>
-                                <td className="px-4 py-3 whitespace-nowrap font-medium">{order.price_total} {order.currency}</td>
-                                <td className="px-4 py-3 text-center">{order.amount ?? '-'}</td>
-                                <td className="px-4 py-3">{mapPurchaseType(order.purchase_type)}</td>
-                                <td className="px-4 py-3 max-w-[150px] truncate" title={order.delivery_address}>{order.delivery_address ? order.delivery_address : '-'}</td>
-                                <td className="px-4 py-3">
-                                  <Badge {...getStatusBadgeProps(order.status)}>
-                                    {mapStatus(order.status)}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <Select
-                                    value={order.status.toString()}
-                                    onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
-                                    disabled={statusUpdatingId === order.id}
-                                  >
-                                    <SelectTrigger className="w-[130px] h-8 text-xs">
-                                      <SelectValue placeholder="Estado" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="0">Recibida</SelectItem>
-                                      <SelectItem value="1">Procesada</SelectItem>
-                                      <SelectItem value="2">Entregada</SelectItem>
-                                      <SelectItem value="3">Cancelada</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </td>
-                              </tr>
-                            ));
-                          })()
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                  {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
-                    <div className="flex justify-center p-4 border-t border-border">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
-                          disabled={ordersPage === 1}
-                        >
-                          Anterior
-                        </Button>
-                        <span className="flex items-center text-sm px-2">
-                          Página {ordersPage} de {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
-                          disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                        >
-                          Siguiente
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {loadingOrders ? (
-                    <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-                  ) : filteredOrders.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No hay órdenes registradas</div>
-                  ) : (
-                    (() => {
-                      const startIndex = (ordersPage - 1) * ordersItemsPerPage;
-                      const endIndex = startIndex + ordersItemsPerPage;
-                      const currentOrders = filteredOrders.slice(startIndex, endIndex);
-                      return (
-                        <>
-                          {currentOrders.map(order => (
-                            <Card key={order.id} className="shadow-sm border-border">
-                              <CardContent className="p-4 space-y-2">
-                                <div className="flex justify-between items-start">
-                                  <div className="flex flex-col">
-                                    <Badge variant="outline" className="w-fit mb-1 bg-primary/5 text-xs text-muted-foreground border-muted">No-{order.id_products}</Badge>
-                                    <h3 className="font-bold">{order.member_name}</h3>
-                                  </div>
-                                  <Badge {...getStatusBadgeProps(order.status)}>
-                                    {mapStatus(order.status)}
-                                  </Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground">{moment(order.created_at).format('DD-MM-YYYY HH:mm')}</p>
-
-                                <Separator className="my-2" />
-
-                                <div className="text-sm space-y-1">
-                                  <p><span className="font-medium">Productos:</span> {order.name_products}</p>
-                                  <p><span className="font-medium">Monto:</span> <span className="text-primary font-bold">{order.price_total} {order.currency}</span></p>
-                                  <p><span className="font-medium">Cantidad:</span> {order.amount ?? '-'}</p>
-                                  <p><span className="font-medium">Tipo:</span> {mapPurchaseType(order.purchase_type)}</p>
-                                  <p><span className="font-medium">Dirección:</span> {order.delivery_address ? order.delivery_address : '-'}</p>
-                                </div>
-
-                                <div className="pt-2 mt-2 border-t border-border flex justify-end">
-                                  <Select
-                                    value={order.status.toString()}
-                                    onValueChange={(v) => handleChangeOrderStatus(order, parseInt(v))}
-                                    disabled={statusUpdatingId === order.id}
-                                  >
-                                    <SelectTrigger className="w-[140px] h-8 text-xs">
-                                      <SelectValue placeholder="Estado" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="0">Recibida</SelectItem>
-                                      <SelectItem value="1">Procesada</SelectItem>
-                                      <SelectItem value="2">Entregada</SelectItem>
-                                      <SelectItem value="3">Cancelada</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                          {Math.ceil(filteredOrders.length / ordersItemsPerPage) > 1 && (
-                            <div className="flex justify-center gap-2 mt-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setOrdersPage(Math.max(1, ordersPage - 1))}
-                                disabled={ordersPage === 1}
-                              >
-                                Anterior
-                              </Button>
-                              <span className="flex items-center text-sm px-2">
-                                {ordersPage} / {Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setOrdersPage(Math.min(Math.ceil(filteredOrders.length / ordersItemsPerPage), ordersPage + 1))}
-                                disabled={ordersPage === Math.ceil(filteredOrders.length / ordersItemsPerPage)}
-                              >
-                                Siguiente
-                              </Button>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()
-                  )}
-                </div>
-              )}
-            </div>
+            <OrdersTab
+              isMobile={isMobile}
+              loading={loadingOrders}
+              orders={filteredOrders}
+              ordersPage={ordersPage}
+              ordersItemsPerPage={ordersItemsPerPage}
+              onOrdersPageChange={setOrdersPage}
+              mapPurchaseType={mapPurchaseType}
+              mapStatus={mapStatus}
+              getStatusBadgeProps={getStatusBadgeProps}
+              statusUpdatingId={statusUpdatingId}
+              onChangeOrderStatus={handleChangeOrderStatus}
+            />
           </TabsContent>
 
-          <TabsContent value="2" className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              {loadingProducts ? (
-                <div className="col-span-full flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : products.length === 0 ? (
-                <div className="col-span-full">
-                  <Alert>
-                    <AlertDescription>No hay productos para mostrar</AlertDescription>
-                  </Alert>
-                </div>
-              ) : (
-                products.map((product) => (
-                  <Card key={product.id} className="h-full flex flex-col shadow-sm border-border overflow-hidden">
-                    <div className="relative aspect-video">
-                      <img
-                        src={product.image_base64}
-                        alt={product.name}
-                        className="w-full h-full object-contain bg-muted/20"
-                      />
-                    </div>
-                    <CardContent className="flex-1 pb-4 pt-4">
-                      <h3 className="font-bold text-lg mb-2">
-                        {product.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {product.description}
-                      </p>
-                      <h4 className="font-bold text-primary text-xl mb-4">
-                        {product.price} {product.currency}
-                      </h4>
-                      <div className="flex gap-2 flex-wrap">
-                        {product.has_delivery && (
-                          <Badge variant="outline" className="text-xs">
-                            <Truck className="h-3 w-3 mr-1" /> Envío
-                          </Badge>
-                        )}
-                        {product.has_pickup && (
-                          <Badge variant="outline" className="text-xs">
-                            <PickupIcon className="h-3 w-3 mr-1" /> Recogida
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
         </Tabs>
       </Card>
 
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
-            </DialogTitle>
-          </DialogHeader>
+      <ProductUpsertDialog
+        openDialog={openDialog}
+        setOpenDialog={setOpenDialog}
+        editingProduct={editingProduct}
+        formData={formData}
+        setFormData={setFormData}
+        categories={categories}
+        showDiscount={showDiscount}
+        formErrors={formErrors}
+        submitting={submitting}
+        formIsValid={formIsValid}
+        submitButtonClassName="bg-[#e49c10] hover:bg-[#e49c10]/90 text-white w-full sm:w-auto font-semibold"
+        handleInputChange={handleInputChange}
+        handleImageUpload={handleImageUpload}
+        handleShowDiscountChange={handleShowDiscountChange}
+        handleDateChange={handleDateChange}
+        validateForm={validateForm}
+        handleCloseDialog={handleCloseDialog}
+        handleSubmit={handleSubmit}
+      />
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 py-4">
-            {editingProduct && (
-              <div className="md:col-span-12 flex items-center space-x-2">
-                <Switch
-                  id="enable"
-                  checked={formData.enable}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enable: checked }))}
-                />
-                <Label htmlFor="enable">Producto Disponible</Label>
-              </div>
-            )}
-
-            <div className="md:col-span-4 space-y-2 flex flex-col justify-end">
-              <Label htmlFor="name">Nombre del producto <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className={formErrors.name ? "border-red-500" : ""}
-              />
-              {formErrors.name && <span className="text-xs text-red-500">{formErrors.name}</span>}
-            </div>
-
-            <div className="md:col-span-4 space-y-2 flex flex-col justify-end">
-              <Label htmlFor="product_code">Código de producto (Opcional)</Label>
-              <Input
-                id="product_code"
-                name="product_code"
-                value={formData.product_code}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="md:col-span-4 space-y-2 flex flex-col justify-end">
-              <Label>Categoría <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
-              <Select
-                value={formData.category || undefined}
-                onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.category}>
-                      {category.category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-12 space-y-2">
-              <Label htmlFor="description">Descripción <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
-              <Textarea
-                id="description"
-                name="description"
-                rows={3}
-                value={formData.description}
-                onChange={handleInputChange}
-                className={formErrors.description ? "border-red-500" : ""}
-              />
-              {formErrors.description && <span className="text-xs text-red-500">{formErrors.description}</span>}
-            </div>
-
-            <div className="md:col-span-8 space-y-2">
-              <Label htmlFor="price">Precio <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.price}
-                onChange={handleInputChange}
-                className={formErrors.price ? "border-red-500" : ""}
-              />
-              {formErrors.price && <span className="text-xs text-red-500">{formErrors.price}</span>}
-            </div>
-
-            <div className="md:col-span-4 space-y-2">
-              <Label>Moneda <span className="text-red-600 font-extrabold text-lg ml-1">*</span></Label>
-              <Select
-                value={formData.currency}
-                onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="CUP">CUP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {editingProduct && (
-              <div className="md:col-span-12 mt-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="showDiscount"
-                    checked={showDiscount}
-                    onCheckedChange={(checked) => handleShowDiscountChange({ target: { checked } })}
-                  />
-                  <Label htmlFor="showDiscount" className="cursor-pointer font-medium">
-                    Añadir precio rebajado y período de oferta
-                  </Label>
-                </div>
-              </div>
-            )}
-
-            {editingProduct && showDiscount && (
-              <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6 bg-muted/20 p-4 rounded-lg border border-border">
-                {!editingProduct && (
-                  <div className="md:col-span-12">
-                    <Alert className="bg-yellow-50/50 text-yellow-800 border-yellow-200">
-                      <AlertDescription className="text-xs">
-                        Manipular precios para aparentar grandes descuentos daña la confianza de los clientes. Mantenga precios reales y coherentes: la transparencia genera más ventas y fidelidad.
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                )}
-
-                <div className="md:col-span-4 space-y-2">
-                  <Label htmlFor="discount">Nuevo Precio (Rebaja aplicada)</Label>
-                  <Input
-                    id="discount"
-                    name="discount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.discount}
-                    onChange={handleInputChange}
-                    disabled={!formData.price || parseFloat(formData.price) <= 0}
-                    className={formErrors.discount ? "border-red-500" : ""}
-                  />
-                  {formErrors.discount && <span className="text-xs text-red-500">{formErrors.discount}</span>}
-                  {formData.discount && formData.price && parseFloat(formData.discount) < (parseFloat(formData.price) / 2) && !formErrors.discount && (
-                    <span className="text-[11px] text-amber-600 mt-1 block">
-                      ⚠️ El descuento supera el 50% del precio original.
-                    </span>
-                  )}
-                </div>
-
-                {formData.discount && parseFloat(formData.discount) > 0 && (
-                  <>
-                    <div className="md:col-span-4 space-y-2">
-                      <Label htmlFor="discount_start_date">Inicio de la oferta</Label>
-                      <Input
-                        id="discount_start_date"
-                        type="datetime-local"
-                        value={formData.discount_start_date ? moment(formData.discount_start_date).format('YYYY-MM-DDTHH:mm') : ''}
-                        onChange={(e) => handleDateChange('discount_start_date', e.target.value ? new Date(e.target.value) : null)}
-                        min={!editingProduct ? moment().format('YYYY-MM-DDTHH:mm') : undefined}
-                        className={formErrors.discount_start_date ? "border-red-500" : ""}
-                      />
-                      {formErrors.discount_start_date && <span className="text-xs text-red-500">{formErrors.discount_start_date}</span>}
-                    </div>
-
-                    <div className="md:col-span-4 space-y-2">
-                      <Label htmlFor="discount_end_date">Fin de la oferta</Label>
-                      <Input
-                        id="discount_end_date"
-                        type="datetime-local"
-                        value={formData.discount_end_date ? moment(formData.discount_end_date).format('YYYY-MM-DDTHH:mm') : ''}
-                        onChange={(e) => handleDateChange('discount_end_date', e.target.value ? new Date(e.target.value) : null)}
-                        min={formData.discount_start_date ? moment(formData.discount_start_date).format('YYYY-MM-DDTHH:mm') : moment().format('YYYY-MM-DDTHH:mm')}
-                        className={formErrors.discount_end_date ? "border-red-500" : ""}
-                      />
-                      {formErrors.discount_end_date && <span className="text-xs text-red-500">{formErrors.discount_end_date}</span>}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            <div className="md:col-span-12">
-              <div className="border border-dashed border-border rounded-lg p-6 text-center hover:bg-muted/50 transition-colors">
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="image-upload"
-                  type="file"
-                  onChange={handleImageUpload}
-                />
-                <Label htmlFor="image-upload" className="cursor-pointer">
-                  <div className="flex flex-col items-center gap-2">
-                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                    <span className="text-sm font-medium">Click para subir imagen</span>
-                  </div>
-                </Label>
-                {formErrors.image && (
-                  <span className="text-xs text-red-500 block mt-2">{formErrors.image}</span>
-                )}
-                {formData.image_base64 && (
-                  <div className="mt-4 flex justify-center">
-                    <img
-                      src={formData.image_base64}
-                      alt="Preview"
-                      className="max-w-[200px] max-h-[200px] object-contain rounded-md border border-border"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="md:col-span-12 space-y-4 bg-muted/30 p-4 rounded-lg">
-              <Label className="text-base font-semibold">Opciones de entrega</Label>
-
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="has_delivery"
-                    checked={formData.has_delivery}
-                    disabled={formData.free_delivery}
-                    onCheckedChange={(checked) => {
-                      setFormData(prev => {
-                        const newFormData = { ...prev, has_delivery: checked };
-                        setTimeout(() => validateForm(newFormData), 0);
-                        return newFormData;
-                      });
-                    }}
-                  />
-                  <Label htmlFor="has_delivery" className={`cursor-pointer ${formData.free_delivery ? 'text-muted-foreground' : 'font-normal'}`}>
-                    Mensajería/Envío a domicilio (costo adicional)
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="free_delivery"
-                    checked={formData.free_delivery}
-                    disabled={formData.has_delivery}
-                    onCheckedChange={(checked) => {
-                      setFormData(prev => {
-                        const newFormData = { ...prev, free_delivery: checked };
-                        setTimeout(() => validateForm(newFormData), 0);
-                        return newFormData;
-                      });
-                    }}
-                  />
-                  <Label htmlFor="free_delivery" className={`cursor-pointer ${formData.free_delivery ? 'font-medium text-green-600' : formData.has_delivery ? 'text-muted-foreground' : 'font-normal'}`}>
-                    Entrega gratis (el vendedor entrega sin costo)
-                  </Label>
-                </div>
-
-                <Separator className="my-2" />
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="has_pickup"
-                    checked={formData.has_pickup}
-                    onCheckedChange={(checked) => {
-                      setFormData(prev => {
-                        const newFormData = { ...prev, has_pickup: checked };
-                        setTimeout(() => validateForm(newFormData), 0);
-                        return newFormData;
-                      });
-                    }}
-                  />
-                  <Label htmlFor="has_pickup" className="font-normal cursor-pointer">
-                    Recogida en tienda
-                  </Label>
-                </div>
-              </div>
-
-              {formErrors.delivery && (
-                <span className="text-xs text-red-500 block mt-2">{formErrors.delivery}</span>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0 mt-4">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={handleCloseDialog}
-            >
-              Cancelar
-            </Button>
-            <Button
-              className="bg-[#e49c10] hover:bg-[#e49c10]/90 text-white w-full sm:w-auto font-semibold"
-              onClick={handleSubmit}
-              disabled={submitting || !formIsValid}
-            >
-              {submitting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                editingProduct ? 'Actualizar' : 'Crear'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openCancelDialog} onOpenChange={setOpenCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Motivo de Cancelación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="cancelReason">Por favor, indique el motivo por el cual cancela esta orden:</Label>
-            <Textarea
-              id="cancelReason"
-              rows={3}
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              className="mt-2"
-              placeholder="Ej: Producto agotado, cliente no responde, etc."
-            />
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0 mt-4">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                setOpenCancelDialog(false);
-                setCancelOrder(null);
-                setCancelReason('');
-              }}
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="destructive"
-              className="w-full sm:w-auto"
-              onClick={confirmCancelOrder}
-              disabled={!cancelReason.trim()}
-            >
-              Confirmar Cancelación
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CancelOrderDialog
+        open={openCancelDialog}
+        onOpenChange={setOpenCancelDialog}
+        cancelReason={cancelReason}
+        onCancelReasonChange={(e) => setCancelReason(e.target.value)}
+        onClose={() => {
+          setOpenCancelDialog(false);
+          setCancelOrder(null);
+          setCancelReason('');
+        }}
+        onConfirm={confirmCancelOrder}
+      />
 
       {/* Modal de confirmación para eliminar producto */}
       <DialogMessage

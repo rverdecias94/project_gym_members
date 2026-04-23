@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { identifyAccountType } from "../services/accountType";
 import { toast } from "sonner";
+import { computeGymNextBillingAmount } from "../utils/gymBilling";
 export const Context = createContext();
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -100,13 +101,28 @@ export const ContextProvider = ({
         }
       } = await getAuthUser();
       if (!user) {
-        throw new Error("Usuario no autenticado");
+        return null;
       }
       if (!forceUpdate) {
         try {
           const cachedGymInfo = sessionStorage.getItem("gym_info");
           if (cachedGymInfo) {
             const parsed = JSON.parse(cachedGymInfo);
+            if (parsed?.created_at && parsed?.next_payment_date) {
+              const expected = computeGymNextBillingAmount({
+                createdAt: parsed.created_at,
+                nextPaymentDate: parsed.next_payment_date,
+                isPremium: parsed.store === true,
+                additionalCostsAmount: parsed.additional_costs_amount ?? 0,
+              });
+              if (typeof parsed.next_payment_amount !== 'number' || Math.abs(Number(parsed.next_payment_amount) - expected) >= 0.01) {
+                parsed.next_payment_amount = expected;
+                if (parsed.additional_costs_amount === undefined || parsed.additional_costs_amount === null) {
+                  parsed.additional_costs_amount = 0;
+                }
+                sessionStorage.setItem("gym_info", JSON.stringify(parsed));
+              }
+            }
             setGymInfo(parsed);
             if (parsed.next_payment_date) {
               const today = new Date();
@@ -133,6 +149,29 @@ export const ContextProvider = ({
         return null;
       }
       if (data) {
+        if (data?.created_at && data?.next_payment_date) {
+          const expected = computeGymNextBillingAmount({
+            createdAt: data.created_at,
+            nextPaymentDate: data.next_payment_date,
+            isPremium: data.store === true,
+            additionalCostsAmount: data.additional_costs_amount ?? 0,
+          });
+          if (typeof data.next_payment_amount !== 'number' || Math.abs(Number(data.next_payment_amount) - expected) >= 0.01) {
+            const { error: billingSyncError } = await supabase
+              .from('info_general_gym')
+              .update({
+                next_payment_amount: expected,
+                additional_costs_amount: data.additional_costs_amount ?? 0,
+              })
+              .eq('owner_id', user.id);
+            if (!billingSyncError) {
+              data.next_payment_amount = expected;
+              if (data.additional_costs_amount === undefined || data.additional_costs_amount === null) {
+                data.additional_costs_amount = 0;
+              }
+            }
+          }
+        }
         sessionStorage.setItem("gym_info", JSON.stringify(data));
         setGymInfo(data); // Update state
         if (data.next_payment_date) {
@@ -148,7 +187,9 @@ export const ContextProvider = ({
       return data; // Return data if needed by caller
     } catch (error) {
       console.error(error);
-      showMessage("Ha ocurrido un error inesperado al obtener la información del gimnasio.", "error");
+      if (!(error instanceof Error) || error.message !== "Usuario no autenticado") {
+        showMessage("Ha ocurrido un error inesperado al obtener la información del gimnasio.", "error");
+      }
       return null;
     }
   };
@@ -162,7 +203,7 @@ export const ContextProvider = ({
         }
       } = await getAuthUser();
       if (!user) {
-        throw new Error("Usuario no autenticado");
+        return null;
       }
       if (!forceUpdate) {
         try {
@@ -196,7 +237,9 @@ export const ContextProvider = ({
       return data; // Return data if needed by caller
     } catch (error) {
       console.error(error);
-      showMessage("Ha ocurrido un error inesperado al obtener la información de la tienda.", "error");
+      if (!(error instanceof Error) || error.message !== "Usuario no autenticado") {
+        showMessage("Ha ocurrido un error inesperado al obtener la información de la tienda.", "error");
+      }
       return null;
     }
   };

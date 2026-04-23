@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from '../supabase/client';
 import dayjs from 'dayjs';
 import { useSnackbar } from "../context/Snackbar";
@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DatePicker } from "@/components/ui/date-picker";
 import { RefreshCw, Search, Trash2, FileText, CreditCard } from "lucide-react";
+import { computeGymNextBillingAmount, roundMoney } from "../utils/gymBilling";
 
 const AdminPanel = () => {
   const [gymInfo, setGymInfo] = useState([]);
@@ -39,12 +40,15 @@ const AdminPanel = () => {
   const [paymentCurrency, setPaymentCurrency] = useState("USD");
   const [paymentNextDate, setPaymentNextDate] = useState("");
   const [paymentPlan, setPaymentPlan] = useState("Standard");
+  const [expectedPaymentAmount, setExpectedPaymentAmount] = useState(null);
   const [savingPayment, setSavingPayment] = useState(false);
   const [historyRows, setHistoryRows] = useState([]);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [aiRequestsDraft, setAiRequestsDraft] = useState({});
   const [aiRequestsSaving, setAiRequestsSaving] = useState({});
+  const [extrasDraft, setExtrasDraft] = useState({});
+  const [extrasSaving, setExtrasSaving] = useState({});
   const [statistics, setStatistics] = useState({
     gymsByProvince: {},
     shopsByProvince: {},
@@ -68,40 +72,11 @@ const AdminPanel = () => {
   });
   const [incomeCurrency, setIncomeCurrency] = useState('USD');
   const [availableCurrencies, setAvailableCurrencies] = useState(['USD']);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const selectedYear = new Date().getFullYear().toString();
 
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  useEffect(() => {
-    fetchAllData();
-    const isDark = document.documentElement.classList.contains('dark');
-    setIsDarkMode(isDark);
-
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          setIsDarkMode(document.documentElement.classList.contains('dark'));
-        }
-      });
-    });
-
-    observer.observe(document.documentElement, { attributes: true });
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    loadMonthlyIncome();
-  }, [incomeCurrency, selectedYear]);
-
-  const fetchAllData = () => {
-    getAllGyms();
-    getAllShops();
-    getStatistics();
-    loadMonthlyIncome();
-  };
-
-  const getAllGyms = async () => {
+  const getAllGyms = useCallback(async () => {
     setRotate(true);
     try {
       const { data, error } = await supabase.from('info_general_gym').select('*').order('created_at', { ascending: false });
@@ -117,9 +92,9 @@ const AdminPanel = () => {
     } finally {
       setTimeout(() => setRotate(false), 1000);
     }
-  };
+  }, [showMessage]);
 
-  const getAllShops = async () => {
+  const getAllShops = useCallback(async () => {
     setRotate(true);
     try {
       const { data, error } = await supabase.from('info_shops').select('*').order('created_at', { ascending: false });
@@ -133,9 +108,9 @@ const AdminPanel = () => {
     } finally {
       setTimeout(() => setRotate(false), 1000);
     }
-  };
+  }, [showMessage]);
 
-  const getStatistics = async () => {
+  const getStatistics = useCallback(async () => {
     try {
       const { data: gymsData } = await supabase.from('info_general_gym').select('*');
       const { data: shopsData } = await supabase.from('info_shops').select('*');
@@ -249,18 +224,26 @@ const AdminPanel = () => {
       console.error('Error fetching statistics:', error);
       showMessage('Error al cargar estadísticas', 'error');
     }
-  };
+  }, [showMessage]);
 
   const updateNextPaymentDate = async (row, newDate, dataType) => {
     const tableName = dataType === 'gym' ? 'info_general_gym' : 'info_shops';
-    const updatedRow = {
-      ...row,
-      next_payment_date: newDate ? dayjs(newDate).format("YYYY-MM-DD") : null,
-    };
+    const nextDateValue = newDate ? dayjs(newDate).format("YYYY-MM-DD") : null;
+    const updatePayload = { next_payment_date: nextDateValue };
+
+    if (dataType === 'gym' && nextDateValue) {
+      const expectedNext = computeGymNextBillingAmount({
+        createdAt: row.created_at,
+        nextPaymentDate: nextDateValue,
+        isPremium: row.store === true,
+        additionalCostsAmount: row.additional_costs_amount ?? 0,
+      });
+      updatePayload.next_payment_amount = expectedNext;
+    }
 
     try {
       if (!row.owner_id) return;
-      const { error } = await supabase.from(tableName).update(updatedRow).eq("owner_id", row.owner_id);
+      const { error } = await supabase.from(tableName).update(updatePayload).eq("owner_id", row.owner_id);
       if (error) throw error;
       showMessage("¡Fecha de pago actualizada con éxito!", "success");
       if (dataType === 'gym') getAllGyms(); else getAllShops();
@@ -298,7 +281,55 @@ const AdminPanel = () => {
     }
   };
 
-  const loadMonthlyIncome = async () => {
+  const updateExtras = async (row) => {
+    try {
+      if (!row.owner_id) return;
+      const draftValue = extrasDraft[row.owner_id];
+      if (draftValue === undefined) return;
+      const normalized = String(draftValue).replace(',', '.').trim();
+      if (normalized === '' || !/^\d+(\.\d{0,2})?$/.test(normalized)) {
+        showMessage("Valor inválido para Extras", "error");
+        return;
+      }
+      const newValue = roundMoney(parseFloat(normalized));
+
+      setExtrasSaving(prev => ({ ...prev, [row.owner_id]: true }));
+      const nextPaymentAmount = computeGymNextBillingAmount({
+        createdAt: row.created_at,
+        nextPaymentDate: row.next_payment_date,
+        isPremium: row.store === true,
+        additionalCostsAmount: newValue,
+      });
+
+      const { error } = await supabase
+        .from("info_general_gym")
+        .update({
+          additional_costs_amount: newValue,
+          next_payment_amount: nextPaymentAmount,
+        })
+        .eq("owner_id", row.owner_id);
+      if (error) throw error;
+
+      showMessage("¡Extras actualizados!", "success");
+      const patchRow = (g) => g.owner_id === row.owner_id
+        ? { ...g, additional_costs_amount: newValue, next_payment_amount: nextPaymentAmount }
+        : g;
+      setGymInfo(prev => prev.map(patchRow));
+      setGymInfoOriginal(prev => prev.map(patchRow));
+      setExtrasDraft(prev => {
+        const next = { ...prev };
+        delete next[row.owner_id];
+        return next;
+      });
+    } catch (error) {
+      console.error(error);
+      showMessage("Error al actualizar Extras.", "error");
+    } finally {
+      setExtrasSaving(prev => ({ ...prev, [row.owner_id]: false }));
+    }
+  };
+
+  const loadMonthlyIncome = useCallback(async () => {
     try {
       const currentYear = parseInt(selectedYear);
 
@@ -349,7 +380,36 @@ const AdminPanel = () => {
       console.error('Error al cargar ingresos mensuales:', error);
       showMessage('Error al cargar ingresos mensuales', 'error');
     }
-  };
+  }, [selectedYear, showMessage]);
+
+  useEffect(() => {
+    loadMonthlyIncome();
+  }, [loadMonthlyIncome]);
+
+  const fetchAllData = useCallback(() => {
+    getAllGyms();
+    getAllShops();
+    getStatistics();
+    loadMonthlyIncome();
+  }, [getAllGyms, getAllShops, getStatistics, loadMonthlyIncome]);
+
+  useEffect(() => {
+    fetchAllData();
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDarkMode(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, [fetchAllData]);
 
   const updateActiveStatus = async (row, dataType) => {
     const tableName = dataType === 'gym' ? 'info_general_gym' : 'info_shops';
@@ -372,12 +432,24 @@ const AdminPanel = () => {
 
   const updateStoreActivation = async (row) => {
     const updatedRow = { ...row, store: !row.store };
+    const nextPaymentAmount = computeGymNextBillingAmount({
+      createdAt: row.created_at,
+      nextPaymentDate: row.next_payment_date,
+      isPremium: updatedRow.store === true,
+      additionalCostsAmount: row.additional_costs_amount ?? 0,
+    });
     try {
       if (!row.owner_id) return;
-      const { error } = await supabase.from("info_general_gym").update(updatedRow).eq("owner_id", row.owner_id);
+      const { error } = await supabase
+        .from("info_general_gym")
+        .update({
+          store: updatedRow.store,
+          next_payment_amount: nextPaymentAmount,
+        })
+        .eq("owner_id", row.owner_id);
       if (error) throw error;
       showMessage("¡Estado de la tienda actualizado!", "success");
-      setGymInfo(prev => prev.map(g => g.owner_id === row.owner_id ? updatedRow : g));
+      setGymInfo(prev => prev.map(g => g.owner_id === row.owner_id ? { ...updatedRow, next_payment_amount: nextPaymentAmount } : g));
     } catch (error) {
       console.error(error);
     }
@@ -386,9 +458,18 @@ const AdminPanel = () => {
   const handleOpenPayment = (row) => {
     setSelectedGym(row);
     setSelectedType(tabValue === 'gyms' ? 'gym' : 'shop');
-    setPaymentAmount("");
+    const expected = tabValue === 'gyms'
+      ? roundMoney(row?.next_payment_amount ?? computeGymNextBillingAmount({
+        createdAt: row.created_at,
+        nextPaymentDate: row.next_payment_date,
+        isPremium: row.store === true,
+        additionalCostsAmount: row.additional_costs_amount ?? 0,
+      }))
+      : null;
+    setExpectedPaymentAmount(expected);
+    setPaymentAmount(expected !== null && expected !== undefined ? String(expected) : "");
     setPaymentCurrency("USD");
-    setPaymentNextDate(row?.next_payment_date ? dayjs(row.next_payment_date).format('YYYY-MM-DD') : "");
+    setPaymentNextDate(row?.next_payment_date ? dayjs(row.next_payment_date).add(1, 'month').format('YYYY-MM-DD') : "");
     setPaymentPlan(row?.store ? "Premium" : "Standard");
     setOpenPayment(true);
   };
@@ -401,10 +482,50 @@ const AdminPanel = () => {
     setSavingPayment(true);
     try {
       if (selectedType === 'gym') {
-        const desiredStore = paymentPlan === "Premium";
-        if (!!selectedGym.store !== desiredStore) {
-          await updateStoreActivation(selectedGym);
+        const paid = roundMoney(parseFloat(paymentAmount));
+        if (!Number.isFinite(paid) || paid <= 0) {
+          showMessage('Monto inválido', 'error');
+          return;
         }
+        const newNextPaymentDate = paymentNextDate ? dayjs(paymentNextDate).format('YYYY-MM-DD') : null;
+        if (!newNextPaymentDate) {
+          showMessage('Seleccione la próxima fecha de pago', 'error');
+          return;
+        }
+
+        const { data, error } = await supabase.rpc('process_gym_payment', {
+          p_uid_customer: selectedGym.owner_id,
+          p_amount: paid,
+          p_currency: paymentCurrency,
+          p_new_next_payment_date: newNextPaymentDate,
+        });
+
+        if (error) {
+          if (error.message?.includes('amount_mismatch')) {
+            showMessage('Monto incorrecto. Debe pagar exactamente el monto esperado.', 'error');
+            return;
+          }
+          if (error.message?.includes('duplicate_payment')) {
+            showMessage('Ya existe un pago registrado para este período', 'error');
+            return;
+          }
+          if (error.message?.includes('not_authorized')) {
+            showMessage('No autorizado para registrar pagos', 'error');
+            return;
+          }
+          throw error;
+        }
+
+        if (!data?.ok) {
+          showMessage('No se pudo procesar el pago', 'error');
+          return;
+        }
+
+        showMessage('Pago registrado', 'success');
+        setOpenPayment(false);
+        setSelectedGym(null);
+        await getAllGyms();
+        return;
       }
       await updateNextPaymentDate(selectedGym, paymentNextDate, selectedType);
       const payload = {
@@ -507,27 +628,6 @@ const AdminPanel = () => {
     else setShopInfo(filteredData);
   };
 
-  function calculateDebt(created_at, next_payment_date, paymentAmount) {
-    const created = new Date(created_at);
-    const now = new Date(next_payment_date);
-
-    let fullMonths =
-      (now.getFullYear() - created.getFullYear()) * 12 +
-      (now.getMonth() - created.getMonth());
-
-    if (now.getDate() < created.getDate()) {
-      fullMonths -= 1;
-    }
-
-    if (fullMonths <= 0) {
-      return 0;
-    } else if (fullMonths === 1 || fullMonths === 2) {
-      return paymentAmount * 0.7;
-    } else {
-      return paymentAmount;
-    }
-  }
-
   const isNewRow = (row) => {
     const propertiesToCheck = ['gym_name', 'address', 'owner_name', 'owner_phone', 'public_phone', 'state', 'city'];
     return row.active === null && propertiesToCheck.some(prop => row[prop]?.includes('DEFAULT_'));
@@ -622,7 +722,149 @@ const AdminPanel = () => {
         </TabsList>
 
         <TabsContent value="gyms">
-          <div className="rounded-md border overflow-x-auto">
+          <div className="md:hidden space-y-4">
+            {gymInfo.map((gym) => (
+              <Card key={gym.owner_id} className={getRowClassName(gym)}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg truncate">{gym.gym_name}</CardTitle>
+                      <div className="text-xs text-muted-foreground">
+                        {gym.owner_name} • {dayjs(gym.created_at).format('DD/MM/YYYY')}
+                      </div>
+                    </div>
+                    <Badge className="shrink-0" variant={gym.store ? "default" : "secondary"}>
+                      {gym.store ? "PRO" : "STD"}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Teléfono</span>
+                      <span className="text-foreground">{gym.owner_phone || "-"}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Prov/Mun</span>
+                      <span className="text-foreground">{[gym.state || "-", gym.city || "-"]?.filter(Boolean).join(" / ")}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Próxima facturación</span>
+                      <span className="text-foreground">
+                        {(() => {
+                          const payment = roundMoney(gym.next_payment_amount ?? computeGymNextBillingAmount({
+                            createdAt: gym.created_at,
+                            nextPaymentDate: gym.next_payment_date,
+                            isPremium: gym.store === true,
+                            additionalCostsAmount: gym.additional_costs_amount ?? 0,
+                          }));
+                          return payment > 0 ? `${payment.toFixed(2)} USD` : "-";
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Fecha de pago</div>
+                      <DatePicker
+                        value={gym.next_payment_date ? dayjs(gym.next_payment_date).format('YYYY-MM-DD') : ''}
+                        onChange={(val) => updateNextPaymentDate(gym, val, 'gym')}
+                        buttonClassName="w-full h-9"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-muted-foreground">Activo</span>
+                      <Switch checked={gym.active || false} onCheckedChange={() => updateActiveStatus(gym, 'gym')} />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-muted-foreground">Plan</span>
+                      <Switch checked={gym.store || false} onCheckedChange={() => updateStoreActivation(gym)} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">Solicitud AI</div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={aiRequestsDraft[gym.owner_id] ?? String(gym.ai_available_requests ?? "")}
+                          onChange={(e) => {
+                            const nextValue = e.target.value;
+                            if (nextValue === "" || /^\d+$/.test(nextValue)) {
+                              setAiRequestsDraft(prev => ({ ...prev, [gym.owner_id]: nextValue }));
+                            }
+                          }}
+                          className="h-9"
+                        />
+                        <Button
+                          variant="secondary"
+                          className="h-9"
+                          disabled={
+                            aiRequestsSaving[gym.owner_id] ||
+                            aiRequestsDraft[gym.owner_id] === undefined ||
+                            String(aiRequestsDraft[gym.owner_id]) === String(gym.ai_available_requests ?? "") ||
+                            !/^\d+$/.test(String(aiRequestsDraft[gym.owner_id]))
+                          }
+                          onClick={() => updateRequests(gym)}
+                        >
+                          Guardar
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">Extras</div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={extrasDraft[gym.owner_id] ?? String(gym.additional_costs_amount ?? 0)}
+                          onChange={(e) => {
+                            const nextValue = e.target.value;
+                            if (nextValue === "" || /^\d+(?:[.,]\d{0,2})?$/.test(nextValue)) {
+                              setExtrasDraft(prev => ({ ...prev, [gym.owner_id]: nextValue }));
+                            }
+                          }}
+                          className="h-9"
+                        />
+                        <Button
+                          variant="secondary"
+                          className="h-9"
+                          disabled={
+                            extrasSaving[gym.owner_id] ||
+                            extrasDraft[gym.owner_id] === undefined ||
+                            String(extrasDraft[gym.owner_id]).replace(',', '.') === String(gym.additional_costs_amount ?? 0)
+                          }
+                          onClick={() => updateExtras(gym)}
+                        >
+                          Guardar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button variant="outline" className="w-full" onClick={() => handleOpenPayment(gym)}>
+                      <CreditCard className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => handleOpenHistory(gym)}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" className="w-full text-destructive" onClick={() => handleOpenConfirm(gym)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="hidden md:block rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -630,8 +872,9 @@ const AdminPanel = () => {
                   <TableHead>Propietario</TableHead>
                   <TableHead>Teléfono</TableHead>
                   <TableHead>Prov/Mun</TableHead>
-                  <TableHead>Pago Mensual</TableHead>
+                  <TableHead>Próxima facturación</TableHead>
                   <TableHead>Solicitud AI</TableHead>
+                  <TableHead>Extras</TableHead>
                   <TableHead>Fecha de Pago</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Plan</TableHead>
@@ -653,7 +896,12 @@ const AdminPanel = () => {
                     </TableCell>
                     <TableCell>
                       {(() => {
-                        const payment = gym.store ? calculateDebt(gym.created_at, gym.next_payment_date, 28) : calculateDebt(gym.created_at, gym.next_payment_date, 15);
+                        const payment = roundMoney(gym.next_payment_amount ?? computeGymNextBillingAmount({
+                          createdAt: gym.created_at,
+                          nextPaymentDate: gym.next_payment_date,
+                          isPremium: gym.store === true,
+                          additionalCostsAmount: gym.additional_costs_amount ?? 0,
+                        }));
                         return payment > 0 ? `${payment.toFixed(2)} USD` : '-';
                       })()}
                     </TableCell>
@@ -682,6 +930,35 @@ const AdminPanel = () => {
                             !/^\d+$/.test(String(aiRequestsDraft[gym.owner_id]))
                           }
                           onClick={() => updateRequests(gym)}
+                        >
+                          Guardar
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          value={extrasDraft[gym.owner_id] ?? String(gym.additional_costs_amount ?? 0)}
+                          onChange={(e) => {
+                            const nextValue = e.target.value;
+                            if (nextValue === "" || /^\d+(?:[.,]\d{0,2})?$/.test(nextValue)) {
+                              setExtrasDraft(prev => ({ ...prev, [gym.owner_id]: nextValue }));
+                            }
+                          }}
+                          className="w-24 h-8 text-xs"
+                        />
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-8 px-3"
+                          disabled={
+                            extrasSaving[gym.owner_id] ||
+                            extrasDraft[gym.owner_id] === undefined ||
+                            String(extrasDraft[gym.owner_id]).replace(',', '.') === String(gym.additional_costs_amount ?? 0)
+                          }
+                          onClick={() => updateExtras(gym)}
                         >
                           Guardar
                         </Button>
@@ -746,7 +1023,63 @@ const AdminPanel = () => {
         </TabsContent>
 
         <TabsContent value="shops">
-          <div className="rounded-md border overflow-x-auto">
+          <div className="md:hidden space-y-4">
+            {shopInfo.map((shop) => (
+              <Card key={shop.owner_id} className={getRowClassName(shop)}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg truncate">{shop.shop_name}</CardTitle>
+                      <div className="text-xs text-muted-foreground">
+                        {shop.owner_name} • {dayjs(shop.created_at).format('DD/MM/YYYY')}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Teléfono</span>
+                      <span className="text-foreground">{shop.owner_phone || "-"}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Prov/Mun</span>
+                      <span className="text-foreground">{[shop.state || "-", shop.city || "-"]?.filter(Boolean).join(" / ")}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Fecha de pago</div>
+                      <DatePicker
+                        value={shop.next_payment_date ? dayjs(shop.next_payment_date).format('YYYY-MM-DD') : ''}
+                        onChange={(val) => updateNextPaymentDate(shop, val, 'shop')}
+                        buttonClassName="w-full h-9"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-muted-foreground">Activo</span>
+                      <Switch checked={shop.active || false} onCheckedChange={() => updateActiveStatus(shop, 'shop')} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button variant="outline" className="w-full" onClick={() => handleOpenPayment(shop)}>
+                      <CreditCard className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => handleOpenHistory(shop)}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" className="w-full text-destructive" onClick={() => handleOpenConfirm(shop)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="hidden md:block rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -1049,13 +1382,18 @@ const AdminPanel = () => {
           <div className="grid gap-4 py-4">
             <div className="font-medium">{selectedGym?.gym_name || selectedGym?.shop_name}</div>
             <div className="grid gap-2">
-              <Label htmlFor="amount">Cantidad a pagar</Label>
+              <Label htmlFor="amount">Monto pagado</Label>
               <Input
                 id="amount"
                 type="number"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
               />
+              {selectedType === 'gym' && expectedPaymentAmount !== null && expectedPaymentAmount !== undefined && (
+                <div className="text-xs text-muted-foreground">
+                  Monto esperado: {Number(expectedPaymentAmount).toFixed(2)} USD
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label>Moneda</Label>
@@ -1074,17 +1412,8 @@ const AdminPanel = () => {
               <DatePicker value={paymentNextDate} onChange={setPaymentNextDate} />
             </div>
             {selectedType === 'gym' && (
-              <div className="grid gap-2">
-                <Label>Tipo de plan</Label>
-                <Select value={paymentPlan} onValueChange={setPaymentPlan}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Standard">Standard</SelectItem>
-                    <SelectItem value="Premium">Premium</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Plan:</span> {paymentPlan}
               </div>
             )}
           </div>

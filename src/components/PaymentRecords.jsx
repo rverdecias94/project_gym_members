@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase/client'
 import dayjs from 'dayjs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Receipt, CheckCircle2, XCircle } from 'lucide-react';
+import { Receipt, CheckCircle2, XCircle } from 'lucide-react';
 
 const PaymentRecords = ({ open, handleClose, memberInfo }) => {
   const [paymentsList, setPaymentsList] = useState([]);
@@ -56,8 +56,8 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="p-4 md:p-6 border-b border-border bg-card shrink-0 flex flex-row items-center justify-between">
-          <DialogTitle className="flex items-center text-xl font-bold text-foreground">
+        <DialogHeader className="p-4 md:p-6 border-b border-border bg-card shrink-0 flex flex-row items-center justify-between pr-10">
+          <DialogTitle className="flex items-center text-xl font-bold text-foreground pr-2 break-words">
             <Receipt className="w-5 h-5 mr-2 text-primary" />
             Historial de Pagos - {memberInfo?.first_name} {memberInfo?.last_name}
           </DialogTitle>
@@ -69,8 +69,45 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : paymentsList?.length > 0 ? (
-            <div className="space-y-6">
-              <div className="bg-card rounded-lg border border-border overflow-hidden">
+            <div className="space-y-4">
+              <div className="space-y-3 md:hidden">
+                {paymentsList.map((payment) => (
+                  <div key={payment.id} className="bg-card rounded-lg border border-border p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="font-semibold text-foreground">
+                        {payment.created_at ? formatDate(payment.created_at) : 'N/A'}
+                      </div>
+                      <Badge variant="secondary" className="shrink-0">
+                        {formatCurrency(payment.quantity_paid)}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-muted-foreground">Próximo pago</span>
+                        <span className="text-foreground">
+                          {payment.next_payment ? formatDate(payment.next_payment) : 'N/A'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-muted-foreground">Incluye entrenador</span>
+                        {payment.trainer_included ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Sí
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+                            <XCircle className="w-3 h-3 mr-1" /> No
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden md:block bg-card rounded-lg border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-muted/50 text-muted-foreground">
@@ -123,6 +160,12 @@ const PaymentRecords = ({ open, handleClose, memberInfo }) => {
             </div>
           )}
         </div>
+
+        <DialogFooter className="p-4 md:p-6 border-t border-border bg-card">
+          <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">
+            Cerrar
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

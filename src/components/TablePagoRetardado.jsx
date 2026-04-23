@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import PaymentModal from './PaymentModal'; // Importar el nuevo modal
 import PaymentIcon from '@mui/icons-material/Payment';
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 // eslint-disable-next-line react/prop-types
 export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
@@ -29,6 +30,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   const [profile, setProfile] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+  const isMobile = window.innerWidth <= 768;
 
   useEffect(() => {
     if (!hasTrainers) {
@@ -193,7 +195,7 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
   }
 
   return (
-    <div className="w-full mb-10">
+    <div className="w-full min-h-[400px] mb-10 pb-20 md:pb-0">
       <br />
       <div className={cn("flex items-center w-full gap-4", hasTrainers ? "justify-between" : "justify-end")}>
         {hasTrainers && (
@@ -227,38 +229,83 @@ export const TablePagoRetardado = ({ membersPaymentDelayed = [] }) => {
         </div>
       </div>
       <br />
-      <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">
-        <DataGrid
-          autoHeight
-          rows={membersDelayed}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 5 },
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-          sx={{
-            border: 'none',
-            '& .MuiDataGrid-cell': {
-              borderColor: 'hsl(var(--border))',
-              color: 'hsl(var(--foreground))',
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: 'hsl(var(--muted))',
-              color: 'hsl(var(--muted-foreground))',
-              borderBottom: '1px solid hsl(var(--border))',
-            },
-            '& .MuiDataGrid-footerContainer': {
-              borderTop: '1px solid hsl(var(--border))',
-              color: 'hsl(var(--foreground))',
-            },
-            '& .MuiTablePagination-root': {
-              color: 'hsl(var(--foreground))',
-            },
-          }}
-        />
-      </div>
+      {!isMobile ? (
+        <div className="bg-card rounded-lg border border-border overflow-hidden pb-10 md:pb-0">
+          <DataGrid
+            autoHeight
+            rows={membersDelayed}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 5 },
+              },
+            }}
+            pageSizeOptions={[5, 10]}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-cell': {
+                borderColor: 'hsl(var(--border))',
+                color: 'hsl(var(--foreground))',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: 'hsl(var(--muted))',
+                color: 'hsl(var(--muted-foreground))',
+                borderBottom: '1px solid hsl(var(--border))',
+              },
+              '& .MuiDataGrid-footerContainer': {
+                borderTop: '1px solid hsl(var(--border))',
+                color: 'hsl(var(--foreground))',
+              },
+              '& .MuiTablePagination-root': {
+                color: 'hsl(var(--foreground))',
+              },
+            }}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {membersDelayed.length === 0 ? (
+            <div className="text-center text-muted-foreground py-10">Sin registros</div>
+          ) : (
+            membersDelayed.map((member) => (
+              <Card key={member.id} className="shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start gap-3">
+                    <h3 className="font-bold text-lg">
+                      {member.first_name} {member.last_name}
+                    </h3>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    <p><strong>Teléfono:</strong> {member.phone || '-'}</p>
+                    <p><strong>Fecha de pago:</strong> {member.pay_date || '-'}</p>
+                    <p><strong>Entrenador:</strong> {member.trainer_name || '-'}</p>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex justify-end gap-2 p-4 pt-0">
+                  <Button variant="outline" size="icon" onClick={() => handleOpenEdit(member)}>
+                    <ContactPageIcon fontSize="small" />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={() => handleOpenPayment(member)} className="text-green-600">
+                    <PaymentIcon fontSize="small" />
+                  </Button>
+                  {member.phone ? (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => enviarNotificacion(member)}
+                      style={{ color: theme.palette.primary.main }}
+                    >
+                      <WhatsAppIcon fontSize="small" />
+                    </Button>
+                  ) : null}
+                </CardFooter>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
       <ViewDetails
         handleClose={handleClose}
         open={open}

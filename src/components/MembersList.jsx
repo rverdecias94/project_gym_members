@@ -107,37 +107,25 @@ function MembersList() {
         </Button>
       </div>
       <Tabs value={value} onValueChange={setValue} className="w-full">
-        <TabsList className="w-full md:w-auto flex overflow-x-auto justify-start h-auto bg-transparent border-b border-border rounded-none p-0">
-          <TabsTrigger
-            value="activos"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
-          >
+        <TabsList className="flex w-full overflow-x-auto justify-start gap-1 sm:grid sm:grid-cols-4 sm:overflow-visible mb-6">
+          <TabsTrigger value="activos" className="shrink-0 min-w-[120px] sm:min-w-0 gap-2">
             Activos
           </TabsTrigger>
-          <TabsTrigger
-            value="por-pagar"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
-          >
+          <TabsTrigger value="por-pagar" className="shrink-0 min-w-[120px] sm:min-w-0 gap-2">
             Por pagar
-            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
               {membersPendingPayment.length}
             </span>
           </TabsTrigger>
-          <TabsTrigger
-            value="atrasado"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
-          >
+          <TabsTrigger value="atrasado" className="shrink-0 min-w-[140px] sm:min-w-0 gap-2">
             Pago atrasado
-            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
               {membersPaymentDelayed.length}
             </span>
           </TabsTrigger>
-          <TabsTrigger
-            value="inactivos"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 flex items-center"
-          >
+          <TabsTrigger value="inactivos" className="shrink-0 min-w-[120px] sm:min-w-0 gap-2">
             Inactivos
-            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-primary text-primary-foreground dark:bg-yellow-500 dark:text-black">
               {membersStatus?.inactive?.length ?? 0}
             </span>
           </TabsTrigger>

@@ -303,7 +303,7 @@ export default function SettingsAccountShop({ handleClose, open, profile, isFrom
 
   if (isFromGym) {
     return (
-      <div className="w-full bg-card rounded-lg border border-border shadow-sm">
+      <div className="w-full bg-card rounded-lg border border-border shadow-sm pb-[calc(env(safe-area-inset-bottom)+6rem)] md:pb-0">
         <div className="px-6 py-4 border-b">
           <h2 className="text-xl font-semibold">
             Configuración de la cuenta: <span className="font-normal text-muted-foreground">{shopInfo.email || profile?.email || "correo@gmail.com"}</span>
@@ -466,7 +466,7 @@ export default function SettingsAccountShop({ handleClose, open, profile, isFrom
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t flex justify-end gap-2 bg-muted/20 rounded-b-lg">
+        <div className="px-6 py-4 border-t flex justify-end gap-2 bg-muted/20 rounded-b-lg pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <Button className="bg-[#e49c10] hover:bg-[#e49c10]/90 text-white" onClick={saveShopInfo}>
             Guardar Cambios
           </Button>
@@ -640,7 +640,7 @@ export default function SettingsAccountShop({ handleClose, open, profile, isFrom
           </div>
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t flex justify-end gap-2">
+        <DialogFooter className="px-6 py-4 border-t flex justify-end gap-2 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>

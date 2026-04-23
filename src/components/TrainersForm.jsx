@@ -1,9 +1,8 @@
 /* eslint-disable react/prop-types */
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import { useMembers } from '../context/Context';
 import ImageUploader from './ImageUploader';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
@@ -11,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function TrainersForm({ trainer, onClose }) {
-  const { createNewTrainer, adding, updateTrainer } = useMembers();
+  const { createNewTrainer, adding, updateTrainer, gymInfo } = useMembers();
   const navigate = useNavigate();
+  const isPremiumGym = gymInfo?.store === true;
   const [trainerData, setTrainerData] = useState({
     name: '',
     last_name: '',
@@ -38,7 +38,7 @@ function TrainersForm({ trainer, onClose }) {
     e.preventDefault();
     let updatedTrainer = { ...trainerData };
 
-    updatedTrainer.image_profile = imageBase64;
+    updatedTrainer.image_profile = isPremiumGym ? imageBase64 : null;
     editing ? await updateTrainer(updatedTrainer) : await createNewTrainer(updatedTrainer);
     setTrainerData({
       name: '',
@@ -89,7 +89,7 @@ function TrainersForm({ trainer, onClose }) {
   };
 
   return (
-    <div className={`flex flex-col ${!editing ? 'p-4 md:p-8 max-w-4xl mx-auto mt-20 md:mt-4' : 'p-4 md:p-6'}`}>
+    <div className={`flex flex-col pb-[calc(env(safe-area-inset-bottom)+6rem)] md:pb-0 ${!editing ? 'p-4 md:p-8 max-w-4xl mx-auto mt-20 md:mt-4' : 'p-4 md:p-6'}`}>
       {!editing && (
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold flex items-center text-primary">
@@ -106,7 +106,17 @@ function TrainersForm({ trainer, onClose }) {
           {/* Image Column */}
           <div className="w-full lg:w-[400px] flex flex-col items-center shrink-0">
             <div className="w-full bg-card rounded-xl border border-border p-4 shadow-sm">
-              <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
+              {isPremiumGym ? (
+                <ImageUploader image={imageBase64} setImageBase64={setImageBase64} />
+              ) : (
+                <div className="w-full">
+                  <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-dashed border-border bg-muted/20 flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground text-center px-4">
+                      Subir foto / Cámara disponible solo para cuentas Premium
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

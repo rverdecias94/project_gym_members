@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -13,24 +13,17 @@ import {
   ListItemIcon,
   ListItemText,
   useMediaQuery,
-  IconButton,
   useTheme,
   ThemeProvider,
   Alert
 } from '@mui/material';
 
 import {
-  ArrowBack,
   CheckCircle,
-  WhatsApp,
-  FitnessCenter,
   TrendingUp,
   Star,
   Group,
   BarChart,
-  Support,
-  Inventory,
-  Business,
   HowToReg,
   ManageAccounts,
   Storefront,
@@ -44,6 +37,7 @@ import { supabase } from '../supabase/client';
 import { useSnackbar } from '../context/Snackbar';
 /* import { useMembers } from '../context/Context'; */
 import DialogMessage from './DialogMessage';
+import DowngradeStoreDialog from './DowngradeStoreDialog';
 import { identifyAccountType } from '../services/accountType';
 import {
   getSelectedPlanForUser,
@@ -51,6 +45,9 @@ import {
   setSelectedPlanForUser,
   markPlanStorageUser,
 } from '../utils/planStorage';
+import UpgradePremiumDialog from './UpgradePremiumDialog';
+import { computePremiumUpgradePreview } from '../utils/premiumUpgrade';
+import { ensureShopExists } from '../utils/ensureShopExists';
 
 
 
@@ -66,6 +63,10 @@ const PlansPage = () => {
   const [accountData, setAccountData] = useState({});
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   const [storedPlanId, setStoredPlanId] = useState(null);
+  const [openDowngrade, setOpenDowngrade] = useState(false);
+  const [authUserId, setAuthUserId] = useState(null);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [upgradeSubmitting, setUpgradeSubmitting] = useState(false);
   /* const [isLoading, setIsLoading] = useState(true); */
 
   useEffect(() => {
@@ -88,6 +89,7 @@ const PlansPage = () => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
+      setAuthUserId(userId ?? null);
 
       let planFromStorage = null;
       if (userId) {
@@ -256,8 +258,134 @@ const PlansPage = () => {
     }
   };
   const handlePlanChange = async (planId) => {
+    const effectiveActive = accountData?.active ?? true;
+    const effectiveStore = accountType === 'gym'
+      ? (accountData?.store ?? (storedPlanId === 'premium'))
+      : accountData?.store;
+
+    if (accountType === 'gym' && effectiveActive && !effectiveStore && planId === 'premium') {
+      setSelectedPlan(planId);
+      setUpgradeDialogOpen(true);
+      return;
+    }
+
+    if (accountType === 'gym' && effectiveActive && effectiveStore && planId === 'estandar') {
+      setOpenDowngrade(true);
+      return;
+    }
+
     setSelectedPlan(planId);
     setOpenMessage(true);
+  };
+
+  const upgradePreview = useMemo(() => {
+    if (accountType !== 'gym') return null;
+    return computePremiumUpgradePreview({
+      createdAt: accountData?.created_at,
+      nextPaymentDate: accountData?.next_payment_date,
+    });
+  }, [accountData?.created_at, accountData?.next_payment_date, accountType]);
+
+  const handleConfirmUpgrade = async () => {
+    if (upgradeSubmitting) return;
+    setUpgradeSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      if (!userId) {
+        showMessage('Usuario no autenticado', 'error');
+        return;
+      }
+
+      const { data: gymRow, error: gymRowError } = await supabase
+        .from('info_general_gym')
+        .select('created_at, next_payment_date, additional_costs_amount')
+        .eq('owner_id', userId)
+        .maybeSingle();
+      if (gymRowError) throw gymRowError;
+
+      const computedPreview = computePremiumUpgradePreview({
+        createdAt: gymRow?.created_at,
+        nextPaymentDate: gymRow?.next_payment_date,
+      });
+
+      const existingAdditional = Number(gymRow?.additional_costs_amount ?? 0);
+      const additionalNew = Math.round((existingAdditional + (computedPreview?.proratedDiff ?? 0)) * 100) / 100;
+      const nextPaymentAmountNew = Math.round(((computedPreview?.premiumCost ?? 0) + additionalNew) * 100) / 100;
+
+      const { error } = await supabase
+        .from('info_general_gym')
+        .update({
+          store: true,
+          additional_costs_amount: additionalNew,
+          next_payment_amount: nextPaymentAmountNew,
+        })
+        .eq('owner_id', userId);
+
+      if (error) throw error;
+
+      await ensureShopExists({ userId, gymNextPaymentDate: accountData?.next_payment_date });
+      setSelectedPlanForUser({ userId, planId: 'premium' });
+      setStoredPlanId('premium');
+
+      setAccountData(prev => ({
+        ...prev,
+        store: true,
+        additional_costs_amount: additionalNew,
+        next_payment_amount: nextPaymentAmountNew,
+      }));
+
+      try {
+        const cached = sessionStorage.getItem('gym_info');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          parsed.store = true;
+          parsed.additional_costs_amount = additionalNew;
+          parsed.next_payment_amount = nextPaymentAmountNew;
+          sessionStorage.setItem('gym_info', JSON.stringify(parsed));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      showMessage('Plan actualizado a Premium. La tienda está habilitada.', 'success');
+      setUpgradeDialogOpen(false);
+      navigate('/tienda-gym');
+    } catch (e) {
+      console.error(e);
+      showMessage('No se pudo actualizar el plan. Intenta nuevamente.', 'error');
+    } finally {
+      setUpgradeSubmitting(false);
+    }
+  };
+
+  const handleDowngradeCompleted = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    setSelectedPlan('estandar');
+    const writeRes = setSelectedPlanForUser({ userId: user.id, planId: 'estandar' });
+    if (writeRes.ok) {
+      setStoredPlanId('estandar');
+    }
+
+    setAccountData(prev => ({
+      ...prev,
+      store: false,
+    }));
+
+    try {
+      const cached = sessionStorage.getItem('gym_info');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        parsed.store = false;
+        sessionStorage.setItem('gym_info', JSON.stringify(parsed));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    navigate('/redirect');
   };
 
   const handlerSendMessage = () => {
@@ -627,6 +755,24 @@ const PlansPage = () => {
             fn={handlerSendMessage}
             open={openMessage}
             msg={`¿Estás seguro que deseas cambiar de plan? El cambio se aplicará en tu próximo ciclo de facturación que comienza el día ` + (accountData?.next_payment_date ? new Date(accountData?.next_payment_date).toLocaleDateString() : '') + '.'}
+          />
+
+          <UpgradePremiumDialog
+            open={upgradeDialogOpen}
+            onOpenChange={setUpgradeDialogOpen}
+            preview={upgradePreview}
+            submitting={upgradeSubmitting}
+            onConfirm={handleConfirmUpgrade}
+          />
+
+          <DowngradeStoreDialog
+            open={openDowngrade}
+            onOpenChange={setOpenDowngrade}
+            userId={authUserId}
+            gymName={accountData?.gym_name}
+            onCompleted={handleDowngradeCompleted}
+            showMessage={showMessage}
+            onGoToOrders={() => navigate('/tienda-gym')}
           />
         </Container>
       </Box>

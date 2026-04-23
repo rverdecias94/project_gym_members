@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { computeGymNextBillingAmount } from "../utils/gymBilling";
 
 // Icons
 import { Camera, Trash2 } from "lucide-react";
@@ -56,7 +57,12 @@ const GYM_DEFAULT = {
   trainers_cost: 0,
   monthly_currency: "CUP",
   daily_currency: "CUP",
-  image_profile: null
+  image_profile: null,
+  additional_costs_amount: 0,
+  next_payment_amount: 0,
+  last_payment_at: null,
+  last_payment_amount: null,
+  last_payment_for_date: null,
 };
 
 const SHOP_DEFAULT = {
@@ -236,6 +242,13 @@ const GeneralInfo = ({ id, step, setIsSaveButtonEnabled, clickOnSave, setIsLoadi
       setTimeout(async () => {
         GYM_DEFAULT.owner_id = id;
         GYM_DEFAULT.store = planId === "premium" ? true : false;
+        GYM_DEFAULT.additional_costs_amount = 0;
+        GYM_DEFAULT.next_payment_amount = computeGymNextBillingAmount({
+          createdAt: new Date(),
+          nextPaymentDate: GYM_DEFAULT.next_payment_date,
+          isPremium: GYM_DEFAULT.store === true,
+          additionalCostsAmount: 0,
+        });
         const { data } = await supabase
           .from('info_general_gym')
           .insert(GYM_DEFAULT);
