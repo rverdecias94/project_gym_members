@@ -1,10 +1,13 @@
 /* eslint-disable react/prop-types */
 
-import { CheckCircle, Store as StoreIcon } from "lucide-react";
+import { CheckCircle, CircleHelp, Store as StoreIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import UpgradePremiumDialog from "../UpgradePremiumDialog";
+import { useEffect } from "react";
+import { useAppTour } from "../../tours/TourShell.jsx";
+import { TOUR_IDS } from "../../tours/registry.js";
 
 const GymStoreNotEnabledView = ({
   upgradePreview,
@@ -15,9 +18,15 @@ const GymStoreNotEnabledView = ({
   onWhatsAppRequest,
   formatUsd,
 }) => {
+  const { startTour, maybeAutoStartTour } = useAppTour();
+
+  useEffect(() => {
+    maybeAutoStartTour(TOUR_IDS.STORE_GYM_UPGRADE);
+  }, [maybeAutoStartTour]);
+
   return (
     <div className="max-w-5xl mx-auto mt-[6rem] mb-12 pb-10 px-4 space-y-6">
-      <div className="rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-5 md:p-6">
+      <div className="rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-5 md:p-6" data-tour="store-upsell-hero">
         <p className="text-sm font-semibold text-primary mb-2">Amplía tu cuenta de gimnasio</p>
         <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
           Activa la tienda y centraliza tu operación en un solo sistema
@@ -25,6 +34,12 @@ const GymStoreNotEnabledView = ({
         <p className="text-sm md:text-base text-muted-foreground max-w-3xl">
           Mantén las herramientas que ya usas en tu gimnasio y suma una tienda integrada para administrar tu negocio desde el mismo panel.
         </p>
+        <div className="mt-4">
+          <Button variant="outline" onClick={() => startTour(TOUR_IDS.STORE_GYM_UPGRADE)}>
+            <CircleHelp className="mr-2 h-4 w-4" />
+            ¿Cómo funciona?
+          </Button>
+        </div>
       </div>
 
       <Card className="border border-border shadow-sm rounded-2xl overflow-hidden bg-card">
@@ -37,10 +52,10 @@ const GymStoreNotEnabledView = ({
             </p>
 
             <div className="space-y-3">
-              <Button className="w-full py-6" onClick={() => setUpgradeDialogOpen(true)}>
+              <Button className="w-full py-6" onClick={() => setUpgradeDialogOpen(true)} data-tour="store-upsell-upgrade">
                 Upgrade a Premium
               </Button>
-              <Button variant="outline" className="w-full" onClick={onWhatsAppRequest}>
+              <Button variant="outline" className="w-full" onClick={onWhatsAppRequest} data-tour="store-upsell-whatsapp">
                 Consultar por WhatsApp
               </Button>
             </div>
@@ -85,7 +100,7 @@ const GymStoreNotEnabledView = ({
                 </AlertDescription>
               </Alert>
 
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start" data-tour="store-upsell-benefits">
                 <div className="sm:col-span-4">
                   <div className="rounded-2xl p-5 text-center border border-border bg-card shadow-sm">
                     <span className="text-3xl font-bold text-primary block">$5</span>
@@ -125,4 +140,3 @@ const GymStoreNotEnabledView = ({
 };
 
 export default GymStoreNotEnabledView;
-

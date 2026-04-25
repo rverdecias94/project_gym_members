@@ -78,6 +78,11 @@
   }
 }
 
+[data-tour] {
+  scroll-margin-top: 6rem;
+  scroll-margin-bottom: 18rem;
+}
+
 .landing .section-title {
   text-align: center;
 }

@@ -5,7 +5,7 @@ import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
 import moment from "moment/moment";
 import { toast } from "sonner";
-import { Plus, Settings } from 'lucide-react';
+import { CircleHelp, Plus, Settings } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,9 +24,12 @@ import ProductUpsertDialog from "./store/ProductUpsertDialog";
 import CancelOrderDialog from "./store/CancelOrderDialog";
 import GymStoreStatsTab from "./store/GymStoreStatsTab";
 import GymStoreNotEnabledView from "./store/GymStoreNotEnabledView";
+import { useAppTour } from "../tours/TourShell.jsx";
+import { TOUR_IDS } from "../tours/registry.js";
 
 const StoreManagmentGym = () => {
   const { getGymInfo, getAuthUser } = useMembers();
+  const { startTour, maybeAutoStartTour } = useAppTour();
   const [store, setStore] = useState(false);
   const [gymInfoData, setGymInfoData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +40,15 @@ const StoreManagmentGym = () => {
 
   const isMobile = window.innerWidth <= 768;
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+
+  useEffect(() => {
+    if (!loading && store) {
+      maybeAutoStartTour(TOUR_IDS.STORE_GYM, {
+        setTabValue,
+        openFilters: () => setShowFiltersMobile(true),
+      });
+    }
+  }, [loading, maybeAutoStartTour, store]);
 
   // Estados para productos
   const [products, setProducts] = useState([]);
@@ -930,6 +942,7 @@ const StoreManagmentGym = () => {
               variant="outline"
               className="w-full"
               onClick={() => setShowFiltersMobile((prev) => !prev)}
+              data-tour="store-filters-toggle"
             >
               {showFiltersMobile ? "Ocultar filtros" : "Mostrar filtros"}
             </Button>
@@ -970,6 +983,18 @@ const StoreManagmentGym = () => {
               Gestión de Tienda
             </h2>
             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() =>
+                  startTour(TOUR_IDS.STORE_GYM, {
+                    setTabValue,
+                    openFilters: () => setShowFiltersMobile(true),
+                  })
+                }
+              >
+                <CircleHelp className=" h-4 w-4" />
+              </Button>
               <Button
                 variant="outline"
                 className="w-full sm:w-auto"
@@ -1017,19 +1042,19 @@ const StoreManagmentGym = () => {
             onValueChange={(v) => setTabValue(parseInt(v))}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-3 md:w-[560px] mb-6">
-              <TabsTrigger value="0">
+            <TabsList data-tour="store-tabs" className="grid w-full grid-cols-3 md:w-[560px] mb-6">
+              <TabsTrigger value="0" data-tour="store-tab-products">
                 Lista de Productos
               </TabsTrigger>
-              <TabsTrigger value="1">
+              <TabsTrigger value="1" data-tour="store-tab-orders">
                 Órdenes
               </TabsTrigger>
-              <TabsTrigger value="3">
+              <TabsTrigger value="3" data-tour="store-tab-stats">
                 Estadísticas
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="0" className="mt-4">
+            <TabsContent value="0" className="mt-4" data-tour="store-products-area">
               <ProductsTab
                 isMobile={isMobile}
                 loading={loading || loadingProducts}
@@ -1042,11 +1067,11 @@ const StoreManagmentGym = () => {
               />
             </TabsContent>
 
-            <TabsContent value="3" className="mt-4">
+            <TabsContent value="3" className="mt-4 pb-24 md:pb-0" data-tour="store-stats-area">
               <GymStoreStatsTab storeStats={storeStats} getChartOptions={getChartOptions} />
             </TabsContent>
 
-            <TabsContent value="1" className="mt-4">
+            <TabsContent value="1" className="mt-4" data-tour="store-orders-area">
               <OrdersTab
                 isMobile={isMobile}
                 loading={loadingOrders}

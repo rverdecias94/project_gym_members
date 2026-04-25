@@ -206,7 +206,7 @@ export default function DowngradeStoreDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Downgrade: Premium a Estándar</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Desactivar: Premium a Estándar</DialogTitle>
           <DialogDescription>
             {gymName ? `Gimnasio: ${gymName}. ` : ""}
             Antes de desactivar la tienda, se validan órdenes pendientes y se define el destino de productos.

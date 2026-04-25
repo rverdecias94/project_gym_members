@@ -32,7 +32,7 @@ const StoreFiltersCard = ({
   setFilterOrderDate,
 }) => {
   return (
-    <Card className="p-6 w-full shadow-sm border-border relative">
+    <Card className="p-6 w-full shadow-sm border-border relative" data-tour="store-filters">
       {loading && (
         <div className="absolute inset-0 bg-background/50 z-10 flex justify-center items-center rounded-lg">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>

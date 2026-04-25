@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { esES } from '@mui/x-data-grid/locales';
 import { SnackbarProvider } from './context/Snackbar.jsx'
+import { TourShell } from './tours/TourShell.jsx'
 
 const theme = createTheme(
   esES,
@@ -16,7 +17,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <SnackbarProvider>
-          <App />
+          <TourShell>
+            <App />
+          </TourShell>
         </SnackbarProvider>
       </BrowserRouter>
     </ThemeProvider>

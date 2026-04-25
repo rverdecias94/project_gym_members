@@ -292,7 +292,7 @@ export const TableMembersList = ({ membersList = [] }) => {
       headerName: "Opciones",
       width: 150,
       renderCell: (params) => (
-        <div className="flex gap-2 items-center h-full">
+        <div className="flex gap-2 items-center h-full" data-tour="clients-row-actions">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -379,7 +379,7 @@ export const TableMembersList = ({ membersList = [] }) => {
         </div>
       </CardContent>
 
-      <CardFooter className="flex justify-end gap-2 p-4 pt-0">
+      <CardFooter className="flex justify-end gap-2 p-4 pt-0" data-tour="clients-row-actions">
         <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleOpenEdit(member)}>
           <Edit className="h-4 w-4" />
         </Button>
@@ -428,6 +428,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 setShowQrScanner(false); // Asegura que se vea el formulario por defecto
               }}
               disabled={members.length === 80 && !gymInfo?.store}
+              data-tour="clients-associate"
             >
               <QrCode className="mr-2 h-4 w-4" />
               <span>Asociar Cliente</span>
@@ -442,6 +443,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 className="w-full"
                 onClick={handleOpenMember}
                 disabled={members.length === 80 && !gymInfo?.store} // Aquí manejamos la apertura del formulario
+                data-tour="clients-new"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 <span>Cliente</span>
@@ -456,6 +458,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                         disabled={selectedRows.length === 0}
                         className={cn("w-full transition-opacity", selectedRows.length === 0 && "opacity-50 cursor-not-allowed")}
                         onClick={handleOpenRule}
+                        data-tour="clients-rule"
                       >
                         <CalendarDays className="mr-2 h-4 w-4" />
                         <span>Aplicar regla</span>
@@ -471,6 +474,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                 className={cn("w-full transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
                 onClick={handlerCheckBox}
                 disabled={membersList.length === 0}
+                data-tour="clients-select-all"
               >
                 {membersList.length !== selectedRows.length ? (
                   <Square className="mr-2 h-4 w-4" />
@@ -491,6 +495,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                         className={cn("w-full transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
                         onClick={downloadPDF}
                         disabled={membersList.length === 0}
+                        data-tour="clients-download"
                       >
                         <FileText className="mr-2 h-4 w-4" />
                         <span>Descargar</span>
@@ -512,6 +517,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                       variant="outline"
                       size="icon"
                       onClick={handleOpenMember}
+                      data-tour="clients-new"
                     >
                       <UserPlus className="h-4 w-4" />
                     </Button>
@@ -530,6 +536,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                         disabled={selectedRows.length === 0}
                         className={cn("transition-opacity", selectedRows.length === 0 && "opacity-50 cursor-not-allowed")}
                         onClick={handleOpenRule}
+                        data-tour="clients-rule"
                       >
                         <CalendarDays className="h-4 w-4" />
                       </Button>
@@ -549,6 +556,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                         onClick={handlerCheckBox}
                         disabled={membersList.length === 0}
                         className={cn("transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
+                        data-tour="clients-select-all"
                       >
                         {membersList.length !== selectedRows.length ? <Square className="h-4 w-4" /> : <CheckSquareIcon className="h-4 w-4" />}
                       </Button>
@@ -568,6 +576,7 @@ export const TableMembersList = ({ membersList = [] }) => {
                         onClick={downloadPDF}
                         disabled={membersList.length === 0}
                         className={cn("transition-opacity", membersList.length === 0 && "opacity-50 cursor-not-allowed")}
+                        data-tour="clients-download"
                       >
                         <FileText className="h-4 w-4" />
                       </Button>

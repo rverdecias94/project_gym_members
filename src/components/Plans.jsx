@@ -30,7 +30,8 @@ import {
   Receipt,
   Insights,
   AutoAwesome,
-  AddShoppingCart
+  AddShoppingCart,
+  HelpOutline
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase/client';
@@ -48,12 +49,15 @@ import {
 import UpgradePremiumDialog from './UpgradePremiumDialog';
 import { computePremiumUpgradePreview } from '../utils/premiumUpgrade';
 import { ensureShopExists } from '../utils/ensureShopExists';
+import { useAppTour } from "../tours/TourShell.jsx";
+import { TOUR_IDS } from "../tours/registry.js";
 
 
 
 const PlansPage = () => {
   const theme = useTheme();
   /* const { gymInfo } = useMembers(); */
+  const { startTour, maybeAutoStartTour } = useAppTour();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [openMessage, setOpenMessage] = useState(false);
@@ -130,6 +134,10 @@ const PlansPage = () => {
 
     init();
   }, []);
+
+  useEffect(() => {
+    maybeAutoStartTour(TOUR_IDS.PLANS);
+  }, [maybeAutoStartTour]);
 
   const premiumColor = isDark ? '#ffb777' : '#6164c7';
   const cardBgDark = 'linear-gradient(135deg, #1a2332 0%, #162131 100%)';
@@ -461,6 +469,23 @@ const PlansPage = () => {
             >
               Elige el plan perfecto para tu negocio
             </Typography>
+            {/* <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => startTour(TOUR_IDS.PLANS)}
+                startIcon={<HelpOutline />}
+                data-tour="plans-help"
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'}`,
+                  color: isDark ? '#fff' : '#6164c7',
+                }}
+              >
+                ¿Cómo funciona?
+              </Button>
+            </Box> */}
             <Typography
               variant={isMobile ? "body1" : "h6"}
               sx={{
@@ -488,6 +513,7 @@ const PlansPage = () => {
                 (
                   <Grid item xs={12} md={accountData?.active ? 6 : 4} key={plan.id} sx={{ display: 'flex' }}>
                     <Card
+                      data-tour={plan.id === 'premium' ? "plans-premium-card" : undefined}
                       sx={{
                         width: '100%',
                         display: 'flex',
@@ -715,6 +741,7 @@ const PlansPage = () => {
                               ? handlePlanChange(plan.id)
                               : handlePlanSelect(plan.id))
                           }
+                          data-tour={plan.id === 'premium' ? "plans-premium-cta" : undefined}
                           sx={{
                             py: 1.5,
                             background: plan.popular

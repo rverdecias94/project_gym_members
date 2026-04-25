@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMembers } from "../context/Context";
 import { supabase } from "../supabase/client";
 import moment from "moment/moment";
-import { Plus } from 'lucide-react';
+import { CircleHelp, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,9 +16,12 @@ import OrdersTab from "./store/OrdersTab";
 import ProductUpsertDialog from "./store/ProductUpsertDialog";
 import CancelOrderDialog from "./store/CancelOrderDialog";
 import StoreStatsTab from "./store/StoreStatsTab";
+import { useAppTour } from "../tours/TourShell.jsx";
+import { TOUR_IDS } from "../tours/registry.js";
 
 const StoreManagment = () => {
   const { getShopInfo, getAuthUser } = useMembers();
+  const { startTour, maybeAutoStartTour } = useAppTour();
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
   const { showMessage } = useSnackbar();
@@ -30,6 +33,13 @@ const StoreManagment = () => {
   const [formIsValid, setFormIsValid] = useState(false);
   const isMobile = window.innerWidth <= 768;
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+
+  useEffect(() => {
+    maybeAutoStartTour(TOUR_IDS.STORE_SHOP, {
+      setTabValue,
+      openFilters: () => setShowFiltersMobile(true),
+    });
+  }, [maybeAutoStartTour]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -757,6 +767,7 @@ const StoreManagment = () => {
             variant="outline"
             className="w-full"
             onClick={() => setShowFiltersMobile((prev) => !prev)}
+            data-tour="store-filters-toggle"
           >
             {showFiltersMobile ? "Ocultar filtros" : "Mostrar filtros"}
           </Button>
@@ -796,37 +807,51 @@ const StoreManagment = () => {
           <h2 className="text-xl font-semibold">
             Gestión de Tienda
           </h2>
-          <Button
-            className="w-full md:w-auto bg-[#e49c10] hover:bg-[#e49c10]/90 text-white"
-            onClick={() => {
-              setEditingProduct(null);
-              setFormData({
-                name: '',
-                description: '',
-                price: '',
-                currency: 'USD',
-                image: null,
-                image_base64: '',
-                has_delivery: false,
-                has_pickup: false,
-                free_delivery: false,
-                discount: '',
-                discount_start_date: '',
-                discount_end_date: '',
-                product_code: '',
-                category: '',
-                city: 'El cerro',
-                state: 'La Habana',
-                enable: true,
-              });
-              setFormErrors({});
-              setFormIsValid(false);
-              setOpenDialog(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Producto
-          </Button>
+          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() =>
+                startTour(TOUR_IDS.STORE_SHOP, {
+                  setTabValue,
+                  openFilters: () => setShowFiltersMobile(true),
+                })
+              }
+            >
+              <CircleHelp className=" h-4 w-4" />
+            </Button>
+            <Button
+              className="w-full sm:w-auto bg-[#e49c10] hover:bg-[#e49c10]/90 text-white"
+              onClick={() => {
+                setEditingProduct(null);
+                setFormData({
+                  name: '',
+                  description: '',
+                  price: '',
+                  currency: 'USD',
+                  image: null,
+                  image_base64: '',
+                  has_delivery: false,
+                  has_pickup: false,
+                  free_delivery: false,
+                  discount: '',
+                  discount_start_date: '',
+                  discount_end_date: '',
+                  product_code: '',
+                  category: '',
+                  city: 'El cerro',
+                  state: 'La Habana',
+                  enable: true,
+                });
+                setFormErrors({});
+                setFormIsValid(false);
+                setOpenDialog(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Producto
+            </Button>
+          </div>
         </div>
 
         <Tabs
@@ -834,19 +859,19 @@ const StoreManagment = () => {
           onValueChange={(v) => setTabValue(parseInt(v))}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-3 md:w-[560px] mb-6">
-            <TabsTrigger value="0">
+          <TabsList data-tour="store-tabs" className="grid w-full grid-cols-3 md:w-[560px] mb-6">
+            <TabsTrigger value="0" data-tour="store-tab-products">
               Lista de Productos
             </TabsTrigger>
-            <TabsTrigger value="1">
+            <TabsTrigger value="1" data-tour="store-tab-orders">
               Órdenes
             </TabsTrigger>
-            <TabsTrigger value="3">
+            <TabsTrigger value="3" data-tour="store-tab-stats">
               Estadísticas
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="0" className="mt-4">
+          <TabsContent value="0" className="mt-4" data-tour="store-products-area">
             <ProductsTab
               isMobile={isMobile}
               loading={loading || loadingProducts}
@@ -859,11 +884,11 @@ const StoreManagment = () => {
             />
           </TabsContent>
 
-          <TabsContent value="3" className="mt-4">
+          <TabsContent value="3" className="mt-4 pb-24 md:pb-0" data-tour="store-stats-area">
             <StoreStatsTab storeStats={storeStats} getChartOptions={getChartOptions} />
           </TabsContent>
 
-          <TabsContent value="1" className="mt-4">
+          <TabsContent value="1" className="mt-4" data-tour="store-orders-area">
             <OrdersTab
               isMobile={isMobile}
               loading={loadingOrders}

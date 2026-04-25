@@ -6,11 +6,14 @@ import { TablePendingPay } from './TablePendingPay';
 import { TablePagoRetardado } from './TablePagoRetardado';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from 'lucide-react';
+import { CircleHelp, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAppTour } from "../tours/TourShell.jsx";
+import { TOUR_IDS } from "../tours/registry.js";
 
 function MembersList() {
   const { membersList, getMembers, getTrainers } = useMembers();
+  const { startTour, maybeAutoStartTour } = useAppTour();
   const [value, setValue] = useState("activos");
   const [membersStatus, setMembersStatus] = useState({ active: [], inactive: [] });
   const [membersPendingPayment, setMembersPendingPayment] = useState([]);
@@ -21,6 +24,10 @@ function MembersList() {
     getMembers();
     getTrainers();
   }, [])
+
+  useEffect(() => {
+    maybeAutoStartTour(TOUR_IDS.CLIENTS, { setClientsTab: setValue });
+  }, [maybeAutoStartTour]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -96,18 +103,29 @@ function MembersList() {
     <div className="w-full p-4 max-w-[1400px] mx-auto mt-20 md:mt-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-foreground">Gestión de Clientes</h1>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="h-10 w-10"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => startTour(TOUR_IDS.CLIENTS, { setClientsTab: setValue })}
+            className="h-10 w-10"
+          >
+            <CircleHelp className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="h-10 w-10"
+            data-tour="clients-refresh"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
       <Tabs value={value} onValueChange={setValue} className="w-full">
-        <TabsList className="flex w-full overflow-x-auto justify-start gap-1 sm:grid sm:grid-cols-4 sm:overflow-visible mb-6">
+        <TabsList data-tour="clients-tabs" className="flex w-full overflow-x-auto justify-start gap-1 sm:grid sm:grid-cols-4 sm:overflow-visible mb-6">
           <TabsTrigger value="activos" className="shrink-0 min-w-[120px] sm:min-w-0 gap-2">
             Activos
           </TabsTrigger>
